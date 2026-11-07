@@ -1,0 +1,6 @@
+node_modules
+out
+dist
+*.log
+# مفاتيح خاصة: ما بتنحط بالمشروع أبدا (scripts/license.mjs keygen بيحطها برا).
+*.pem

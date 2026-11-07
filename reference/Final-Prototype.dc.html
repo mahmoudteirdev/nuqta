@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>نقطة: النموذج التفاعلي</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+:root{--ink:#13201D;--muted:#55625D;--ctl:#7A8680;--line:#D9DDD5;--fill:#E8EBE5;--ground:#F4F5F0;--pri:#0A5C56;--pri-h:#084A45;--pri-t:#DDEDE9;--ok:#0A4A45;--warn:#6B3D00;--warn-t:#FBEFD9;--err:#8A1C14;--err-t:#F9E3E0}
+.scr{animation:nq-in .18s ease-out}
+@keyframes nq-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes nq-fade{from{opacity:0}to{opacity:1}}
+@keyframes nq-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes nq-new{from{background:var(--pri-t)}to{background:#fff}}
+@keyframes nq-spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:16px;height:16px;box-sizing:border-box;border:2px solid currentColor;border-inline-end-color:transparent;border-radius:50%;animation:nq-spin .8s linear infinite;flex:none}
+@media (prefers-reduced-motion:reduce){.scr,.spin,.ov,.dlg,.toast,.ev.new{animation:none}.btn,.ni,.bar span{transition:none}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;box-sizing:border-box;border:1px solid transparent;border-radius:4px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap;transition:background-color .12s}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btn-p{background:var(--pri);color:#fff}.btn-p:hover{background:var(--pri-h)}
+.btn-s{background:#fff;color:var(--ink);border-color:var(--ink)}.btn-s:hover{background:var(--fill)}
+.btn-d{background:#fff;color:var(--err);border-color:var(--err)}.btn-d:hover{background:var(--err-t)}
+.btn-g{background:transparent;color:var(--ink)}.btn-g:hover{background:var(--fill)}
+.btn:disabled{background:var(--fill);color:var(--muted);border-color:transparent;cursor:not-allowed}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+.ni{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border:0;border-radius:4px;color:#DDE3DE;background:transparent;font:inherit;width:100%;text-align:start;cursor:pointer;transition:background-color .12s}
+.ni:hover{background:#2A3632;color:#fff}.ni:focus-visible{outline:2px solid #fff;outline-offset:-2px}
+.ni.on{background:var(--pri);color:#fff;font-weight:600}
+.srch{display:flex;align-items:center;min-height:44px;min-width:240px;padding:0 12px;box-sizing:border-box;background:#fff;border:1px solid var(--ctl);border-radius:4px;color:var(--muted);font:inherit;cursor:pointer;text-align:start}
+.srch:hover{border-color:var(--ink)}.srch:focus-visible{outline:2px solid var(--pri)}
+.card{background:#fff;border:1px solid var(--line);border-radius:4px;padding:20px;box-sizing:border-box}
+.card.top{border:2px solid var(--ink);padding:19px}
+.m{display:inline-block;direction:ltr;unicode-bidi:isolate}
+.h1{margin:0;font-size:28px;line-height:38px;font-weight:600}
+.h2{margin:0;font-size:20px;line-height:30px;font-weight:600}
+.big{font-size:28px;line-height:38px;font-weight:700}
+.sub{color:var(--muted)}
+.lbl{font-size:14px;line-height:22px;font-weight:600}
+.fld{display:flex;flex-direction:column;gap:4px}
+.box{display:flex;align-items:center;gap:8px;min-height:44px;box-sizing:border-box;padding:0 12px;background:#fff;border:1px solid var(--ctl);border-radius:4px}
+.box:hover{border-color:var(--ink)}.box:focus-within{border-color:var(--pri);outline:2px solid var(--pri)}
+.box.err{border:2px solid var(--err);padding:0 11px}
+.box input,.box select{all:unset;flex:1 1 auto;min-width:0;width:100%;min-height:42px;font:inherit}
+.box select{all:revert;flex:1 1 auto;min-width:0;width:100%;height:42px;border:0;outline:0;background:transparent;font:inherit;color:inherit;cursor:pointer}
+.sk{display:block;height:14px;border-radius:4px;background:var(--fill);animation:nq-pulse 1.4s ease-in-out infinite}
+@keyframes nq-pulse{50%{opacity:.5}}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line)}
+.tab{min-height:44px;padding:0 16px;font:inherit;color:var(--muted);background:transparent;border:0;border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-1px}
+.tab:hover{color:var(--ink);border-bottom-color:var(--line)}.tab:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--pri)}
+.rowx{display:grid;gap:12px;padding:10px 16px;align-items:center;border-top:1px solid var(--line)}
+.demo-sel{min-height:36px;font:inherit;font-size:14px;border:1px solid var(--ctl);border-radius:4px;background:#fff;color:var(--ink);padding:0 8px}
+.emsg{font-size:14px;line-height:22px;color:var(--err);font-weight:500}
+.chip{min-height:64px;padding:8px 12px;font:inherit;color:var(--ink);background:#fff;border:1px solid var(--ctl);border-radius:4px;text-align:start;cursor:pointer;width:100%}
+.chip:hover{border-color:var(--ink);background:var(--ground)}.chip:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.chip.on{background:var(--pri-t);border:2px solid var(--pri);padding:7px 11px;color:var(--ok)}
+.tr{display:flex;justify-content:space-between;gap:12px;align-items:center;min-height:48px;padding:6px 16px;width:100%;box-sizing:border-box;font:inherit;color:inherit;background:#fff;border:0;border-bottom:1px solid var(--line);text-align:start;cursor:pointer}
+.tr:hover{background:var(--ground)}.tr:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.tr.on{background:var(--pri-t);font-weight:600}
+.ev{display:grid;grid-template-columns:1fr 2fr .7fr .8fr .8fr 1fr;gap:12px;padding:10px 16px;border-top:1px solid var(--line);align-items:start}
+.ev.head{background:var(--ground);font-size:14px;line-height:22px;font-weight:600;border-top:0}
+.ev.new{animation:nq-new 2s ease-out}
+.n{direction:ltr;text-align:right}
+.bar{height:8px;background:var(--fill)}.bar span{display:block;height:100%;background:var(--pri);transition:width .25s}
+.rep{display:grid;grid-template-columns:1.6fr .8fr .8fr .8fr 1.4fr;gap:12px;padding:12px 16px;align-items:center;border-top:1px solid var(--line)}
+.ses{display:grid;grid-template-columns:1.2fr .8fr .8fr 1fr 1fr auto;gap:12px;padding:8px 16px;align-items:center;border-top:1px solid var(--line)}
+.mono{font-family:'IBM Plex Mono',monospace;font-weight:500;direction:ltr;text-align:right}
+.bn{display:flex;gap:10px;align-items:center;padding:12px 16px;border-radius:4px}
+.bn.ok{background:var(--pri-t);color:var(--ok)}.bn.wa{background:var(--warn-t);color:var(--warn)}.bn.er{background:var(--err-t);color:var(--err)}
+.vc{background:#fff;color:#13201D;border:1.5px dashed #13201D;padding:8px 10px;display:flex;flex-direction:column;gap:2px;font-size:13px;line-height:20px}
+.vc.p{background:#E8EBE5;border-color:#55625D;color:#55625D}
+.code{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:20px;line-height:28px;text-align:center}
+.ov{position:fixed;inset:0;z-index:20;background:rgba(19,32,29,.5);display:flex;align-items:center;justify-content:center;padding:16px;animation:nq-fade .14s}
+.dlg{background:#fff;border-radius:4px;padding:24px;width:min(460px,100%);box-sizing:border-box;display:flex;flex-direction:column;gap:14px;animation:nq-up .16s ease-out}
+.toast{position:fixed;bottom:24px;inset-inline-end:24px;z-index:30;background:var(--ink);color:#F4F5F0;padding:12px 16px;border-radius:4px;max-width:min(420px,calc(100% - 48px));animation:nq-up .16s ease-out}
+.tick{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border-radius:4px;font-size:14px;line-height:22px;background:#fff;border:1px solid var(--line);color:var(--ink)}
+.tick.done{background:var(--pri-t);border-color:var(--pri);color:var(--ok);font-weight:600}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;border-radius:50%;border:1px solid var(--ctl);font-weight:600}
+.dot.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.dot.done{background:var(--pri-t);border-color:var(--pri);color:var(--ok)}
+[role=columnheader]{position:relative}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.skip{position:absolute;top:8px;inset-inline-start:8px;z-index:40;transform:translateY(-300%)}.skip:focus{transform:none}
+.lnk{all:unset;display:inline-flex;align-items:center;min-height:24px;color:var(--pri);font-weight:600;cursor:pointer;text-decoration:underline}.lnk:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+[tabindex="0"]:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+input::placeholder{color:var(--muted);opacity:1}
+h1:focus{outline:none}
+@media (max-width:800px),(pointer:coarse){.btn.sm{min-height:44px!important}.lnk{min-height:44px}}
+@media (max-width:800px){
+.sidenav{flex:1 1 100%!important;padding:12px 16px!important;gap:12px!important}
+.navlist{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px!important}
+.ni{justify-content:center;gap:6px;padding:0 4px;font-size:14px}
+.topbn{padding:12px 16px!important}.topbn .box{min-width:0!important;flex:1 1 100%}
+.mainpad{padding:20px 16px!important}
+}
+@media (max-width:600px){.navlist{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+</helmet>
+<div dir="rtl" onClick="{{countClick}}" style="min-height: 100vh; background: #F4F5F0; color: #13201D; font-family: 'IBM Plex Sans Arabic', Tahoma, sans-serif; font-size: 16px; line-height: 26px; display: flex; flex-direction: column">
+
+<sc-if value="{{testMode}}" hint-placeholder-val="{{ false }}">
+<section aria-label="وضع الاختبار" onClick="{{stopClick}}" style="background: #E8EBE5; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #D9DDD5">
+<sc-if value="{{testIdle}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><label for="tt" style="font-weight: 600">وضع الاختبار. المهمة:</label><select id="tt" class="demo-sel" value="{{testTask}}" onChange="{{setTestTask}}" style="flex: 1 1 320px"><sc-for list="{{testTasks}}" as="k" hint-placeholder-count="7"><option value="{{k.id}}">{{k.label}}</option></sc-for></select><button type="button" class="btn btn-p sm" onClick="{{startTest}}">ابدأ المهمة</button><button type="button" class="btn btn-s sm" onClick="{{copyResults}}">انسخ النتائج</button><button type="button" class="btn btn-g sm" onClick="{{exitTest}}">خروج</button></div></sc-if>
+<sc-if value="{{running}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between"><span style="flex: 1 1 320px"><strong style="font-weight: 600">المهمة:</strong> {{testText}}</span><button type="button" class="btn btn-s sm" onClick="{{toggleRouter}}">{{routerLabel}}</button></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><label for="tn2" class="lbl">ملاحظة الميسّر</label><input id="tn2" value="{{testNote}}" onChange="{{setTestNote}}" class="demo-sel" style="flex: 1 1 280px"><button type="button" class="btn btn-p sm" onClick="{{markPass}}">نجح</button><button type="button" class="btn btn-s sm" onClick="{{markHard}}">نجح بصعوبة</button><button type="button" class="btn btn-d sm" onClick="{{markFail}}">ما نجح</button></div></sc-if>
+<sc-if value="{{hasResults}}" hint-placeholder-val="{{ false }}"><div style="overflow-x: auto; font-size: 14px; line-height: 22px"><div style="min-width: 640px"><div style="display: grid; grid-template-columns: 2fr .8fr .8fr .8fr 2fr; gap: 12px; padding: 4px 0; font-weight: 600"><span>المهمة</span><span>النتيجة</span><span>الوقت</span><span>النقرات</span><span>الملاحظة</span></div><sc-for list="{{testRows}}" as="r" hint-placeholder-count="2"><div style="display: grid; grid-template-columns: 2fr .8fr .8fr .8fr 2fr; gap: 12px; border-top: 1px solid #D9DDD5; padding: 4px 0"><span>{{r.task}}</span><strong style="font-weight: 600">{{r.outcome}}</strong><span>{{r.secs}} ثانية</span><span>{{r.clicks}} نقرة</span><span>{{r.note}}</span></div></sc-for></div></div></sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{showDemo}}" hint-placeholder-val="{{ true }}"><section aria-label="تحكم العرض التجريبي" style="background: #E8EBE5; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; border-bottom: 1px solid #D9DDD5">
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+<strong style="font-size: 14px; font-weight: 600">جرّب:</strong>
+<sc-for list="{{tour}}" as="t" hint-placeholder-count="5"><span class="{{t.cls}}">{{t.label}}</span></sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+<button type="button" class="btn btn-s sm" onClick="{{toggleNet}}">{{netLabel}}</button>
+<button type="button" class="btn btn-s sm" onClick="{{toggleRouter}}">{{routerLabel}}</button>
+<button type="button" class="btn btn-s sm" onClick="{{goSetup}}">أول تشغيل</button>
+<label for="sm" style="font-size: 14px; font-weight: 600">حالة الشاشة</label><select id="sm" class="demo-sel" value="{{stateMode}}" onChange="{{setStateMode}}"><option value="normal">عادية</option><option value="loading">تحميل</option><option value="error">خطأ</option><option value="empty">فاضية</option></select>
+<button type="button" class="btn btn-s sm" onClick="{{enterTest}}">وضع الاختبار</button>
+<button type="button" class="btn btn-g sm" onClick="{{reset}}">ابدأ من جديد</button>
+</div>
+</section></sc-if>
+
+<sc-if value="{{isSetup}}" hint-placeholder-val="{{ false }}">
+<main class="scr" style="padding: 40px clamp(16px, 5vw, 72px)">
+<div style="max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px">
+<strong style="font-size: 24px; line-height: 34px; font-weight: 700">أهلا بك في نُقطة</strong>
+<ol aria-label="الخطوات" style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: 12px">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="4"><li aria-current="{{s.cur}}" style="display: flex; gap: 10px; align-items: center; font-size: 14px; line-height: 22px"><span class="{{s.cls}}">{{s.mark}}</span>{{s.name}}</li></sc-for>
+</ol>
+
+<sc-if value="{{setup1}}" hint-placeholder-val="{{ false }}">
+<section class="card scr" style="display: flex; flex-direction: column; gap: 14px; max-width: 640px" aria-labelledby="s1">
+<div><h1 id="s1" class="h1">وصّل الراوتر</h1><div class="sub">لازم يكون جهازك على نفس شبكة الراوتر. فعّل خدمة api-ssl من IP &gt; Services، واستخدم حساب بصلاحيات محدودة مش حساب المدير.</div></div>
+<div class="fld"><label class="lbl" for="ip">عنوان الراوتر</label><div class="box" dir="ltr"><input id="ip" value="{{ip}}" onChange="{{setIp}}" placeholder="192.168.88.1"></div></div>
+<div class="fld"><label class="lbl" for="un">اسم المستخدم</label><div class="box" dir="ltr"><input id="un" value="{{user}}" onChange="{{setUser}}"></div></div>
+<div class="fld"><label class="lbl" for="pw">كلمة المرور</label><div class="box" dir="ltr"><input id="pw" type="password" value="{{pass}}" onChange="{{setPass}}"></div></div>
+<sc-if value="{{connMsg}}" hint-placeholder-val="{{ false }}"><div role="status" class="{{connCls}}"><span>{{connMsg}}</span></div></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between">
+<button type="button" class="btn btn-s" onClick="{{testConn}}" disabled="{{connBusy}}"><sc-if value="{{connBusy}}" hint-placeholder-val="{{ false }}"><span class="spin" aria-hidden="true"></span></sc-if>{{connBtn}}</button>
+<sc-if value="{{connOk}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-p" onClick="{{next2}}">التالي: الفئات والأسعار</button></sc-if>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{setup2}}" hint-placeholder-val="{{ false }}">
+<section class="card scr" style="display: flex; flex-direction: column; gap: 14px; max-width: 640px" aria-labelledby="s2">
+<div><h1 id="s2" class="h1">الفئات والأسعار</h1><div class="sub">لقينا هالفئات على الراوتر. راجع السعر قبل ما تكمل.</div></div>
+<div aria-hidden="true" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 14px; line-height: 22px; color: #55625D; font-weight: 500"><span>الفئة</span><span>سعر الجملة</span><span>سعر البيع</span></div><sc-for list="{{catRows}}" as="c" hint-placeholder-count="4"><div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: center; border-top: 1px solid #D9DDD5; padding-top: 10px"><strong style="font-weight: 600">{{c.name}}</strong><div class="box" dir="ltr"><span aria-hidden="true">₪</span><input aria-label="{{c.wLabel}}" inputmode="decimal" value="{{c.whole}}" onChange="{{c.setWhole}}"></div><div class="box" dir="ltr"><span aria-hidden="true">₪</span><input aria-label="{{c.sLabel}}" inputmode="decimal" value="{{c.sale}}" onChange="{{c.setSale}}"></div></div></sc-for>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between"><button type="button" class="btn btn-g" onClick="{{back1}}">رجوع</button><button type="button" class="btn btn-p" onClick="{{next3}}">التالي: الموزعين</button></div>
+</section>
+</sc-if>
+
+<sc-if value="{{setup3}}" hint-placeholder-val="{{ false }}">
+<section class="card scr" style="display: flex; flex-direction: column; gap: 14px; max-width: 640px" aria-labelledby="s3">
+<div><h1 id="s3" class="h1">الموزعين والأرصدة</h1><div class="sub">أضف موزع، واكتب الدين القديم عليه إذا موجود.</div></div>
+<div class="fld"><label class="lbl" for="nn">اسم الموزع</label><div class="box"><input id="nn" value="{{newName}}" onChange="{{setNewName}}"></div></div>
+<div class="fld"><label class="lbl" for="no">الرصيد الافتتاحي</label><div class="box" dir="ltr"><span aria-hidden="true">₪</span><input id="no" inputmode="numeric" value="{{newOpen}}" onChange="{{setNewOpen}}" placeholder="0"></div></div>
+<sc-if value="{{addMsg}}" hint-placeholder-val="{{ false }}"><div role="status" class="bn ok">{{addMsg}}</div></sc-if>
+<sc-if value="{{addErr}}" hint-placeholder-val="{{ false }}"><span class="emsg" role="alert">{{addErr}}</span></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between"><div style="display: flex; gap: 8px"><button type="button" class="btn btn-g" onClick="{{back2}}">رجوع</button><button type="button" class="btn btn-s" onClick="{{addFromSetup}}">أضف الموزع</button></div><button type="button" class="btn btn-p" onClick="{{next4}}">التالي: كرت تجربة</button></div>
+</section>
+</sc-if>
+
+<sc-if value="{{setup4}}" hint-placeholder-val="{{ false }}">
+<section class="card scr" style="display: flex; flex-direction: column; gap: 14px; max-width: 640px" aria-labelledby="s4">
+<div><h1 id="s4" class="h1">جرّب كرت قبل الطباعة</h1><div class="sub">هيك بتتأكد إن الربط شغال قبل أول دفعة حقيقية.</div></div>
+<sc-if value="{{testNeeded}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-p" style="align-self: flex-start" onClick="{{genTest}}">ولّد كرت تجربة</button></sc-if>
+<sc-if value="{{testCode}}" hint-placeholder-val="{{ false }}">
+<div class="vc" style="font-size: 14px; max-width: 320px"><div class="code" dir="ltr" style="font-size: 28px; line-height: 38px">{{testCode}}</div></div>
+<strong style="font-weight: 600">جرّبته على موبايلك. اشتغل؟</strong>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" class="btn btn-p" onClick="{{testYes}}">اشتغل، خلصنا</button><button type="button" class="btn btn-s" onClick="{{testNo}}">ما اشتغل</button></div>
+</sc-if>
+<sc-if value="{{testDiag}}" hint-placeholder-val="{{ false }}"><div role="status" class="bn wa">تأكد إن الهوتسبوت شغال على الراوتر، وإن الفئة فيها وقت وسرعة، وجرّب مرة ثانية.</div></sc-if>
+</section>
+</sc-if>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{inApp}}" hint-placeholder-val="{{ true }}">
+<div style="flex: 1 1 auto; display: flex; flex-wrap: wrap">
+<button type="button" class="btn btn-p skip" onClick="{{skipMain}}">انتقل للمحتوى</button>
+<nav class="sidenav" aria-label="القائمة الرئيسية" style="flex: 1 1 224px; box-sizing: border-box; background: #13201D; padding: 24px 16px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px; color: #F4F5F0"><svg aria-hidden="true" width="32" height="32" viewBox="0 0 48 48"><circle cx="24" cy="10" r="6.5" fill="#F26B21"></circle><path d="M5.5 21v4a18.5 18.5 0 0 0 37 0v-4" fill="none" stroke="#F4F5F0" stroke-width="7.5" stroke-linecap="round"></path></svg><strong style="font-size: 22px; line-height: 32px">شبكة النور</strong></div>
+<div class="navlist" style="display: flex; flex-direction: column; gap: 4px">
+<button type="button" class="{{navHome.cls}}" aria-current="{{navHome.cur}}" onClick="{{navHomeGo}}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg>الرئيسية</button>
+<button type="button" class="{{navAccount.cls}}" aria-current="{{navAccount.cur}}" onClick="{{navAccountGo}}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.5a6.5 6.5 0 0 1 3.5 5.5"></path></svg>الموزعين</button>
+<button type="button" class="{{navBatch.cls}}" aria-current="{{navBatch.cur}}" onClick="{{navBatchGo}}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"></path></svg>الكروت</button>
+<button type="button" class="{{navNetwork.cls}}" aria-current="{{navNetwork.cur}}" onClick="{{navNetworkGo}}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a15 15 0 0 1 20 0M5.5 13a10 10 0 0 1 13 0M9 16.5a5 5 0 0 1 6 0"></path><circle cx="12" cy="20" r="1"></circle></svg>الشبكة</button>
+<button type="button" class="{{navReports.cls}}" aria-current="{{navReports.cur}}" onClick="{{navReportsGo}}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"></path></svg>التقارير</button>
+<button type="button" class="{{navSettings.cls}}" aria-current="{{navSettings.cur}}" onClick="{{navSettingsGo}}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></svg>الإعدادات</button>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box">
+<div class="{{bnCls}} topbn" style="flex-wrap: wrap; justify-content: space-between; padding: 12px 32px; border-radius: 0">
+<span role="status" style="display: flex; gap: 10px; align-items: center"><sc-if value="{{bnIsErr}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="M12 4l9 16H3zM12 10v4M12 17v.5"></path></svg></sc-if><sc-if value="{{bnIsWarn}}" hint-placeholder-val="{{ true }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></sc-if><sc-if value="{{bnIsOk}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="M4 12l5 5L20 6"></path></svg></sc-if><span><strong>{{bnTitle}}</strong> {{bnText}}</span></span>
+<div class="box" dir="ltr" style="min-width: 260px"><input aria-label="ابحث عن كرت" value="{{topCode}}" onChange="{{setTopCode}}" onKeyDown="{{topKey}}" placeholder="ابحث عن كرت، واضغط Enter" dir="rtl"></div>
+</div>
+<div class="mainpad" style="padding: 32px; max-width: 1200px; box-sizing: border-box">
+
+<sc-if value="{{isStateLoading}}" hint-placeholder-val="{{ false }}">
+<h1 class="sr">جاري التحميل</h1>
+<div class="scr" aria-busy="true" role="status" aria-label="جاري التحميل" style="display: flex; flex-direction: column; gap: 24px">
+<span class="sk" style="width: 220px; height: 30px"></span>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px"><div class="card"><span class="sk" style="width: 60%; margin-bottom: 14px"></span><span class="sk" style="width: 40%; height: 28px"></span></div><div class="card"><span class="sk" style="width: 60%; margin-bottom: 14px"></span><span class="sk" style="width: 40%; height: 28px"></span></div><div class="card"><span class="sk" style="width: 60%; margin-bottom: 14px"></span><span class="sk" style="width: 40%; height: 28px"></span></div></div>
+<div class="card"><span class="sk" style="width: 70%; margin-bottom: 16px"></span><span class="sk" style="width: 90%; margin-bottom: 16px"></span><span class="sk" style="width: 55%"></span></div>
+</div>
+</sc-if>
+<sc-if value="{{isStateError}}" hint-placeholder-val="{{ false }}">
+<div class="card scr" role="alert" style="border: 2px solid #8A1C14; padding: 39px 19px; text-align: center"><h1 style="margin: 0; font-size: 20px; line-height: 30px; font-weight: 600; color: #8A1C14">{{stateErrTitle}}</h1><p style="margin: 4px 0 16px">بياناتك ما انمسحت. جرّب مرة ثانية، وإذا ضلت المشكلة استرجع آخر نسخة من الإعدادات.</p><button type="button" class="btn btn-s" onClick="{{stateRetry}}">أعد المحاولة</button></div>
+</sc-if>
+<sc-if value="{{isStateEmpty}}" hint-placeholder-val="{{ false }}">
+<div class="card scr" style="padding: 48px 20px; text-align: center"><h1 style="margin: 0; font-size: 20px; line-height: 30px; font-weight: 600">{{stateEmptyTitle}}</h1><p style="margin: 4px 0 16px; color: #55625D">{{stateEmptyBody}}</p><button type="button" class="btn btn-p" onClick="{{stateEmptyAct}}">{{stateEmptyCta}}</button></div>
+</sc-if>
+
+<sc-if value="{{isSettings}}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="display: flex; flex-direction: column; gap: 20px">
+<h1 class="h1">الإعدادات</h1>
+<div class="tabs" role="tablist" aria-label="أقسام الإعدادات" onKeyDown="{{tabKey}}"><sc-for list="{{setTabs}}" as="t" hint-placeholder-count="5"><button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" tabindex="{{t.ti}}" onClick="{{t.go}}">{{t.name}}</button></sc-for></div><div role="tabpanel" aria-label="{{setPanel}}" tabindex="-1" style="display: flex; flex-direction: column; gap: 20px; min-width: 0">
+
+<sc-if value="{{setNet}}" hint-placeholder-val="{{ true }}">
+<section class="card scr" aria-label="بيانات الشبكة" style="display: flex; flex-direction: column; gap: 14px; max-width: 640px">
+<div class="fld"><label class="lbl" for="sn">اسم الشبكة على الكرت</label><div class="box"><input id="sn" value="{{netName}}" onChange="{{setNetName}}"></div></div>
+<div class="fld"><label class="lbl" for="sp">رقم الدعم على الكرت</label><div class="box" dir="ltr"><input id="sp" value="{{netPhone}}" onChange="{{setNetPhone}}" placeholder="059"></div></div>
+<div class="fld"><label class="lbl" for="sc">العملة</label><div class="box"><select id="sc"><option>شيكل ₪</option><option>دولار $</option><option>دينار د.أ</option></select></div></div>
+<button type="button" class="btn btn-p" style="align-self: flex-start" onClick="{{saveNet}}">احفظ</button>
+</section>
+</sc-if>
+
+<sc-if value="{{setUsers}}" hint-placeholder-val="{{ false }}">
+<section class="scr" aria-label="المستخدمون" style="background: #FFFFFF; border: 1px solid #D9DDD5; border-radius: 4px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px"><div><h2 class="h2">المستخدمون والصلاحيات</h2><span class="sub" style="font-size: 14px">الفني بيدير الراوتر والكروت، وما بيشوف الحسابات.</span></div><button type="button" class="btn btn-s sm" onClick="{{openAddUser}}">أضف مستخدم</button></div>
+<sc-for list="{{users}}" as="u" hint-placeholder-count="2"><div class="rowx" style="grid-template-columns: 1.4fr 1fr auto"><strong style="font-weight: 600">{{u.name}}</strong><span>{{u.role}}</span><span class="sub">{{u.note}}</span></div></sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{setBackup}}" hint-placeholder-val="{{ false }}">
+<section class="scr" aria-label="النسخ والاستعادة" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; align-items: start">
+<div class="card" style="display: flex; flex-direction: column; gap: 12px"><h2 class="h2">نسخة على هذا الجهاز</h2><div>آخر نسخة: <strong style="font-weight: 600">{{lastBackup}}</strong></div><button type="button" class="btn btn-p" style="align-self: flex-start" onClick="{{backupNow}}" disabled="{{backupBusy}}"><sc-if value="{{backupBusy}}" hint-placeholder-val="{{ false }}"><span class="spin" aria-hidden="true"></span></sc-if>{{backupLabel}}</button></div>
+<div class="card" style="display: flex; flex-direction: column; gap: 12px"><h2 class="h2">استرجاع نسخة</h2><p style="margin: 0">الاسترجاع بيرجع كل الحسابات لتاريخ النسخة. الحركات الأحدث منها بتروح.</p><button type="button" class="btn btn-d" style="align-self: flex-start" onClick="{{openRestore}}">استرجع نسخة</button></div>
+</section>
+</sc-if>
+
+<sc-if value="{{setImport}}" hint-placeholder-val="{{ false }}">
+<section class="card scr" aria-label="الاستيراد" style="display: flex; flex-direction: column; gap: 14px; max-width: 640px">
+<div><h2 class="h2">استيراد من برنامج ثاني</h2><span class="sub">صدّر الكروت من برنامجك الحالي كملف CSV، ورح نربطها بالموزعين.</span></div>
+<button type="button" class="btn btn-s" style="align-self: flex-start" onClick="{{pickImport}}">اختر ملف CSV</button>
+<sc-if value="{{importReady}}" hint-placeholder-val="{{ false }}"><div class="bn ok" role="status"><span><strong>لقينا 240 كرت في kroot.csv.</strong> 12 منهم مكررين ورح نتجاوزهم.</span></div><button type="button" class="btn btn-p" style="align-self: flex-start" onClick="{{runImport}}">استورد 228 كرت</button></sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{setLicense}}" hint-placeholder-val="{{ false }}">
+<section class="card scr" aria-label="الترخيص" style="display: flex; flex-direction: column; gap: 14px; max-width: 640px">
+<div class="{{licCls}}" role="status"><span><strong>{{licTitle}}</strong> {{licText}}</span></div>
+<div class="fld"><label class="lbl" for="lk">مفتاح الترخيص</label><div class="box" dir="ltr"><input id="lk" value="{{licKey}}" onChange="{{setLicKey}}" placeholder="XXXX-XXXX-XXXX" style="font-family: 'IBM Plex Mono', monospace"></div></div>
+<div style="font-size: 14px; line-height: 22px; color: #55625D">بدون نت؟ ابعت كود الجهاز <span dir="ltr" style="font-family: 'IBM Plex Mono', monospace">NQ-7H2K-94TD</span> للدعم، وبيوصلك مفتاح تفعيل.</div>
+<button type="button" class="btn btn-p" style="align-self: flex-start" onClick="{{activate}}">فعّل</button>
+</section>
+</sc-if>
+</div></div>
+</sc-if>
+
+<sc-if value="{{isHome}}" hint-placeholder-val="{{ true }}">
+<div class="scr" style="display: flex; flex-direction: column; gap: 24px">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px"><div><h1 class="h1">شغل اليوم</h1><div class="sub">الخميس، 5 نوفمبر</div></div><button type="button" class="btn btn-p" onClick="{{goBatch}}">توليد كروت</button></header>
+<section aria-label="أرقام اليوم" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px">
+<div class="card"><div class="sub">كروت انستخدمت اليوم</div><div class="big"><span class="m">{{usedToday}}</span></div></div>
+<div class="card"><div class="sub">محصّل اليوم</div><div class="big"><span class="m">{{collected}}</span></div></div>
+<div class="card top"><div class="sub">مستحق على الموزعين</div><div class="big"><span class="m">{{totalOwed}}</span></div></div>
+</section>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<section aria-label="المهام" style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{tasks}}" as="k" hint-placeholder-count="3"><div class="{{k.cls}}" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px"><div><strong style="display: block; font-weight: 600">{{k.title}}</strong><span class="sub">{{k.detail}}</span></div><button type="button" class="{{k.btn}}" onClick="{{k.act}}">{{k.label}}</button></div></sc-for>
+<sc-if value="{{noTasks}}" hint-placeholder-val="{{ false }}"><div class="card scr" style="text-align: center; padding: 40px 16px"><strong style="display: block; font-size: 20px; line-height: 30px; font-weight: 600">{{noTasksTitle}}</strong><span class="sub">{{noTasksBody}}</span></div></sc-if>
+</section>
+<aside class="card" aria-labelledby="sold" style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+<h2 id="sold" class="h2">الاستخدام اليوم حسب الموزع</h2>
+<sc-if value="{{noSellers}}" hint-placeholder-val="{{ false }}"><span class="sub">لسا ما انستخدم أي كرت اليوم.</span></sc-if>
+<sc-for list="{{sellers}}" as="s" hint-placeholder-count="5"><div><div style="display: flex; justify-content: space-between; gap: 8px"><span>{{s.name}}</span><strong class="m" style="font-weight: 600">{{s.value}}</strong></div><div class="bar" aria-hidden="true" style="height: 6px; margin-top: 4px"><span style="width: {{s.w}}"></span></div></div></sc-for>
+</aside>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{noDist}}" hint-placeholder-val="{{ false }}">
+<div class="card scr" style="padding: 48px 20px; text-align: center"><strong style="display: block; font-size: 20px; line-height: 30px; font-weight: 600">لسا ما أضفت موزعين</strong><p style="margin: 4px 0 16px; color: #55625D">أضف أول موزع عشان تتابع كروته وحسابه.</p><button type="button" class="btn btn-p" onClick="{{openAdd}}">أضف موزع</button></div>
+</sc-if>
+<sc-if value="{{isAccount}}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<section aria-label="قائمة الموزعين" style="flex: 1 1 260px; min-width: 0; background: #FFFFFF; border: 1px solid #D9DDD5; border-radius: 4px; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px"><strong style="font-weight: 600">الموزعين</strong><button type="button" class="btn btn-s sm" onClick="{{openAdd}}">أضف موزع</button></div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="4"><button type="button" class="{{r.cls}}" onClick="{{r.open}}" aria-pressed="{{r.pressed}}"><span>{{r.name}}</span><span class="m">{{r.balance}}</span></button></sc-for>
+</section>
+<section aria-labelledby="acc" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px"><div><h1 id="acc" class="h1">{{cur.name}}</h1><div class="sub" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px"><span>{{cur.sub}}</span><button type="button" class="btn btn-g sm" style="padding: 0 6px; min-height: 32px; color: #0A5C56" onClick="{{openLimit}}">سقف الدين {{cur.limitText}}</button></div></div><div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" class="btn btn-s" onClick="{{openReturn}}">إرجاع كروت</button><button type="button" class="btn btn-s" onClick="{{openDispute}}">{{disputeLabel}}</button></div></header>
+<sc-if value="{{cur.inDispute}}" hint-placeholder-val="{{ false }}"><div role="status" class="bn wa"><span>في خلاف مفتوح مع هذا الموزع. الرصيد ما تغير، والخلاف مسجل بالكشف.</span></div></sc-if>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 12px">
+<div class="card" style="padding: 16px"><div class="sub" style="font-size: 14px; line-height: 22px">كروت عنده</div><div style="font-size: 24px; line-height: 34px; font-weight: 700">{{cur.held}}</div></div>
+<div class="card" style="padding: 16px"><div class="sub" style="font-size: 14px; line-height: 22px">قيمة المستخدم</div><div style="font-size: 24px; line-height: 34px; font-weight: 700"><span class="m">{{cur.charged}}</span></div></div>
+<div class="card" style="padding: 16px"><div class="sub" style="font-size: 14px; line-height: 22px">محصّل</div><div style="font-size: 24px; line-height: 34px; font-weight: 700"><span class="m">{{cur.paid}}</span></div></div>
+<div class="card top" style="padding: 15px"><div class="sub" style="font-size: 14px; line-height: 22px">{{cur.balLabel}}</div><div style="font-size: 24px; line-height: 34px; font-weight: 700"><span class="m">{{cur.balance}}</span></div></div>
+</div>
+<div class="card" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start">
+<div class="fld" style="flex: 1 1 240px"><label class="lbl" for="amt">استلمت منه</label><div class="{{amtCls}}" dir="ltr"><span aria-hidden="true">₪</span><input id="amt" inputmode="decimal" value="{{amount}}" onChange="{{setAmount}}" onKeyDown="{{amountKey}}" placeholder="0" aria-invalid="{{amtInvalid}}" aria-describedby="amtE"></div><sc-if value="{{amtErr}}" hint-placeholder-val="{{ false }}"><span id="amtE" class="emsg" role="alert">{{amtErr}}</span></sc-if></div>
+<button type="button" class="btn btn-p" style="margin-top: 26px" onClick="{{settle}}" disabled="{{settleBusy}}"><sc-if value="{{settleBusy}}" hint-placeholder-val="{{ false }}"><span class="spin" aria-hidden="true"></span></sc-if>{{settleLabel}}</button>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #D9DDD5; border-radius: 4px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px"><h2 class="h2">كشف الحساب</h2><div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" class="btn btn-s sm" onClick="{{openCorrect}}">صحّح آخر تسوية</button><button type="button" class="btn btn-s sm" onClick="{{printStatement}}">اطبع الكشف</button></div></div>
+<div role="group" aria-label="كشف الحساب، قابل للتمرير" tabindex="0" style="overflow-x: auto"><div role="table" aria-label="كشف الحساب" style="min-width: 680px">
+<div role="row" class="ev head"><span role="columnheader">التاريخ</span><span role="columnheader">الحركة</span><span role="columnheader" class="n">كروت</span><span role="columnheader" class="n">عليه</span><span role="columnheader" class="n">دفع</span><span role="columnheader" class="n">الرصيد</span></div>
+<sc-for list="{{entries}}" as="e" hint-placeholder-count="4">
+<div role="row" class="{{e.cls}}"><span role="cell">{{e.date}}</span><span role="cell">{{e.action}}<sc-if value="{{e.isUsage}}" hint-placeholder-val="{{ false }}"><br><button type="button" class="btn btn-g sm" style="padding: 0 4px; color: #0A5C56; min-height: 32px" onClick="{{e.toggle}}" aria-expanded="{{e.expanded}}">{{e.toggleLabel}}</button></sc-if></span><span role="cell" class="n">{{e.cards}}</span><span role="cell" class="n">{{e.charge}}</span><span role="cell" class="n">{{e.paid}}</span><strong role="cell" class="n" style="font-weight: 600">{{e.balance}}</strong></div>
+<sc-if value="{{e.open}}" hint-placeholder-val="{{ false }}"><div role="row" class="scr" style="background: #F4F5F0; padding: 8px 16px; font-size: 14px; line-height: 22px; display: flex; flex-direction: column; gap: 4px"><div role="cell" style="display: contents">
+<sc-for list="{{e.proof}}" as="p" hint-placeholder-count="2"><div><span dir="ltr" style="font-family: 'IBM Plex Mono', monospace">{{p.code}}</span> · {{p.time}} · جهاز ينتهي بـ<span dir="ltr">{{p.mac}}</span></div></sc-for>
+<div class="sub">و{{e.more}} كرت ثاني بنفس القائمة</div>
+</div></div></sc-if>
+</sc-for>
+</div></div>
+</div>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{isBatch}}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="display: flex; flex-direction: column; gap: 24px">
+<h1 class="h1">الكروت</h1>
+<div class="tabs" role="tablist" aria-label="أقسام الكروت" onKeyDown="{{tabKey}}"><sc-for list="{{cardTabs}}" as="t" hint-placeholder-count="4"><button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" tabindex="{{t.ti}}" onClick="{{t.go}}">{{t.name}}</button></sc-for></div><div role="tabpanel" aria-label="{{cardPanel}}" tabindex="-1" style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+
+<sc-if value="{{tabBatches}}" hint-placeholder-val="{{ false }}">
+<section class="scr" aria-label="الدفعات" style="background: #FFFFFF; border: 1px solid #D9DDD5; border-radius: 4px; overflow-x: auto"><div role="table" aria-label="الدفعات" style="min-width: 760px">
+<div role="row" class="rowx" style="grid-template-columns: .8fr 1fr 1.6fr 1fr .9fr auto; background: #F4F5F0; font-size: 14px; line-height: 22px; font-weight: 600; border-top: 0"><span role="columnheader">الدفعة</span><span role="columnheader">الفئة</span><span role="columnheader">الموزع</span><span role="columnheader">مستخدم</span><span role="columnheader">انطبعت</span><span role="columnheader" style="width: 110px"><span class="sr">إجراء</span></span></div>
+<sc-for list="{{batches}}" as="b" hint-placeholder-count="3"><div role="row" class="rowx" style="grid-template-columns: .8fr 1fr 1.6fr 1fr .9fr auto"><span role="cell" dir="ltr" style="text-align: right; font-family: 'IBM Plex Mono', monospace">{{b.no}}</span><span role="cell">{{b.cat}}</span><span role="cell">{{b.dist}}</span><span role="cell">{{b.used}}</span><span role="cell">{{b.times}}</span><span role="cell" style="display: contents"><button type="button" class="btn btn-s sm" style="width: 110px" onClick="{{b.reprint}}">اطبع ثاني</button></span></div></sc-for>
+<sc-if value="{{noBatches}}" hint-placeholder-val="{{ false }}"><div style="padding: 32px 16px; text-align: center; color: #55625D">لسا ما ولّدت أي دفعة.</div></sc-if>
+</div></section>
+</sc-if>
+
+<sc-if value="{{tabPrices}}" hint-placeholder-val="{{ false }}">
+<section class="scr" aria-label="الفئات والأسعار" style="background: #FFFFFF; border: 1px solid #D9DDD5; border-radius: 4px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px"><span class="sub">كل فئة مربوطة بملف Hotspot على الراوتر. سعر الجملة هو اللي بيتحسب على الموزع.</span><button type="button" class="btn btn-s sm" onClick="{{openAddCat}}">أضف فئة</button></div>
+<div style="overflow-x: auto"><div role="table" aria-label="الفئات والأسعار" style="min-width: 640px">
+<div role="row" class="rowx" style="grid-template-columns: 1.2fr 1fr 1fr 1fr; background: #F4F5F0; font-size: 14px; line-height: 22px; font-weight: 600; border-top: 0"><span role="columnheader">الفئة</span><span role="columnheader">سعر الجملة</span><span role="columnheader">سعر البيع</span><span role="columnheader">ربح الموزع</span></div>
+<sc-for list="{{catRows}}" as="c" hint-placeholder-count="4"><div role="row" class="rowx" style="grid-template-columns: 1.2fr 1fr 1fr 1fr"><strong role="cell" style="font-weight: 600">{{c.name}}</strong><span role="cell" style="display: contents"><div class="box" dir="ltr"><span aria-hidden="true">₪</span><input aria-label="{{c.wLabel}}" inputmode="numeric" value="{{c.whole}}" onChange="{{c.setWhole}}"></div></span><span role="cell" style="display: contents"><div class="box" dir="ltr"><span aria-hidden="true">₪</span><input aria-label="{{c.sLabel}}" inputmode="numeric" value="{{c.sale}}" onChange="{{c.setSale}}"></div></span><span role="cell" class="{{c.marginCls}}">{{c.margin}}</span></div></sc-for>
+</div></div>
+</section>
+</sc-if>
+
+<sc-if value="{{tabTemplates}}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<section class="card" aria-label="إعدادات القالب" style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="fld"><span class="lbl" id="tl">شكل الطباعة</span><div role="group" aria-labelledby="tl" style="display: flex; flex-direction: column; gap: 8px"><sc-for list="{{tplList}}" as="t" hint-placeholder-count="3"><button type="button" class="{{t.cls}}" aria-pressed="{{t.sel}}" onClick="{{t.pick}}" style="min-height: 56px"><strong style="display: block; font-weight: 600">{{t.name}}</strong><span style="font-size: 14px">{{t.note}}</span></button></sc-for></div></div>
+<div class="fld"><label class="lbl" for="tn">اسم الشبكة</label><div class="box"><input id="tn" value="{{netName}}" onChange="{{setNetName}}"></div></div>
+<label style="display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer"><input type="checkbox" checked="{{tplPrice}}" onChange="{{toggleTplPrice}}" style="width: 20px; height: 20px; accent-color: #0A5C56">اطبع السعر على الكرت</label>
+<button type="button" class="btn btn-p" style="align-self: flex-start" onClick="{{saveTpl}}">احفظ القالب</button>
+</section>
+<section class="card" aria-label="معاينة القالب" style="flex: 999 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+<h2 class="h2">معاينة</h2>
+<div style="max-width: 320px"><div class="vc" style="font-size: 14px; line-height: 22px; padding: 12px 14px"><div style="display: flex; justify-content: space-between; font-weight: 600"><span>{{netName}}</span><span>3 ساعات</span></div><div class="code" dir="ltr" style="font-size: 26px; line-height: 36px">A7HK-58RX</div><div style="display: flex; justify-content: space-between; gap: 12px"><span>افتح الواي فاي وادخل الكود</span><sc-if value="{{tplPrice}}" hint-placeholder-val="{{ true }}"><strong class="m" style="font-weight: 600">{{tplSale}}</strong></sc-if></div><sc-if value="{{netPhone}}" hint-placeholder-val="{{ false }}"><div dir="ltr" style="text-align: right; font-size: 13px">{{netPhone}}</div></sc-if></div></div>
+<span class="sub" style="font-size: 14px">الأكواد ما بتستخدم 0 و O و 1 و I و L.</span>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{tabGen}}" hint-placeholder-val="{{ true }}">
+<div class="scr" style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<section aria-label="إعدادات الدفعة" class="card" style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="fld"><label class="lbl" for="br">الراوتر</label><div class="box"><select id="br" value="{{bRouter}}" onChange="{{setBRouter}}" disabled="{{bLocked}}"><option value="main">الراوتر الرئيسي</option><option value="sub">الراوتر الفرعي</option></select></div></div>
+<div class="fld"><span class="lbl" id="cl">الفئة</span><div role="group" aria-labelledby="cl" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><sc-for list="{{catChips}}" as="c" hint-placeholder-count="4"><button type="button" class="{{c.cls}}" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}" disabled="{{bLocked}}"><strong style="display: block; font-weight: 600">{{c.name}}</strong><span style="font-size: 14px">جملة <span class="m">{{c.whole}}</span>، بيع <span class="m">{{c.sale}}</span></span></button></sc-for></div></div>
+<div class="fld"><label class="lbl" for="bn">العدد</label><div class="{{bCountCls}}"><input id="bn" inputmode="numeric" value="{{bCount}}" onChange="{{setBCount}}" disabled="{{bLocked}}" aria-invalid="{{bInvalid}}" aria-describedby="bnE"></div><sc-if value="{{bErr}}" hint-placeholder-val="{{ false }}"><span id="bnE" class="emsg" role="alert">{{bErr}}</span></sc-if></div>
+<div class="fld"><label class="lbl" for="bd">الموزع</label><div class="box"><select id="bd" value="{{bDist}}" onChange="{{setBDist}}" disabled="{{bLocked}}"><sc-for list="{{rows}}" as="r" hint-placeholder-count="4"><option value="{{r.id}}">{{r.name}}</option></sc-for><option value="direct">بيع مباشر</option></select></div><sc-if value="{{bLimitWarn}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 22px; color: #6B3D00; font-weight: 500">{{bLimitWarn}}</span></sc-if></div>
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border-top: 1px solid #D9DDD5; padding-top: 12px"><span>قيمة الدفعة بالجملة</span><strong class="m" style="font-size: 24px; line-height: 34px; font-weight: 700">{{bValue}}</strong></div>
+<sc-if value="{{bIdle}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-p" onClick="{{send}}">ولّد وأرسل للراوتر</button></sc-if>
+<sc-if value="{{bCanNew}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-s" onClick="{{newBatch}}">دفعة جديدة</button></sc-if>
+</section>
+<section aria-label="التأكيد والطباعة" style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<sc-if value="{{bSending}}" hint-placeholder-val="{{ false }}"><div class="card scr" role="status"><strong style="font-weight: 600">جاري الإرسال للراوتر</strong><div class="bar" style="margin-top: 10px"><span style="width: {{bProgW}}"></span></div></div></sc-if>
+<sc-if value="{{bSent}}" hint-placeholder-val="{{ false }}">
+<div role="status" class="{{bStatusCls}}" style="flex-wrap: wrap; justify-content: space-between; padding: 16px 20px"><div><strong style="display: block; font-size: 18px; font-weight: 600">{{bStatusTitle}}</strong>{{bStatusText}}</div><sc-if value="{{hasPending}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-s" onClick="{{resend}}" disabled="{{resendBusy}}"><sc-if value="{{resendBusy}}" hint-placeholder-val="{{ false }}"><span class="spin" aria-hidden="true"></span></sc-if>{{resendLabel}}</button></sc-if></div>
+</sc-if>
+<sc-if value="{{bDone}}" hint-placeholder-val="{{ false }}"><div role="status" class="bn ok scr"><span><strong>{{doneTitle}}</strong> {{doneText}}</span></div></sc-if>
+<div class="card" style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px"><div><h2 class="h2">معاينة الطباعة</h2><span class="sub" style="font-size: 14px">A4، 12 كرت في الصفحة</span></div><sc-if value="{{bSent}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-p" onClick="{{doPrint}}" disabled="{{printDisabled}}"><sc-if value="{{printBusy}}" hint-placeholder-val="{{ false }}"><span class="spin" aria-hidden="true"></span></sc-if>{{printLabel}}</button></sc-if></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: 8px"><sc-for list="{{preview}}" as="v" hint-placeholder-count="6"><div class="{{v.cls}}"><div style="display: flex; justify-content: space-between; font-weight: 600"><span>{{netName}}</span><span>{{v.cat}}</span></div><div class="code" dir="ltr">{{v.code}}</div><span style="font-weight: 600">{{v.foot}}</span></div></sc-for></div>
+</div>
+</section>
+</div>
+</sc-if>
+</div></div>
+</sc-if>
+
+<sc-if value="{{isCard}}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="display: flex; flex-direction: column; gap: 24px">
+<h1 class="h1">فحص كرت</h1>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; max-width: 560px"><div class="fld" style="flex: 1 1 260px"><label class="lbl" for="code">كود الكرت</label><div class="box" dir="ltr"><input id="code" value="{{code}}" onChange="{{setCode}}" placeholder="7K4F-92QM" style="font-family: 'IBM Plex Mono', monospace"></div><span class="sub" style="font-size: 14px; line-height: 22px">جرّب: 7K4F-92QM أو H8NC-47VR أو V5MQ-83ZF</span></div><button type="button" class="btn btn-p" style="margin-top: 26px" onClick="{{checkCard}}" disabled="{{cardBusy}}"><sc-if value="{{cardBusy}}" hint-placeholder-val="{{ false }}"><span class="spin" aria-hidden="true"></span></sc-if>{{cardBtn}}</button></div>
+<sc-if value="{{cardMissing}}" hint-placeholder-val="{{ false }}"><div class="bn er scr" role="alert"><span><strong>الكود مش موجود.</strong> تأكد من الكتابة، أو اسأل الموزع عن رقم الدفعة.</span></div></sc-if>
+<sc-if value="{{hasCard}}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<section aria-label="نتيجة الفحص" style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div class="card top"><strong style="display: block; font-size: 24px; line-height: 34px; font-weight: 700">{{card.status}}</strong><p style="margin: 4px 0 0">{{card.next}}</p><sc-if value="{{cardCanKick}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-d" style="margin-top: 12px" onClick="{{kickCard}}">افصل الجلسة</button></sc-if></div>
+<div class="card" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: 16px"><div><span class="sub" style="display: block; font-size: 14px">الفئة</span><strong style="font-weight: 600">{{card.cat}}</strong></div><div><span class="sub" style="display: block; font-size: 14px">الدفعة</span><strong style="font-weight: 600">{{card.batch}}</strong></div><div><span class="sub" style="display: block; font-size: 14px">الموزع</span><strong style="font-weight: 600">{{card.dist}}</strong></div><div><span class="sub" style="display: block; font-size: 14px">الوقت الباقي</span><strong style="font-weight: 600">{{card.left}}</strong></div></div>
+</section>
+<aside class="card" aria-labelledby="hist" style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 10px"><h2 id="hist" class="h2">سجل الكرت</h2><sc-for list="{{card.log}}" as="l" hint-placeholder-count="3"><div style="display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #D9DDD5; padding-top: 10px"><span>{{l.a}}</span><span class="sub">{{l.b}}</span></div></sc-for></aside>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isNetwork}}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="display: flex; flex-direction: column; gap: 24px">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px"><h1 class="h1">الشبكة</h1><button type="button" class="btn btn-s" onClick="{{openRouter}}">اربط راوتر</button></header>
+<section aria-label="الأجهزة" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px">
+<sc-for list="{{devices}}" as="d" hint-placeholder-count="3"><div class="card" style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between; gap: 8px"><strong style="font-size: 18px; font-weight: 600">{{d.name}}</strong><span class="mono">{{d.meta}}</span></div><div class="{{d.cls}}" style="padding: 8px 12px; font-size: 14px; line-height: 22px; font-weight: 500">{{d.text}}</div></div></sc-for>
+</section>
+<section aria-labelledby="on" style="background: #FFFFFF; border: 1px solid #D9DDD5; border-radius: 4px">
+<div style="padding: 12px 16px"><h2 id="on" class="h2">{{onlineTitle}}</h2></div>
+<sc-if value="{{routerUp}}" hint-placeholder-val="{{ true }}"><div style="overflow-x: auto"><div role="table" aria-label="المتصلين الآن" style="min-width: 760px">
+<div role="row" class="ses" style="background: #F4F5F0; font-size: 14px; line-height: 22px; font-weight: 600; border-top: 0"><span role="columnheader">الكرت</span><span role="columnheader">الفئة</span><span role="columnheader">الراوتر</span><span role="columnheader">IP</span><span role="columnheader">الوقت الباقي</span><span role="columnheader" style="width: 76px"><span class="sr">إجراء</span></span></div>
+<sc-for list="{{sessions}}" as="s" hint-placeholder-count="5"><div role="row" class="ses"><span role="cell" class="mono">{{s.code}}</span><span role="cell">{{s.cat}}</span><span role="cell">{{s.router}}</span><span role="cell" class="mono">{{s.ip}}</span><span role="cell">{{s.left}}</span><span role="cell" style="display: contents"><button type="button" class="btn btn-d sm" style="width: 76px" onClick="{{s.kick}}" aria-label="{{s.aria}}">افصل</button></span></div></sc-for>
+</div></div></sc-if>
+<sc-if value="{{routerDown}}" hint-placeholder-val="{{ false }}"><div style="text-align: center; padding: 40px 16px; border-top: 1px solid #D9DDD5"><strong style="display: block; font-weight: 600">ما قدرنا نجيب المتصلين</strong><span class="sub">الراوتر مش راد. بياناتك محفوظة، ورح تتحدث لما يرجع.</span></div></sc-if>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{isReports}}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="display: flex; flex-direction: column; gap: 24px">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px"><div><h1 class="h1">التقارير</h1><div class="sub">آخر 30 يوم، بسعر الجملة</div></div><div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" class="btn btn-s" onClick="{{exportX}}">تصدير Excel</button><button type="button" class="btn btn-s" onClick="{{exportP}}">تصدير PDF</button></div></header>
+<div class="tabs" role="tablist" aria-label="التقارير" onKeyDown="{{tabKey}}"><sc-for list="{{repTabs}}" as="t" hint-placeholder-count="3"><button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" tabindex="{{t.ti}}" onClick="{{t.go}}">{{t.name}}</button></sc-for></div><div role="tabpanel" aria-label="{{repPanel}}" tabindex="-1" style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<sc-if value="{{repCommission}}" hint-placeholder-val="{{ false }}"><section class="scr" tabindex="0" aria-label="عمولة الموزعين" style="background: #FFFFFF; border: 1px solid #D9DDD5; border-radius: 4px; overflow-x: auto"><div role="table" aria-label="عمولة الموزعين" style="min-width: 560px"><div role="row" class="rowx" style="grid-template-columns: 1.6fr 1fr 1fr; background: #F4F5F0; font-size: 14px; line-height: 22px; font-weight: 600; border-top: 0"><span role="columnheader">الموزع</span><span role="columnheader">كروت مستخدمة</span><span role="columnheader">العمولة التقديرية</span></div><sc-for list="{{commRows}}" as="r" hint-placeholder-count="4"><div role="row" class="rowx" style="grid-template-columns: 1.6fr 1fr 1fr"><span role="cell">{{r.name}}</span><span role="cell">{{r.cards}}</span><strong role="cell" class="m" style="font-weight: 600; justify-self: start">{{r.value}}</strong></div></sc-for></div></section><p style="margin: 0; font-size: 14px; color: #55625D">العمولة هون فرق سعر البيع عن الجملة على فرض فئة 3 ساعات، وبتتحدد بدقة لما نربطها بكل دفعة.</p></sc-if>
+<sc-if value="{{repStale}}" hint-placeholder-val="{{ false }}"><section class="scr" tabindex="0" aria-label="كروت راكدة" style="background: #FFFFFF; border: 1px solid #D9DDD5; border-radius: 4px; overflow-x: auto"><div role="table" aria-label="كروت راكدة" style="min-width: 560px"><div role="row" class="rowx" style="grid-template-columns: 1.6fr 1fr 1fr 1fr; background: #F4F5F0; font-size: 14px; line-height: 22px; font-weight: 600; border-top: 0"><span role="columnheader">الموزع</span><span role="columnheader">كروت عنده</span><span role="columnheader">مرتجعة</span><span role="columnheader">آخر تسليم</span></div><sc-for list="{{staleRows}}" as="r" hint-placeholder-count="4"><div role="row" class="rowx" style="grid-template-columns: 1.6fr 1fr 1fr 1fr"><span role="cell">{{r.name}}</span><span role="cell">{{r.held}}</span><span role="cell">{{r.back}}</span><span role="cell">{{r.last}}</span></div></sc-for></div></section></sc-if>
+<sc-if value="{{repCollected}}" hint-placeholder-val="{{ true }}"><div class="scr" style="display: flex; flex-direction: column; gap: 24px">
+<section aria-label="الملخص" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px"><div class="card"><div class="sub">قيمة الكروت المستخدمة</div><div class="big"><span class="m">{{repUsed}}</span></div></div><div class="card"><div class="sub">وصلك منها</div><div class="big"><span class="m">{{repPaid}}</span></div></div><div class="card top"><div class="sub">لسا ما وصلك</div><div class="big"><span class="m">{{totalOwed}}</span></div></div></section>
+<section aria-label="حسب الموزع" style="background: #FFFFFF; border: 1px solid #D9DDD5; border-radius: 4px; overflow-x: auto"><div role="table" aria-label="حسب الموزع" style="min-width: 760px">
+<div role="row" class="rep" style="background: #F4F5F0; font-size: 14px; line-height: 22px; font-weight: 600; border-top: 0"><span role="columnheader">الموزع</span><span role="columnheader" class="n">المستخدم</span><span role="columnheader" class="n">المحصّل</span><span role="columnheader" class="n">الفرق</span><span role="columnheader">نسبة التحصيل</span></div>
+<sc-for list="{{repRows}}" as="r" hint-placeholder-count="4"><div role="row" class="rep"><span role="cell" style="display: contents"><button type="button" class="lnk" onClick="{{r.open}}">{{r.name}}</button></span><span role="cell" class="n">{{r.used}}</span><span role="cell" class="n">{{r.paid}}</span><strong role="cell" class="n" style="font-weight: 600">{{r.gap}}</strong><span role="cell" style="display: contents"><div style="display: flex; align-items: center; gap: 10px"><span style="width: 44px">{{r.pct}}</span><div class="bar" aria-hidden="true" style="flex: 1"><span style="width: {{r.pct}}"></span></div></div></span></div></sc-for>
+</div></section>
+</div></sc-if>
+</div></div>
+</sc-if>
+
+</div>
+</main>
+</div>
+</sc-if>
+
+<sc-if value="{{dlg}}" hint-placeholder-val="{{ false }}">
+<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgt" onKeyDown="{{dlgKey}}">
+<strong id="dlgt" style="font-size: 20px; line-height: 30px; font-weight: 600">{{dlg.title}}</strong>
+<sc-if value="{{dlg.body}}" hint-placeholder-val="{{ false }}"><div>{{dlg.body}}</div></sc-if>
+<sc-if value="{{dlg.field1}}" hint-placeholder-val="{{ false }}"><div class="fld"><label class="lbl" for="d1">{{dlg.field1}}</label><div class="box"><input id="d1" value="{{dlg1}}" onChange="{{setDlg1}}"></div></div></sc-if>
+<sc-if value="{{dlg.field2}}" hint-placeholder-val="{{ false }}"><div class="fld"><label class="lbl" for="d2">{{dlg.field2}}</label><div class="box" dir="ltr"><span aria-hidden="true">₪</span><input id="d2" inputmode="decimal" value="{{dlg2}}" onChange="{{setDlg2}}" placeholder="0" aria-describedby="dlgE"></div></div></sc-if>
+<sc-if value="{{dlgErr}}" hint-placeholder-val="{{ false }}"><span id="dlgE" class="emsg" role="alert">{{dlgErr}}</span></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start"><button type="button" class="{{dlgOkCls}}" onClick="{{dlgOk}}" disabled="{{dlgBusy}}"><sc-if value="{{dlgBusy}}" hint-placeholder-val="{{ false }}"><span class="spin" aria-hidden="true"></span></sc-if>{{dlg.ok}}</button><button type="button" class="btn btn-g" onClick="{{dlgCancel}}" disabled="{{dlgBusy}}">{{dlg.cancel}}</button></div>
+</div></div>
+</sc-if>
+
+<div class="sr" role="status" aria-live="polite">{{toast}}</div>
+<sc-if value="{{toast}}" hint-placeholder-val="{{ false }}"><div class="toast" aria-hidden="true">{{toast}}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"start":{"editor":null},"hideDemo":{"editor":null},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.timers = [];
+    this.okFn = null;
+    this.cancelFn = null;
+    var w = this.world(), s = props && props.start;
+    var map = {
+      batches: { screen: 'batch', cTab: 'batches' }, prices: { screen: 'batch', cTab: 'prices' }, templates: { screen: 'batch', cTab: 'templates' },
+      settings: { screen: 'settings' }, users: { screen: 'settings', sTab: 'users' }, backup: { screen: 'settings', sTab: 'backup' }, importing: { screen: 'settings', sTab: 'import' }, license: { screen: 'settings', sTab: 'license' },
+      setup2: { screen: 'setup', setupStep: 2 }, setup3: { screen: 'setup', setupStep: 3 }, setup4: { screen: 'setup', setupStep: 4, testCode: 'G4XR-73HK' },
+      commission: { screen: 'reports', rTab: 'commission' }, stale: { screen: 'reports', rTab: 'stale' },
+      loading: { stateMode: 'loading' }, error: { stateMode: 'error' }, empty: { stateMode: 'empty' }
+    };
+    Object.assign(map, {
+      account: { screen: 'account' }, batch: { screen: 'batch' }, network: { screen: 'network' }, reports: { screen: 'reports' },
+      batchSent: { screen: 'batch', bStage: 'sent', bTotal: 100, confirmed: 88, pending: 12, firstSend: false },
+      card: { screen: 'card', code: '7K4F-92QM', cardKey: '7K4F-92QM' },
+      setup: { screen: 'setup', ip: '192.168.88.1', user: 'nuqta', pass: 'password', connOk: true, connMsg: 'تم الاتصال بالراوتر. لقينا 4 فئات هوتسبوت.' }
+    });
+    if (s === 'fresh') w = Object.assign(w, this.freshBits());
+    if (s && map[s]) w = Object.assign(w, map[s]);
+    this.state = w;
+    this.prevView = w.stateMode + w.screen + w.setupStep;
+  }
+  focusTitle() {
+    var h = document.querySelector('main h1');
+    if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+  }
+  num(v) {
+    var s = String(v == null ? '' : v).replace(/[٠-٩]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }).replace(/[۰-۹]/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d); }).replace(/٫/g, '.').replace(/[\s₪]/g, '').replace(/[,،٬](\d{1,2})$/, '.$1').replace(/[,،٬]/g, '');
+    return /^\d+(\.\d{1,2})?$/.test(s) ? Number(s) : NaN;
+  }
+  normCode(v) {
+    var kb = { 'ض': 'Q', 'ص': 'W', 'ث': 'E', 'ق': 'R', 'ف': 'T', 'غ': 'Y', 'ع': 'U', 'ه': 'I', 'خ': 'O', 'ح': 'P', 'ش': 'A', 'س': 'S', 'ي': 'D', 'ب': 'F', 'ل': 'G', 'ا': 'H', 'ت': 'J', 'ن': 'K', 'م': 'L', 'ئ': 'Z', 'ء': 'X', 'ؤ': 'C', 'ر': 'V', 'ى': 'N', 'ة': 'M' };
+    var clean = function (t) { return t.replace(/[\u0621-\u064A]/g, function (c) { return kb[c] || ''; }).toUpperCase().replace(/[٠-٩]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }).replace(/[^A-Z0-9]/g, ''); };
+    var raw = String(v || ''), s = clean(raw.replace(/لا/g, 'B'));
+    if (s.length !== 8 && raw.indexOf('لا') !== -1) s = clean(raw);
+    return s.length === 8 ? s.slice(0, 4) + '-' + s.slice(4) : s;
+  }
+  daysText(n) { return n === 1 ? 'يوم' : (n === 2 ? 'يومين' : (n >= 3 && n <= 10 ? n + ' أيام' : n + ' يوم')); }
+  loadResults() { try { return JSON.parse(localStorage.getItem('nuqta-test') || '[]'); } catch (e) { return []; } }
+  saveResults(list) { try { localStorage.setItem('nuqta-test', JSON.stringify(list)); } catch (e) {} }
+  runCheck(raw) {
+    var self = this, key = this.normCode(raw);
+    if (!key) { this.say('اكتب كود الكرت.'); return; }
+    this.setState({ cardBusy: true, cardKey: '', code: key, screen: 'card', stateMode: 'normal' });
+    this.later(function () { self.setState({ cardBusy: false, cardKey: key }); self.mark('card'); }, 600);
+  }
+  freshBits() { return { fresh: true, dist: {}, sel: '', bDist: 'direct', batches: [], kicked: [], collectedToday: 0, screen: 'home', users: [{ name: 'صاحب الشبكة', role: 'مدير', note: 'كل الصلاحيات' }] }; }
+  componentDidUpdate() {
+    var view = this.state.stateMode + this.state.screen + this.state.setupStep;
+    if (view !== this.prevView) {
+      if (this.prevView !== undefined && !this.state.dlg) this.focusTitle();
+      this.prevView = view;
+      var t = document.querySelector('h1');
+      if (t) document.title = 'نقطة: ' + t.textContent;
+    }
+    var now = !!this.state.dlg;
+    if (now && !this.hadDlg) {
+      this.prevFocus = document.activeElement;
+      var el = document.querySelector('.dlg input, .dlg button:not([disabled])');
+      if (el) el.focus();
+    } else if (!now && this.hadDlg && this.prevFocus && this.prevFocus.isConnected) {
+      this.prevFocus.focus();
+    }
+    this.hadDlg = now;
+  }
+  componentWillUnmount() { this.timers.forEach(clearTimeout); }
+  later(fn, ms) { var id = setTimeout(fn, ms); this.timers.push(id); return id; }
+  world() {
+    return {
+      screen: 'home', routerUp: true, netUp: false, extra: 0, done: {}, fresh: false, stateMode: 'normal',
+      cTab: 'gen', sTab: 'net', rTab: 'collected', netName: 'شبكة النور', netPhone: '', tpl: 'a4', tplPrice: true,
+      cats: { h1: { name: 'ساعة', whole: '1', sale: '2' }, h3: { name: '3 ساعات', whole: '2', sale: '3' }, d1: { name: 'يوم كامل', whole: '4', sale: '5' }, w1: { name: 'أسبوع', whole: '15', sale: '20' } },
+      batches: [{ no: 'B-1038', cat: '3 ساعات', dist: 'محل يوسف', total: 300, used: 285, times: 1 }, { no: 'B-1035', cat: '3 ساعات', dist: 'مكتبة الأمل', total: 900, used: 870, times: 2 }, { no: 'B-1034', cat: 'يوم كامل', dist: 'سوبرماركت أبو خالد', total: 1400, used: 1240, times: 1 }],
+      users: [{ name: 'صاحب الشبكة', role: 'مدير', note: 'كل الصلاحيات' }, { name: 'سامي', role: 'فني', note: 'الراوتر والكروت' }],
+      testMode: false, testTask: '0', running: false, startedAt: 0, clicks: 0, testNote: '', testResults: this.loadResults(), topCode: '', addErr: '',
+      extraRouters: [], lastBackup: 'اليوم، 11:18 ص', backupBusy: false, importReady: false, licKey: '', licensed: false,
+      setupStep: 1, ip: '', user: '', pass: '', connMsg: '', connOk: false, connBusy: false, newName: '', newOpen: '', addMsg: '', testCode: '', testDiag: false,
+      sel: 'yousef', amount: '', amtErr: '', settleBusy: false, proofKey: '', newKey: -1, disputes: [],
+      dist: {
+        yousef: { name: 'محل يوسف', area: 'السوق', days: 9, limit: 1000, entries: [
+          { date: '2 أكتوبر', action: 'تسليم دفعة B-1031', cards: 600, charge: 0, paid: 0 },
+          { date: '18 أكتوبر', action: 'استخدام 525 كرت', cards: -525, charge: 1050, paid: 0 },
+          { date: '27 أكتوبر', action: 'تسوية', cards: 0, charge: 0, paid: 300 },
+          { date: '28 أكتوبر', action: 'تسليم دفعة B-1038', cards: 300, charge: 0, paid: 0 },
+          { date: '4 نوفمبر', action: 'استخدام 147 كرت', cards: -147, charge: 294, paid: 0 },
+          { date: '5 نوفمبر', action: 'استخدام 138 كرت', cards: -138, charge: 276, paid: 0 } ] },
+        khaled: { name: 'سوبرماركت أبو خالد', area: 'الشارع الرئيسي', days: 3, limit: 1500, entries: [
+          { date: '5 أكتوبر', action: 'تسليم دفعة B-1034', cards: 1400, charge: 0, paid: 0 },
+          { date: '29 أكتوبر', action: 'استخدام 1240 كرت', cards: -1240, charge: 2480, paid: 0 },
+          { date: '2 نوفمبر', action: 'تسوية', cards: 0, charge: 0, paid: 1500 } ] },
+        port: { name: 'كشك الميناء', area: 'الميناء', days: 18, limit: 1000, entries: [
+          { date: '1 أكتوبر', action: 'تسليم دفعة B-1030', cards: 700, charge: 0, paid: 0 },
+          { date: '14 أكتوبر', action: 'تسوية', cards: 0, charge: 0, paid: 500 },
+          { date: '3 نوفمبر', action: 'استخدام 560 كرت', cards: -560, charge: 1120, paid: 0 } ] },
+        amal: { name: 'مكتبة الأمل', area: 'قرب المدرسة', days: 1, limit: 1000, stockLow: true, entries: [
+          { date: '6 أكتوبر', action: 'تسليم دفعة B-1035', cards: 900, charge: 0, paid: 0 },
+          { date: '1 نوفمبر', action: 'استخدام 870 كرت', cards: -870, charge: 1740, paid: 0 },
+          { date: '4 نوفمبر', action: 'تسوية', cards: 0, charge: 0, paid: 1200 } ] }
+      },
+      collectedToday: 0,
+      bRouter: 'main', bCat: 'h3', bCount: '100', bDist: 'amal', bErr: '', bStage: 'form', bProg: 0, bTotal: 0, confirmed: 0, pending: 0, printed: 0, bNo: 1043, resendBusy: false, printBusy: false, bNote: '', doneTitle: '', doneText: '', firstSend: true,
+      code: '', cardKey: '', cardBusy: false,
+      kicked: [], dlg: null, dlg1: '', dlg2: '', dlgErr: '', dlgBusy: false, toast: ''
+    };
+  }
+  usedValue(d) { return d.entries.reduce(function (a, e) { return a + (e.action === 'رصيد افتتاحي' ? 0 : e.charge); }, 0); }
+  owed(d) { return d.entries.reduce(function (a, e) { return a + e.charge - e.paid; }, 0); }
+  money(n) { return '₪' + Math.abs(n).toLocaleString('en-US'); }
+  say(text) {
+    var self = this;
+    clearTimeout(this.toastId);
+    this.setState({ toast: text });
+    this.toastId = setTimeout(function () { self.setState({ toast: '' }); }, 3500);
+    this.timers.push(this.toastId);
+  }
+  mark(key) {
+    var d = Object.assign({}, this.state.done); d[key] = true; this.setState({ done: d });
+  }
+  addEntry(id, entry) {
+    var next = Object.assign({}, this.state.dist);
+    next[id] = Object.assign({}, next[id], { entries: next[id].entries.concat([entry]) });
+    return next;
+  }
+  open(cfg, okFn, cancelFn) {
+    this.okFn = okFn; this.cancelFn = cancelFn || null;
+    this.setState({ dlg: cfg, dlg1: '', dlg2: '', dlgErr: '', dlgBusy: false });
+  }
+  close() { this.okFn = null; this.cancelFn = null; this.setState({ dlg: null, dlgBusy: false, dlgErr: '' }); }
+  recordPay(id, paid) {
+    var self = this, d = this.state.dist[id], owedNow = this.owed(d), due = Math.max(owedNow, 0), extra = paid - due;
+    var next = this.addEntry(id, { date: '5 نوفمبر', action: 'تسوية', cards: 0, charge: 0, paid: paid });
+    next[id] = Object.assign({}, next[id], { days: 0 });
+    this.setState({ dist: next, amount: '', amtErr: '', settleBusy: false, collectedToday: this.state.collectedToday + paid, newKey: next[id].entries.length - 1 });
+    this.say(extra > 0 ? 'انسجل ' + this.money(paid) + '. الزيادة ' + this.money(extra) + ' صارت رصيد للموزع.' : 'انسجل ' + this.money(paid) + '. الباقي عليه ' + this.money(due - paid) + '.');
+    this.mark('settle');
+  }
+  renderVals() {
+    var self = this, st = this.state;
+    var field = function (k) { return function (e) { var o = {}; o[k] = e.target.value; self.setState(o); }; };
+    var go = function (s) { return function () { self.setState({ screen: s, amtErr: '' }); }; };
+    var openAcc = function (id) { return function () { self.setState({ sel: id, screen: 'account', amount: '', amtErr: '', proofKey: '', newKey: -1 }); }; };
+
+    var ids = Object.keys(st.dist).sort(function (x, y) { return self.owed(st.dist[y]) - self.owed(st.dist[x]); });
+    var total = ids.reduce(function (a, id) { return a + Math.max(self.owed(st.dist[id]), 0); }, 0);
+    var rows = ids.map(function (id) {
+      var v = self.owed(st.dist[id]), on = id === st.sel;
+      return { id: id, name: st.dist[id].name, balance: (v < 0 ? 'له ' : '') + self.money(v), cls: on ? 'tr on' : 'tr', pressed: on ? 'true' : 'false', open: openAcc(id) };
+    });
+
+    var navOf = function (name) {
+      var on = st.screen === name;
+      return { cls: on ? 'ni on' : 'ni', cur: on ? 'page' : 'false', go: function () { self.setState({ screen: name, amtErr: '', stateMode: 'normal' }); } };
+    };
+    var tabOf = function (key, stateKey, current, name) {
+      var on = current === key, o = {};
+      o[stateKey] = key;
+      return { name: name, cls: on ? 'tab on' : 'tab', sel: on ? 'true' : 'false', ti: on ? '0' : '-1', go: function () { self.setState(o); } };
+    };
+
+    var bn;
+    if (!st.routerUp) bn = { c: 'bn er', k: 'e', t: 'الراوتر مش راد.', x: 'الكروت الجديدة بتستنى لحين رجوعه، وحساباتك شغالة عادي.' };
+    else if (!st.netUp) bn = { c: 'bn wa', k: 'w', t: 'النت مقطوع من 42 دقيقة.', x: 'الراوترات متصلة والبيع مستمر، والنسخ السحابي بيكمل لما يرجع.' };
+    else bn = { c: 'bn ok', k: 'o', t: 'كل شيء متصل.', x: 'آخر نسخة سحابية قبل دقيقة.' };
+
+    var mode = st.stateMode, normal = mode === 'normal';
+    var errTitles = { home: 'ما قدرنا نفتح شغل اليوم', account: 'ما قدرنا نفتح حسابات الموزعين', batch: 'ما قدرنا نجيب الكروت والفئات', card: 'ما قدرنا نفحص الكرت', network: 'ما قدرنا نقرأ حالة الشبكة', reports: 'ما قدرنا نجهز التقرير', settings: 'ما قدرنا نفتح الإعدادات' };
+    var emptyDefs = {
+      home: ['ما في شغل اليوم', 'كل الحسابات المتأخرة انسوت، وما في دفعات بالانتظار.', 'توليد كروت', function () { self.setState({ screen: 'batch', stateMode: 'normal' }); }],
+      account: ['لسا ما أضفت موزعين', 'أضف أول موزع عشان تتابع كروته وحسابه.', 'أضف موزع', function () { self.setState({ stateMode: 'normal' }); }],
+      batch: ['ما في فئات على الراوتر', 'أنشئ فئة بوقت وسرعة وسعر، وبعدها ولّد أول دفعة.', 'أنشئ فئة', function () { self.setState({ cTab: 'prices', stateMode: 'normal' }); }],
+      card: ['اكتب كود الكرت', 'بتشوف حالته وسجله والخطوة الجاية.', 'ابدأ الفحص', function () { self.setState({ stateMode: 'normal' }); }],
+      network: ['ما في راوتر مربوط', 'اربط أول راوتر عشان تشوف المتصلين وتولّد كروت.', 'اربط راوتر', function () { self.setState({ screen: 'setup', setupStep: 1, stateMode: 'normal' }); }],
+      reports: ['لسا ما في بيانات', 'التقرير بيظهر بعد أول استخدام للكروت.', 'توليد كروت', function () { self.setState({ screen: 'batch', stateMode: 'normal' }); }],
+      settings: ['ما في إعدادات محفوظة', 'ابدأ باسم الشبكة اللي بيطلع على الكرت.', 'بيانات الشبكة', function () { self.setState({ sTab: 'net', stateMode: 'normal' }); }]
+    };
+    var emptyDef = emptyDefs[st.screen] || emptyDefs.home;
+
+    var tasks = [];
+    if (st.pending > 0) tasks.push({ title: 'أكمل دفعة بالانتظار', detail: st.pending + ' كرت ما أكدها الراوتر', label: 'افتح الدفعة', act: go('batch') });
+    ids.forEach(function (id) {
+      var d = st.dist[id], v = self.owed(d);
+      if (v > 0 && d.days >= 7) tasks.push({ title: 'حصّل من ' + d.name, detail: self.money(v) + '، آخر تسوية قبل ' + self.daysText(d.days), label: 'افتح الحساب', act: openAcc(id) });
+    });
+    ids.forEach(function (id) {
+      if (st.dist[id].stockLow) tasks.push({ title: 'اشحن كروت ل' + st.dist[id].name, detail: 'باقي 6 كروت من فئة 3 ساعات', label: 'ولّد دفعة', act: function () { self.setState({ screen: 'batch', bDist: id }); } });
+    });
+    st.disputes.forEach(function (id) {
+      tasks.push({ title: 'راجع خلاف مع ' + st.dist[id].name, detail: 'مفتوح اليوم', label: 'افتح الحساب', act: openAcc(id) });
+    });
+    if (!st.routerUp) tasks.unshift({ title: 'افحص الراوتر', detail: 'ما بيرد من شوي', label: 'افتح الشبكة', act: go('network') });
+    tasks.forEach(function (k, i) { k.cls = i === 0 ? 'card top' : 'card'; k.btn = i === 0 ? 'btn btn-p' : 'btn btn-s'; });
+
+    var sellers = st.fresh ? [] : [['سوبرماركت أبو خالد', 412, '100%'], ['مكتبة الأمل', 318, '77%'], ['محل يوسف', 276, '67%'], ['كشك الميناء', 178, '43%'], ['بيع مباشر', 100, '24%']].map(function (s) { return { name: s[0], value: self.money(s[1]), w: s[2] }; });
+
+    var hasDist = ids.length > 0;
+    var cur = st.dist[st.sel] || { name: '', area: '', days: 0, limit: 0, entries: [] };
+    var owedNow = this.owed(cur);
+    var held = cur.entries.reduce(function (a, e) { return a + e.cards; }, 0);
+    var inDispute = st.disputes.indexOf(st.sel) !== -1;
+    var run = 0;
+    var macs = ['4F:A2', '7B:C8', '2D:91', 'E6:30'];
+    var codesA = ['Q2ZS-85WE', 'M6YB-39KG', 'T9DS-72JP', 'P3XA-62TD'];
+    var entries = cur.entries.map(function (e, i) {
+      run += e.charge - e.paid;
+      var usage = /^استخدام/.test(e.action), key = st.sel + ':' + i, isOpen = st.proofKey === key;
+      return {
+        date: e.date, action: e.action,
+        cards: e.cards ? (e.cards > 0 ? '+' : '-') + Math.abs(e.cards) : '—',
+        charge: e.charge ? self.money(e.charge) : '—', paid: e.paid ? (e.paid < 0 ? '-' : '') + self.money(e.paid) : '—',
+        balance: (run < 0 ? 'له ' : '') + self.money(run),
+        cls: i === st.newKey ? 'ev new' : 'ev',
+        isUsage: usage, open: usage && isOpen, expanded: isOpen ? 'true' : 'false',
+        toggleLabel: isOpen ? 'إخفاء الكروت' : 'شوف الكروت', more: Math.abs(e.cards) - 2,
+        proof: [{ code: codesA[i % 4], time: '9:14 ص', mac: macs[i % 4] }, { code: codesA[(i + 1) % 4], time: '9:32 ص', mac: macs[(i + 1) % 4] }],
+        toggle: function () { self.setState({ proofKey: isOpen ? '' : key }); }
+      };
+    }).reverse();
+
+    var numOf = function (v) { return self.num(v) || 0; };
+    var setCat = function (k, f) { return function (e) { var next = Object.assign({}, st.cats); next[k] = Object.assign({}, next[k]); next[k][f] = e.target.value; self.setState({ cats: next }); }; };
+    var catList = Object.keys(st.cats).map(function (k) {
+      var c = st.cats[k], on = st.bCat === k;
+      return { name: c.name, whole: self.money(numOf(c.whole)), sale: self.money(numOf(c.sale)), cls: on ? 'chip on' : 'chip', pressed: on ? 'true' : 'false', pick: function () { self.setState({ bCat: k }); } };
+    });
+    var catRows = Object.keys(st.cats).map(function (k) {
+      var c = st.cats[k], m = numOf(c.sale) - numOf(c.whole);
+      return { name: c.name, whole: c.whole, sale: c.sale, wLabel: 'سعر جملة ' + c.name, sLabel: 'سعر بيع ' + c.name, setWhole: setCat(k, 'whole'), setSale: setCat(k, 'sale'), margin: m < 0 ? 'البيع أقل من الجملة' : self.money(m), marginCls: m < 0 ? 'emsg' : '' };
+    });
+    var cc = st.cats[st.bCat], curCat = [cc.name, numOf(cc.whole), numOf(cc.sale)];
+    var nCount = Math.floor(self.num(st.bCount)) || 0;
+    var limDist = st.dist[st.bDist];
+    var bLimitWarn = limDist && self.owed(limDist) > limDist.limit ? 'عليه ' + self.money(self.owed(limDist)) + '، فوق السقف ' + self.money(limDist.limit) + '.' : '';
+    var routerName = st.bRouter === 'sub' ? 'الراوتر الفرعي' : 'الراوتر الرئيسي';
+    var distName = st.bDist === 'direct' ? 'البيع المباشر' : (st.dist[st.bDist] ? st.dist[st.bDist].name : '');
+    var beginSend = function () {
+      var n = Math.floor(self.num(self.state.bCount)) || 0;
+      self.setState({ bStage: 'sending', bTotal: n, bProg: 0, confirmed: 0, pending: 0, printed: 0, bNote: '', bErr: '' });
+      var tick = function (p) {
+        if (p < 100) { self.setState({ bProg: p }); self.later(function () { tick(p + 20); }, 180); return; }
+        var up = self.state.routerUp;
+        var ok = !up ? 0 : (self.state.firstSend ? Math.round(n * 0.88) : n);
+        self.setState({ bProg: 100, bStage: 'sent', confirmed: ok, pending: n - ok, firstSend: false });
+      };
+      tick(20);
+    };
+    var codesB = ['A7HK-58RX', 'E3PW-26NM', 'J9TC-74GU', 'V5MQ-83ZF', 'S2DY-69BE', 'W8KH-35TA'];
+    var showCodes = st.bStage === 'sent' || st.bStage === 'done';
+    var preview = codesB.map(function (code, i) {
+      var waiting = st.bStage === 'sent' && st.pending > 0 && (i === 5 || st.confirmed === 0);
+      return { code: showCodes ? code : 'XXXX-XXXX', cat: curCat[0], cls: waiting || !showCodes ? 'vc p' : 'vc', foot: waiting ? 'بالانتظار' : self.money(curCat[2]) };
+    });
+
+    var cards = {
+      '7K4F-92QM': { status: 'الكرت خلص وقته', next: 'الشبكة سليمة. انتهت الـ3 ساعات أمس الساعة 8:20 م، فقول للزبون يشتري كرت جديد.', cat: '3 ساعات', batch: 'B-1035', dist: 'مكتبة الأمل', left: 'صفر', active: false, log: [{ a: 'تولّد وأكده الراوتر', b: '6 أكتوبر' }, { a: 'انطبع مرة واحدة', b: '6 أكتوبر' }, { a: 'تسلّم لمكتبة الأمل', b: '6 أكتوبر' }, { a: 'أول استخدام', b: 'أمس، 5:20 م' }, { a: 'انتهى الوقت', b: 'أمس، 8:20 م' }] },
+      'H8NC-47VR': { status: 'الكرت شغال الآن', next: 'في جهاز مستخدمه هلأ. إذا الزبون مش هو، افصل الجلسة.', cat: 'يوم كامل', batch: 'B-1034', dist: 'سوبرماركت أبو خالد', left: '9 ساعات', active: true, log: [{ a: 'تسلّم لأبو خالد', b: '5 أكتوبر' }, { a: 'أول استخدام', b: 'اليوم، 8:02 ص' }] },
+      'V5MQ-83ZF': { status: 'الكرت سليم ولسا ما انستخدم', next: 'خلي الزبون يتأكد إنه متصل بواي فاي شبكة النور ويكتب الكود مزبوط.', cat: 'ساعة', batch: 'B-1038', dist: 'محل يوسف', left: 'ساعة كاملة', active: false, log: [{ a: 'تسلّم لمحل يوسف', b: '28 أكتوبر' }] }
+    };
+    var card = cards[st.cardKey] || { log: [] };
+
+    var sessAll = [
+      ['P3XA-62TD', '3 ساعات', 'الرئيسي', '10.5.50.14', 'ساعة و12 دقيقة'],
+      ['H8NC-47VR', 'يوم كامل', 'الرئيسي', '10.5.50.27', '9 ساعات'],
+      ['Q2ZS-85WE', 'ساعة', 'الفرعي', '10.5.51.9', '18 دقيقة'],
+      ['T9DS-72JP', 'أسبوع', 'الرئيسي', '10.5.50.41', '4 أيام'],
+      ['M6YB-39KG', '3 ساعات', 'الفرعي', '10.5.51.22', 'ساعتين و5 دقايق']
+    ];
+    var askKick = function (code) {
+      return function () {
+        self.open({ title: 'تفصل الكرت ' + code + '؟', body: 'الزبون رح ينفصل فورا، والوقت الباقي بيضل على الكرت.', ok: 'افصل', cancel: 'ألغِ', danger: true }, function () {
+          self.setState({ dlgBusy: true });
+          self.later(function () { self.setState({ kicked: self.state.kicked.concat([code]) }); self.close(); self.say('انفصل الكرت ' + code + '.'); }, 600);
+        });
+      };
+    };
+    var sessions = (st.fresh ? [] : sessAll).filter(function (s) { return st.kicked.indexOf(s[0]) === -1; }).map(function (s) {
+      return { code: s[0], cat: s[1], router: s[2], ip: s[3], left: s[4], aria: 'افصل الكرت ' + s[0], kick: askKick(s[0]) };
+    });
+    var devices = [
+      { name: 'الراوتر الرئيسي', meta: '192.168.88.1', cls: st.routerUp ? 'bn ok' : 'bn er', text: st.routerUp ? 'متصل، ' + (st.fresh ? 0 : 61 - st.kicked.length) + ' جهاز' : 'مش راد' },
+      { name: 'الراوتر الفرعي', meta: st.fresh ? '' : '192.168.88.2', cls: st.fresh ? 'bn ok' : (st.routerUp ? 'bn wa' : 'bn er'), text: st.fresh ? 'ما في راوتر ثاني مربوط' : (st.routerUp ? 'متصل، 26 جهاز. أعاد التشغيل 3 مرات اليوم' : 'مش راد') },
+      { name: 'النسخ السحابي', meta: '', cls: st.netUp ? 'bn ok' : 'bn wa', text: st.netUp ? 'محدّث' : '42 عملية بانتظار النت، ومحفوظة على الجهاز' }
+    ].concat(st.extraRouters.map(function (ip) { return { name: 'راوتر جديد', meta: ip, cls: st.routerUp ? 'bn ok' : 'bn er', text: st.routerUp ? 'متصل، 0 جهاز' : 'مش راد' }; }));
+
+    var repUsed = 0, repPaid = 0;
+    var repRows = ids.map(function (id) {
+      var d = st.dist[id], u = self.usedValue(d), p = d.entries.reduce(function (a, e) { return a + e.paid; }, 0);
+      repUsed += u; repPaid += p;
+      return { name: d.name, used: self.money(u), paid: self.money(p), gap: self.money(Math.max(self.owed(d), 0)), pct: (u ? Math.min(Math.round(p / u * 100), 100) : 100) + '%', open: openAcc(id) };
+    });
+
+    var usedCards = function (d) { return d.entries.reduce(function (a, e) { var m = /^استخدام (\d+)/.exec(e.action); return a + (m ? Number(m[1]) : 0); }, 0); };
+    var h3m = numOf(st.cats.h3.sale) - numOf(st.cats.h3.whole);
+    var commRows = ids.map(function (id) { var d = st.dist[id], n = usedCards(d); return { name: d.name, cards: n, value: self.money(n * h3m) }; });
+    var staleRows = ids.map(function (id) {
+      var d = st.dist[id], back = d.entries.reduce(function (a, e) { return a + (e.action === 'مرتجع' ? Math.abs(e.cards) : 0); }, 0);
+      var last = d.entries.filter(function (e) { return e.cards > 0; }).pop();
+      return { name: d.name, held: d.entries.reduce(function (a, e) { return a + e.cards; }, 0), back: back, last: last ? last.date : '—' };
+    });
+    var batches = st.batches.map(function (b) {
+      return { no: b.no, cat: b.cat, dist: b.dist, used: b.used + ' من ' + b.total, times: b.times + ' مرة', reprint: function () {
+        self.open({ title: 'تطبع الدفعة ' + b.no + ' مرة ثانية؟', body: 'نفس الأكواد بتنطبع، والمرة بتنسجل بالسجل. استخدمها لما تتلف الورقة بس.', ok: 'اطبع', cancel: 'ألغِ' }, function () {
+          self.setState({ batches: self.state.batches.map(function (x) { return x.no === b.no ? Object.assign({}, x, { times: x.times + 1 }) : x; }) });
+          self.close(); self.say('انسجلت إعادة طباعة ' + b.no + '.');
+        });
+      } };
+    });
+    var tpls = [['a4', 'A4، 12 كرت', 'لأي طابعة عادية'], ['a4s', 'A4، 24 كرت', 'كروت أصغر وورق أقل'], ['thermal', 'طابعة حرارية', 'كرت واحد بكل قصة']];
+    var tplList = tpls.map(function (t) { var on = st.tpl === t[0]; return { name: t[1], note: t[2], cls: on ? 'chip on' : 'chip', sel: on ? 'true' : 'false', pick: function () { self.setState({ tpl: t[0] }); } }; });
+
+    var testDefs = [
+      ['سجّل ₪300 من الموزع اللي عليه أكبر مبلغ', { screen: 'home' }],
+      ['موزع بينكر دينه: وريه من وين إجا مبلغ كشك الميناء', { screen: 'home' }],
+      ['سلّم مكتبة الأمل 100 كرت 3 ساعات', { screen: 'home' }],
+      ['الراوتر مقطوع والموزع مستعجل: شو بتعمل؟', { screen: 'home', routerUp: false }],
+      ['زبون كرته 7K4F-92QM مش شغال: شو بتقول له؟', { screen: 'home' }],
+      ['سجّلت تسوية بالغلط: صلّحها', { screen: 'account', sel: 'khaled' }],
+      ['ركّب البرنامج لأول مرة واطبع كرت تجربة', Object.assign(this.freshBits(), { screen: 'setup', setupStep: 1 })]
+    ];
+    var finishTest = function (outcome) {
+      return function () {
+        var s = self.state, t = testDefs[Number(s.testTask)];
+        var list = s.testResults.concat([{ task: t[0], outcome: outcome, secs: Math.round((Date.now() - s.startedAt) / 1000), clicks: s.clicks, note: s.testNote }]);
+        self.saveResults(list);
+        self.setState(Object.assign(self.world(), { testMode: true, testResults: list, testTask: s.testTask }));
+      };
+    };
+
+    var tourDefs = [['settle', 'سوّي حساب موزع'], ['batch', 'ولّد دفعة وسلّمها'], ['card', 'افحص كرت'], ['router', 'اقطع الراوتر'], ['setup', 'أول تشغيل']];
+    var tour = tourDefs.map(function (t) { var d = !!st.done[t[0]]; return { label: (d ? '✓ ' : '') + t[1], cls: d ? 'tick done' : 'tick' }; });
+
+    var stepNames = ['ربط الراوتر', 'الفئات والأسعار', 'الموزعين والأرصدة', 'كرت تجربة'];
+    var steps = stepNames.map(function (name, i) {
+      var n = i + 1;
+      return { name: name, mark: n < st.setupStep ? '✓' : String(n), cur: n === st.setupStep ? 'step' : 'false', cls: n === st.setupStep ? 'dot on' : (n < st.setupStep ? 'dot done' : 'dot') };
+    });
+
+    return {
+      tour: tour,
+      netLabel: st.netUp ? 'اقطع النت' : 'رجّع النت', routerLabel: st.routerUp ? 'اقطع الراوتر' : 'رجّع الراوتر',
+      toggleNet: function () { self.setState({ netUp: !st.netUp }); },
+      toggleRouter: function () { self.setState({ routerUp: !st.routerUp }); if (st.routerUp) self.mark('router'); },
+      goSetup: function () { self.setState(Object.assign({}, self.freshBits(), { screen: 'setup', setupStep: 1, connMsg: '', connOk: false, testCode: '', testDiag: false, addMsg: '', stateMode: 'normal', pending: 0, confirmed: 0, bStage: 'form' })); },
+      reset: function () { self.timers.forEach(clearTimeout); self.timers = []; self.setState(self.world()); },
+      showDemo: !this.props.hideDemo && !st.testMode,
+      stateMode: mode, setStateMode: function (e) { self.setState({ stateMode: e.target.value }); },
+      isStateLoading: !normal && mode === 'loading', isStateError: !normal && mode === 'error', isStateEmpty: !normal && mode === 'empty',
+      stateErrTitle: errTitles[st.screen] || errTitles.home, stateRetry: function () { self.setState({ stateMode: 'normal' }); },
+      stateEmptyTitle: emptyDef[0], stateEmptyBody: emptyDef[1], stateEmptyCta: emptyDef[2], stateEmptyAct: emptyDef[3],
+      netName: st.netName, setNetName: field('netName'), netPhone: st.netPhone, setNetPhone: field('netPhone'),
+
+      isSettings: normal && st.screen === 'settings',
+      setTabs: [tabOf('net', 'sTab', st.sTab, 'بيانات الشبكة'), tabOf('users', 'sTab', st.sTab, 'المستخدمون'), tabOf('backup', 'sTab', st.sTab, 'النسخ والاستعادة'), tabOf('import', 'sTab', st.sTab, 'الاستيراد'), tabOf('license', 'sTab', st.sTab, 'الترخيص')],
+      setNet: st.sTab === 'net', setUsers: st.sTab === 'users', setBackup: st.sTab === 'backup', setImport: st.sTab === 'import', setLicense: st.sTab === 'license',
+      saveNet: function () { self.say('انحفظت بيانات الشبكة.'); },
+      users: st.users,
+      openAddUser: function () {
+        self.open({ title: 'أضف مستخدم', body: 'الدور الافتراضي فني: الراوتر والكروت بدون الحسابات.', field1: 'اسم المستخدم', ok: 'أضف', cancel: 'ألغِ' }, function () {
+          var n = self.state.dlg1.trim();
+          if (!n) { self.setState({ dlgErr: 'اكتب الاسم.' }); return; }
+          self.setState({ users: self.state.users.concat([{ name: n, role: 'فني', note: 'الراوتر والكروت' }]) }); self.close(); self.say('انضاف ' + n + '.');
+        });
+      },
+      lastBackup: st.lastBackup, backupBusy: st.backupBusy, backupLabel: st.backupBusy ? 'جاري النسخ' : 'خذ نسخة الآن',
+      backupNow: function () { self.setState({ backupBusy: true }); self.later(function () { self.setState({ backupBusy: false, lastBackup: 'الآن' }); self.say('انحفظت نسخة على هذا الجهاز.'); }, 800); },
+      openRestore: function () {
+        self.open({ title: 'تسترجع نسخة اليوم 11:18 ص؟', body: 'الحركات الأحدث من النسخة رح تروح. بناخد نسخة من الوضع الحالي قبل الاسترجاع.', ok: 'استرجع', cancel: 'ألغِ', danger: true }, function () {
+          self.setState({ dlgBusy: true }); self.later(function () { self.close(); self.say('انسترجعت النسخة.'); }, 700);
+        });
+      },
+      importReady: st.importReady, pickImport: function () { self.setState({ importReady: true }); },
+      runImport: function () { self.setState({ importReady: false }); self.say('انضاف 228 كرت، ومسجلين بيع مباشر لحين ربطهم بموزع.'); },
+      licKey: st.licKey, setLicKey: field('licKey'), licCls: st.licensed ? 'bn ok' : 'bn wa', licTitle: st.licensed ? 'البرنامج مفعل.' : 'نسخة تجريبية.', licText: st.licensed ? 'على هذا الجهاز.' : 'باقي 14 يوم. البرنامج بيشتغل كامل خلال التجربة.',
+      activate: function () { if (!st.licKey.trim()) { self.say('اكتب مفتاح الترخيص.'); return; } self.setState({ licensed: true }); self.say('تم التفعيل.'); },
+
+      cardTabs: [tabOf('gen', 'cTab', st.cTab, 'توليد دفعة'), tabOf('batches', 'cTab', st.cTab, 'الدفعات'), tabOf('prices', 'cTab', st.cTab, 'الفئات والأسعار'), tabOf('templates', 'cTab', st.cTab, 'قوالب الطباعة')],
+      tabGen: st.cTab === 'gen', tabBatches: st.cTab === 'batches', tabPrices: st.cTab === 'prices', tabTemplates: st.cTab === 'templates',
+      batches: batches, noBatches: batches.length === 0, catRows: catRows,
+      openAddCat: function () {
+        self.open({ title: 'أضف فئة', body: 'الوقت والسرعة بنربطهم بملف Hotspot على الراوتر.', field1: 'اسم الفئة', field2: 'سعر الجملة', ok: 'أضف', cancel: 'ألغِ' }, function () {
+          var n = self.state.dlg1.trim(), w = self.num(self.state.dlg2);
+          if (!n) { self.setState({ dlgErr: 'اكتب اسم الفئة.' }); return; }
+          if (!(w > 0)) { self.setState({ dlgErr: 'اكتب سعر الجملة.' }); return; }
+          var next = Object.assign({}, self.state.cats); next['c' + Object.keys(next).length] = { name: n, whole: String(w), sale: String(w) };
+          self.setState({ cats: next }); self.close(); self.say('انضافت فئة ' + n + '. حدد سعر البيع.');
+        });
+      },
+      tplList: tplList, tplPrice: st.tplPrice, toggleTplPrice: function () { self.setState({ tplPrice: !st.tplPrice }); }, tplSale: self.money(numOf(st.cats.h3.sale)), saveTpl: function () { self.say('انحفظ القالب.'); },
+
+      repTabs: [tabOf('collected', 'rTab', st.rTab, 'المحصّل مقابل المستخدم'), tabOf('commission', 'rTab', st.rTab, 'عمولة الموزعين'), tabOf('stale', 'rTab', st.rTab, 'كروت راكدة ومرتجعة')],
+      repCollected: st.rTab === 'collected', repCommission: st.rTab === 'commission', repStale: st.rTab === 'stale', commRows: commRows, staleRows: staleRows,
+
+      bnIsErr: bn.k === 'e', bnIsWarn: bn.k === 'w', bnIsOk: bn.k === 'o',
+      navHomeGo: navOf('home').go, navAccountGo: navOf('account').go, navBatchGo: navOf('batch').go, navNetworkGo: navOf('network').go, navReportsGo: navOf('reports').go, navSettingsGo: navOf('settings').go, navHome: navOf('home'), navAccount: navOf('account'), navBatch: navOf('batch'), navNetwork: navOf('network'), navReports: navOf('reports'), navSettings: navOf('settings'),
+      usedToday: this.money(st.fresh ? 0 : 1284), noSellers: sellers.length === 0,
+      noTasksTitle: st.fresh ? 'جاهز تبدأ' : 'ما في شغل اليوم', noTasksBody: st.fresh ? 'ولّد أول دفعة كروت، وهون رح تظهر المهام.' : 'كل الحسابات المتأخرة انسوت.',
+      noDist: normal && st.screen === 'account' && !hasDist,
+      dlgKey: function (e) {
+        if (e.key === 'Escape') { e.stopPropagation(); if (e.nativeEvent && e.nativeEvent.stopImmediatePropagation) e.nativeEvent.stopImmediatePropagation(); if (!self.state.dlgBusy) { var f = self.cancelFn; if (f) { f(); } else { self.close(); } } return; }
+        if (e.key !== 'Tab') return;
+        var items = e.currentTarget.querySelectorAll('input, select, button:not([disabled])');
+        if (!items.length) return;
+        var first = items[0], lastItem = items[items.length - 1], act = document.activeElement;
+        if (e.shiftKey && act === first) { e.preventDefault(); lastItem.focus(); }
+        else if (!e.shiftKey && act === lastItem) { e.preventDefault(); first.focus(); }
+      },
+
+      isSetup: st.screen === 'setup', inApp: st.screen !== 'setup',
+      steps: steps, setup1: st.setupStep === 1, setup2: st.setupStep === 2, setup3: st.setupStep === 3, setup4: st.setupStep === 4,
+      ip: st.ip, user: st.user, pass: st.pass, setIp: field('ip'), setUser: field('user'), setPass: field('pass'),
+      connMsg: st.connMsg, connOk: st.connOk, connBusy: st.connBusy, connCls: st.connOk ? 'bn ok' : 'bn er', connBtn: st.connBusy ? 'جاري الفحص' : 'اختبر الاتصال',
+      testConn: function () {
+        self.setState({ connBusy: true, connMsg: '', connOk: false });
+        self.later(function () {
+          var s = self.state;
+          if (!s.ip.trim()) self.setState({ connBusy: false, connMsg: 'اكتب عنوان الراوتر.' });
+          else if (!s.routerUp) self.setState({ connBusy: false, connMsg: 'الراوتر مش راد. تأكد إنك على نفس الشبكة، وإن خدمة api-ssl مفعلة من IP > Services.' });
+          else if (!s.user.trim() || !s.pass) self.setState({ connBusy: false, connMsg: 'اكتب اسم المستخدم وكلمة المرور.' });
+          else self.setState({ connBusy: false, connOk: true, connMsg: 'تم الاتصال بالراوتر. لقينا 4 فئات هوتسبوت.' });
+        }, 800);
+      },
+      next2: function () { self.setState({ setupStep: 2 }); }, next3: function () { self.setState({ setupStep: 3 }); }, next4: function () { self.setState({ setupStep: 4 }); },
+      cats: catList,
+      newName: st.newName, newOpen: st.newOpen, setNewName: field('newName'), setNewOpen: field('newOpen'), addMsg: st.addMsg,
+      addFromSetup: function () {
+        var name = st.newName.trim();
+        if (!name) { self.setState({ addMsg: '', addErr: 'اكتب اسم الموزع أول.' }); return; }
+        var open = Math.max(self.num(st.newOpen) || 0, 0), id = 'x' + Object.keys(st.dist).length, next = Object.assign({}, st.dist);
+        next[id] = { name: name, area: 'موزع جديد', days: 0, limit: 1000, entries: [{ date: '5 نوفمبر', action: 'رصيد افتتاحي', cards: 0, charge: open, paid: 0 }] };
+        self.setState({ dist: next, sel: id, bDist: id, newName: '', newOpen: '', addErr: '', addMsg: 'انضاف ' + name + ' برصيد ' + self.money(open) + '.' });
+      },
+      testNeeded: !st.testCode, testCode: st.testCode, testDiag: st.testDiag,
+      genTest: function () { self.setState({ testCode: 'G4XR-73HK', testDiag: false }); },
+      testYes: function () { self.setState({ screen: 'home', setupStep: 1 }); self.mark('setup'); self.say('نُقطة جاهزة. ولّد أول دفعة.'); },
+      testNo: function () { self.setState({ testDiag: true }); },
+
+      goCard: go('card'), goBatch: go('batch'),
+      bnCls: bn.c, bnTitle: bn.t, bnText: bn.x,
+      isHome: normal && st.screen === 'home', tasks: tasks, noTasks: tasks.length === 0, sellers: sellers,
+      collected: this.money((st.fresh ? 0 : 860) + st.collectedToday), totalOwed: this.money(total),
+
+      isAccount: normal && st.screen === 'account' && hasDist, rows: rows, entries: entries,
+      cur: { name: cur.name, sub: cur.area + (cur.days === 0 ? '، تسوية اليوم' : '، آخر تسوية قبل ' + this.daysText(cur.days)), limitText: this.money(cur.limit), held: held, charged: this.money(this.usedValue(cur)), paid: this.money(cur.entries.reduce(function (a, e) { return a + e.paid; }, 0)), balLabel: owedNow < 0 ? 'رصيد له' : 'مستحق عليه', balance: this.money(owedNow), inDispute: inDispute },
+      amount: st.amount, setAmount: function (e) { self.setState({ amount: e.target.value, amtErr: '' }); }, amtErr: st.amtErr, amtCls: st.amtErr ? 'box err' : 'box', amtInvalid: st.amtErr ? 'true' : 'false',
+      settleBusy: st.settleBusy, settleLabel: st.settleBusy ? 'جاري الحفظ' : 'سجّل التسوية',
+      amountKey: function (e) { if (e.key === 'Enter') { e.preventDefault(); self.renderVals().settle(); } },
+      settle: function () {
+        var paid = self.num(self.state.amount);
+        if (!(paid > 0)) { self.setState({ amtErr: 'اكتب المبلغ بالأرقام.' }); return; }
+        var due = Math.max(owedNow, 0), id = st.sel;
+        var run = function () { self.setState({ settleBusy: true }); self.later(function () { self.recordPay(id, paid); }, 700); };
+        if (paid > due) {
+          self.open({ title: 'المبلغ أكبر من المستحق', body: 'استلمت ' + self.money(paid) + ' والمستحق ' + self.money(due) + '. الزيادة ' + self.money(paid - due) + ' بتتسجل رصيد للموزع.', ok: 'سجّلها', cancel: 'عدّل المبلغ' }, function () { self.close(); run(); });
+        } else { run(); }
+      },
+      openAdd: function () {
+        self.open({ title: 'أضف موزع', field1: 'اسم الموزع', field2: 'الدين القديم عليه، إن وجد', ok: 'أضف', cancel: 'ألغِ' }, function () {
+          var name = self.state.dlg1.trim();
+          if (!name) { self.setState({ dlgErr: 'اكتب اسم الموزع.' }); return; }
+          var open = Math.max(self.num(self.state.dlg2) || 0, 0), id = 'x' + Object.keys(self.state.dist).length, next = Object.assign({}, self.state.dist);
+          next[id] = { name: name, area: 'موزع جديد', days: 0, limit: 1000, entries: [{ date: '5 نوفمبر', action: 'رصيد افتتاحي', cards: 0, charge: open, paid: 0 }] };
+          self.setState({ dist: next, sel: id, bDist: id, proofKey: '' }); self.close(); self.say('انضاف ' + name + '.');
+        });
+      },
+      openLimit: function () {
+        var id = st.sel;
+        self.open({ title: 'سقف الدين على ' + cur.name, body: 'السقف الحالي ' + self.money(cur.limit) + '. لما يتجاوزه، بيظهر تحذير قبل تسليم كروت جديدة.', field1: 'السقف الجديد بالشيكل', ok: 'احفظ', cancel: 'ألغِ' }, function () {
+          var n = self.num(self.state.dlg1);
+          if (!(n > 0)) { self.setState({ dlgErr: 'اكتب مبلغ صحيح.' }); return; }
+          var next = Object.assign({}, self.state.dist); next[id] = Object.assign({}, next[id], { limit: n });
+          self.setState({ dist: next }); self.close(); self.say('السقف صار ' + self.money(n) + '.');
+        });
+      },
+      openRouter: function () {
+        self.open({ title: 'اربط راوتر', body: 'بنتصل عبر api-ssl بحساب خاص بصلاحيات محدودة.', field1: 'عنوان الراوتر', ok: 'اربط', cancel: 'ألغِ' }, function () {
+          var ip = self.state.dlg1.trim();
+          if (!ip) { self.setState({ dlgErr: 'اكتب عنوان الراوتر.' }); return; }
+          self.setState({ dlgBusy: true });
+          self.later(function () { self.setState({ extraRouters: self.state.extraRouters.concat([ip]) }); self.close(); self.say('انربط الراوتر ' + ip + '.'); }, 700);
+        });
+      },
+      openReturn: function () {
+        var id = st.sel;
+        self.open({ title: 'إرجاع كروت من ' + cur.name, body: 'عنده ' + held + ' كرت. الكروت المرتجعة بتنوقف على الراوتر.', field1: 'عدد الكروت', ok: 'سجّل المرتجع', cancel: 'ألغِ' }, function () {
+          var n = self.num(self.state.dlg1);
+          if (!(n > 0) || n !== Math.floor(n)) { self.setState({ dlgErr: 'اكتب عدد صحيح.' }); return; }
+          if (n > held) { self.setState({ dlgErr: 'عنده ' + held + ' كرت بس.' }); return; }
+          self.setState({ dist: self.addEntry(id, { date: '5 نوفمبر', action: 'مرتجع', cards: -n, charge: 0, paid: 0 }), newKey: st.dist[id].entries.length }); self.close(); self.say(self.state.routerUp ? 'انسجل مرتجع ' + n + ' كرت، وانوقفوا على الراوتر.' : 'انسجل مرتجع ' + n + ' كرت، وبينوقفوا لما يرجع الراوتر.');
+        });
+      },
+      disputeLabel: inDispute ? 'سكّر الخلاف' : 'افتح خلاف',
+      openDispute: function () {
+        var id = st.sel;
+        if (inDispute) {
+          self.setState({ disputes: st.disputes.filter(function (x) { return x !== id; }), dist: self.addEntry(id, { date: '5 نوفمبر', action: 'انسكر الخلاف', cards: 0, charge: 0, paid: 0 }), newKey: st.dist[id].entries.length }); self.say('انسكر الخلاف، وضل مسجل بالكشف.'); return;
+        }
+        self.open({ title: 'تفتح خلاف مع ' + cur.name + '؟', body: 'الرصيد ما بيتغير. الخلاف بيتسجل بالكشف، وبيظهر بشغل اليوم لحين حله.', ok: 'افتح الخلاف', cancel: 'ألغِ' }, function () {
+          self.setState({ disputes: self.state.disputes.concat([id]), dist: self.addEntry(id, { date: '5 نوفمبر', action: 'خلاف مفتوح', cards: 0, charge: 0, paid: 0 }), newKey: st.dist[id].entries.length }); self.close();
+        });
+      },
+      openCorrect: function () {
+        var id = st.sel, last = cur.entries[cur.entries.length - 1];
+        if (!last || !(last.paid > 0)) { self.say('آخر حركة مش تسوية، فما في شيء يتصحح.'); return; }
+        self.open({ title: 'تلغي تسوية ' + self.money(last.paid) + '؟', body: 'ما بنحذف الحركة. بنضيف حركة تصحيح عكسية، وبيضل السجل كامل.', ok: 'صحّح', cancel: 'ألغِ', danger: true }, function () {
+          self.setState({ dist: self.addEntry(id, { date: '5 نوفمبر', action: 'تصحيح: إلغاء تسوية ' + self.money(last.paid), cards: 0, charge: 0, paid: -last.paid }), newKey: st.dist[id].entries.length, collectedToday: Math.max(self.state.collectedToday - last.paid, 0) }); self.close(); self.say('انضافت حركة التصحيح.');
+        });
+      },
+      printStatement: function () { self.say('انبعت كشف ' + cur.name + ' للطباعة.'); },
+
+      isBatch: normal && st.screen === 'batch', catChips: catList, bRouter: st.bRouter, setBRouter: field('bRouter'),
+      bCount: st.bCount, setBCount: function (e) { self.setState({ bCount: e.target.value, bErr: '' }); }, bCountCls: st.bErr ? 'box err' : 'box', bErr: st.bErr,
+      bDist: st.bDist, setBDist: field('bDist'), bValue: this.money(nCount * curCat[1]),
+      bIdle: st.bStage === 'form', bSending: st.bStage === 'sending', bSent: st.bStage === 'sent', bDone: st.bStage === 'done', bCanNew: st.bStage === 'done' || st.bStage === 'sent',
+      bProgW: st.bProg + '%',
+      bLocked: st.bStage !== 'form', bLimitWarn: st.bStage === 'form' ? bLimitWarn : '',
+      send: function () {
+        var n = self.num(st.bCount);
+        if (!(n > 0) || n !== Math.floor(n)) { self.setState({ bErr: 'اكتب عدد صحيح.' }); return; }
+        var d = st.dist[st.bDist];
+        if (d && self.owed(d) > d.limit) {
+          self.open({ title: d.name + ' فوق سقف الدين', body: 'عليه ' + self.money(self.owed(d)) + ' والسقف ' + self.money(d.limit) + '. متأكد بدك تسلمه كروت جديدة؟', ok: 'أكمل على مسؤوليتي', cancel: 'ألغِ' }, function () { self.close(); beginSend(); });
+          return;
+        }
+        beginSend();
+      },
+      hasPending: st.pending > 0, resendBusy: st.resendBusy, resendLabel: st.resendBusy ? 'جاري الإرسال' : 'أعد إرسال ' + st.pending + ' كرت',
+      bStatusCls: st.pending > 0 ? 'bn wa scr' : 'bn ok scr',
+      bStatusTitle: st.pending > 0 ? routerName + ' أكد ' + st.confirmed + ' كرت من ' + st.bTotal : routerName + ' أكد كل الكروت',
+      bStatusText: st.bNote || (st.pending > 0 ? st.pending + ' كرت بالانتظار. الدفعة محفوظة، وما بتنطبع قبل التأكيد.' : 'الدفعة جاهزة للطباعة.'),
+      resend: function () {
+        self.setState({ resendBusy: true, bNote: '' });
+        self.later(function () {
+          var s = self.state;
+          if (s.routerUp) self.setState({ resendBusy: false, confirmed: s.confirmed + s.pending, pending: 0 });
+          else self.setState({ resendBusy: false, bNote: 'الراوتر لسا مش راد. الدفعة محفوظة، وجرّب لما يرجع.' });
+        }, 800);
+      },
+      printBusy: st.printBusy, printDisabled: st.confirmed === 0 || st.printBusy,
+      printLabel: st.printBusy ? 'جاري الطباعة' : 'اطبع ' + st.confirmed + ' كرت',
+      doPrint: function () {
+        var askPrint = function () {
+          self.setState({ printBusy: true });
+          self.later(function () {
+            var s = self.state, times = s.printed + 1;
+            self.setState({ printBusy: false, printed: times });
+            self.open({ title: 'طلعت الطباعة سليمة؟', body: 'انطبعت الدفعة ' + times + ' مرة، وكل إعادة طباعة بتنسجل.', ok: 'نعم، سلّمها', cancel: 'لا، أعد نفس الأكواد' }, function () {
+              var s2 = self.state, no = 'B-' + s2.bNo, count = s2.confirmed, up = {};
+              if (s2.bDist !== 'direct') {
+                up.dist = self.addEntry(s2.bDist, { date: '5 نوفمبر', action: 'تسليم دفعة ' + no, cards: count, charge: 0, paid: 0 });
+                if (up.dist[s2.bDist].stockLow) up.dist[s2.bDist] = Object.assign({}, up.dist[s2.bDist], { stockLow: false });
+              }
+              up.bNo = s2.bNo + 1; up.confirmed = 0;
+              up.batches = [{ no: no, cat: curCat[0], dist: distName, total: count, used: 0, times: s2.printed }].concat(s2.batches);
+              up.doneTitle = 'انسجلت دفعة ' + no + '.';
+              up.doneText = count + ' كرت عهدة على ' + distName + '. الدين بينحسب لما تنستخدم الكروت.';
+              if (s2.pending > 0) { up.bNote = 'انسلم ' + count + ' كرت. باقي ' + s2.pending + ' بالانتظار.'; }
+              else { up.bStage = 'done'; }
+              self.setState(up); self.close(); self.mark('batch'); self.say(count + ' كرت انسجلوا على ' + distName + '.');
+            }, function () { self.close(); askPrint(); });
+          }, 700);
+        };
+        askPrint();
+      },
+      doneTitle: st.doneTitle, doneText: st.doneText, preview: preview,
+      newBatch: function () { self.setState({ bStage: 'form', bCount: '100', confirmed: 0, pending: 0, bNote: '' }); },
+
+      isCard: normal && st.screen === 'card', code: st.code, setCode: field('code'), cardBusy: st.cardBusy, cardBtn: st.cardBusy ? 'جاري البحث' : 'افحص',
+      card: card, hasCard: !st.cardBusy && !!cards[st.cardKey], cardMissing: !st.cardBusy && !!st.cardKey && !cards[st.cardKey],
+      cardCanKick: !!card.active && st.routerUp && st.kicked.indexOf(st.cardKey) === -1,
+      kickCard: askKick(st.cardKey),
+      checkCard: function () { self.runCheck(self.state.code); },
+      topCode: st.topCode, setTopCode: field('topCode'),
+      topKey: function (e) { if (e.key === 'Enter') { e.preventDefault(); self.runCheck(self.state.topCode); self.setState({ topCode: '' }); } },
+      back1: function () { self.setState({ setupStep: 1 }); }, back2: function () { self.setState({ setupStep: 2 }); },
+      addErr: st.addErr,
+      skipMain: function () { self.focusTitle(); },
+      tabKey: function (e) {
+        var tabs = Array.prototype.slice.call(e.currentTarget.querySelectorAll('[role=tab]')), i = tabs.indexOf(document.activeElement), n = -1;
+        if (e.key === 'ArrowLeft') n = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowRight') n = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') n = 0;
+        else if (e.key === 'End') n = tabs.length - 1;
+        if (n < 0) return;
+        e.preventDefault(); tabs[n].click(); tabs[n].focus();
+      },
+      setPanel: { net: 'بيانات الشبكة', users: 'المستخدمون', backup: 'النسخ والاستعادة', 'import': 'الاستيراد', license: 'الترخيص' }[st.sTab],
+      cardPanel: { gen: 'توليد دفعة', batches: 'الدفعات', prices: 'الفئات والأسعار', templates: 'قوالب الطباعة' }[st.cTab],
+      repPanel: { collected: 'المحصّل مقابل المستخدم', commission: 'عمولة الموزعين', stale: 'كروت راكدة ومرتجعة' }[st.rTab],
+      bInvalid: st.bErr ? 'true' : 'false',
+      stopClick: function (e) { e.stopPropagation(); },
+      countClick: function () { if (self.state.running) self.setState({ clicks: self.state.clicks + 1 }); },
+      testMode: st.testMode, testIdle: st.testMode && !st.running, running: st.running,
+      testTask: st.testTask, setTestTask: field('testTask'), testNote: st.testNote, setTestNote: field('testNote'),
+      testTasks: testDefs.map(function (t, i) { return { id: String(i), label: t[0] }; }),
+      testText: testDefs[Number(st.testTask)] ? testDefs[Number(st.testTask)][0] : '',
+      enterTest: function () { self.setState(Object.assign(self.world(), { testMode: true })); },
+      exitTest: function () { self.setState(self.world()); },
+      startTest: function () {
+        var t = testDefs[Number(self.state.testTask)];
+        self.setState(Object.assign(self.world(), t[1], { testMode: true, running: true, testTask: self.state.testTask, startedAt: Date.now(), clicks: 0, testNote: '' }));
+      },
+      markPass: finishTest('نجح'), markHard: finishTest('نجح بصعوبة'), markFail: finishTest('ما نجح'),
+      hasResults: st.testMode && st.testResults.length > 0, testRows: st.testResults,
+      copyResults: function () {
+        var text = self.state.testResults.map(function (r) { return [r.task, r.outcome, r.secs, r.clicks, r.note].join('\t'); }).join('\n');
+        try { navigator.clipboard.writeText(text).then(function () { self.say('انسخت النتائج.'); }, function () { self.say('النسخ ما زبط. حدد النص من الجدول.'); }); }
+        catch (err) { self.say('النسخ ما زبط. حدد النص من الجدول.'); }
+      },
+
+      isNetwork: normal && st.screen === 'network', devices: devices, sessions: sessions, routerUp: st.routerUp, routerDown: !st.routerUp,
+      onlineTitle: st.routerUp ? 'متصلين الآن: ' + (87 - st.kicked.length) : 'متصلين الآن: غير متاح',
+
+      isReports: normal && st.screen === 'reports', repRows: repRows, repUsed: this.money(repUsed), repPaid: this.money(repPaid),
+      exportX: function () { self.say('جهزنا ملف Excel للتقرير.'); },
+      exportP: function () { self.say('جهزنا ملف PDF للتقرير.'); },
+
+      dlg: st.dlg, dlg1: st.dlg1, dlg2: st.dlg2, setDlg1: field('dlg1'), setDlg2: field('dlg2'), dlgErr: st.dlgErr, dlgBusy: st.dlgBusy,
+      dlgOkCls: st.dlg && st.dlg.danger ? 'btn btn-d' : 'btn btn-p',
+      dlgOk: function () { if (self.okFn) self.okFn(); },
+      dlgCancel: function () { var fn = self.cancelFn; if (fn) { fn(); } else { self.close(); } },
+      toast: st.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

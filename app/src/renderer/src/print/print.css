@@ -1,0 +1,51 @@
+/* صفحة الطباعة. أصغر نص 13px على الكرت المطبوع (HANDOFF القسم 3). أبيض وأسود عشان الطابعات العادية والحرارية. */
+html,body{margin:0;padding:0;background:#fff;color:#13201D;font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.m{display:inline-block;direction:ltr;unicode-bidi:isolate}
+.n{direction:ltr;text-align:right;unicode-bidi:isolate}
+
+/* ───── الكروت */
+.page{break-after:page;display:grid;box-sizing:border-box}
+.page:last-child{break-after:auto}
+.pc{box-sizing:border-box;border:1px dashed #13201D;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.pc-top{display:flex;justify-content:space-between;gap:2mm;font-weight:600}
+.pc-code{font-family:'IBM Plex Mono',monospace;font-weight:600;text-align:center;letter-spacing:.02em}
+.pc-foot{display:flex;justify-content:space-between;gap:2mm;align-items:baseline}
+.pc-foot strong{font-weight:700}
+.pc-meta{display:flex;justify-content:space-between;color:#55625D}
+
+/* A4، 12 كرت: 3 × 4 */
+.t-a4-12 .page{width:210mm;height:297mm;padding:8mm;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr)}
+.t-a4-12 .pc{padding:4mm 4.5mm;font-size:13px;line-height:19px}
+.t-a4-12 .pc-code{font-size:23px;line-height:32px}
+
+/* A4، 24 كرت: 4 × 6 */
+.t-a4-24 .page{width:210mm;height:297mm;padding:6mm;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(6,1fr)}
+.t-a4-24 .pc{padding:2.5mm 3mm;font-size:13px;line-height:17px}
+.t-a4-24 .pc-code{font-size:18px;line-height:26px}
+.t-a4-24 .pc-foot span{font-size:13px}
+
+/* حرارية 80mm: كرت بكل قصة */
+.t-thermal .page{width:80mm;height:55mm;padding:3mm 4mm}
+.t-thermal .pc{border:0;border-bottom:1px dashed #13201D;padding:0 0 2mm;font-size:14px;line-height:20px}
+.t-thermal .pc-code{font-size:28px;line-height:40px}
+
+/* ───── الكشف والتقرير: A4 عمودي */
+.doc{width:210mm;box-sizing:border-box;padding:14mm 14mm 16mm;font-size:13px;line-height:20px}
+.doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8mm;border-bottom:2px solid #13201D;padding-bottom:4mm;margin-bottom:5mm}
+.doc-head h1{margin:1mm 0 0;font-size:20px;line-height:28px;font-weight:700}
+.doc-net{font-weight:600}
+.doc-sub{color:#55625D}
+.doc-sum{display:grid;grid-template-columns:repeat(5,1fr);gap:3mm;margin-bottom:5mm}
+.doc-sum div{border:1px solid #D9DDD5;padding:2mm 3mm;display:flex;flex-direction:column}
+.doc-sum span{color:#55625D}
+.doc-sum strong{font-size:16px;line-height:24px}
+.doc-sum .doc-owed{border:2px solid #13201D}
+.doc-table{width:100%;border-collapse:collapse}
+.doc-table th,.doc-table td{padding:1.6mm 2mm;border-bottom:1px solid #D9DDD5;text-align:start;vertical-align:top}
+.doc-table th{background:#F4F5F0;font-weight:600;border-bottom:1px solid #13201D}
+.doc-table thead{display:table-header-group}
+.doc-table tr{break-inside:avoid}
+.doc-table tfoot td{border-top:2px solid #13201D;border-bottom:0;font-weight:600}
+.doc-note{margin-top:6mm;color:#55625D}
+
+@page{margin:0}

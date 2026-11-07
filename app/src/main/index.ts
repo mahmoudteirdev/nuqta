@@ -1,0 +1,72 @@
+import { app, BrowserWindow, shell } from 'electron'
+import { join } from 'node:path'
+import { startBackend } from './backend'
+
+// البرنامج لازم يشتغل بدون نت: ما في أي تحميل من مصدر خارجي.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
+  "img-src 'self' data:",
+  "connect-src 'self' ws://localhost:*"
+].join('; ')
+
+function createWindow(): void {
+  const win = new BrowserWindow({
+    width: 1280,
+    height: 860,
+    minWidth: 360,
+    minHeight: 600,
+    show: false,
+    backgroundColor: '#F4F5F0',
+    title: 'نقطة',
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      spellcheck: false
+    }
+  })
+
+  win.webContents.session.webRequest.onHeadersReceived((details, cb) => {
+    cb({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [CSP] } })
+  })
+
+  win.once('ready-to-show', () => win.show())
+
+  // أثناء التطوير: رسائل الواجهة وأخطاؤها بتطلع في الطرفية.
+  if (!app.isPackaged) {
+    win.webContents.on('console-message', (e) => console.log(`[renderer:${e.level}] ${e.message}`))
+    win.webContents.on('preload-error', (_e, path, err) => console.error(`[preload] ${path}: ${err.message}`))
+  }
+
+  // أي رابط خارجي بيفتح في المتصفح، والنافذة ما بتتنقل لبره البرنامج.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:\/\//.test(url)) void shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  win.webContents.on('will-navigate', (e, url) => {
+    const devUrl = process.env['ELECTRON_RENDERER_URL']
+    if (!devUrl || !url.startsWith(devUrl)) e.preventDefault()
+  })
+
+  const devUrl = process.env['ELECTRON_RENDERER_URL']
+  if (!app.isPackaged && devUrl) void win.loadURL(devUrl)
+  else void win.loadFile(join(__dirname, '../renderer/index.html'))
+}
+
+app.whenReady().then(() => {
+  const status = startBackend()
+  if (!app.isPackaged) console.log('[backend]', JSON.stringify(status))
+  createWindow()
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})

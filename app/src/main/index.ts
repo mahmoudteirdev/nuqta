@@ -1,6 +1,9 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { startBackend } from './backend'
+import { allowDevEnv, devEnv } from './dev-env'
+
+if (!app.isPackaged) allowDevEnv()
 
 // البرنامج لازم يشتغل بدون نت: ما في أي تحميل من مصدر خارجي.
 const CSP = [
@@ -11,6 +14,8 @@ const CSP = [
   "img-src 'self' data:",
   "connect-src 'self' ws://localhost:*"
 ].join('; ')
+
+let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -35,6 +40,8 @@ function createWindow(): void {
     cb({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [CSP] } })
   })
 
+  mainWindow = win
+  win.on('closed', () => { if (mainWindow === win) mainWindow = null })
   win.once('ready-to-show', () => win.show())
 
   // أثناء التطوير: رسائل الواجهة وأخطاؤها بتطلع في الطرفية.
@@ -49,23 +56,35 @@ function createWindow(): void {
     return { action: 'deny' }
   })
   win.webContents.on('will-navigate', (e, url) => {
-    const devUrl = process.env['ELECTRON_RENDERER_URL']
+    const devUrl = devEnv('ELECTRON_RENDERER_URL')
     if (!devUrl || !url.startsWith(devUrl)) e.preventDefault()
   })
 
-  const devUrl = process.env['ELECTRON_RENDERER_URL']
+  const devUrl = devEnv('ELECTRON_RENDERER_URL')
   if (!app.isPackaged && devUrl) void win.loadURL(devUrl)
   else void win.loadFile(join(__dirname, '../renderer/index.html'))
 }
 
-app.whenReady().then(() => {
-  const status = startBackend()
-  if (!app.isPackaged) console.log('[backend]', JSON.stringify(status))
-  createWindow()
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+// نسخة وحدة بس: نسختين بيكتبوا على نفس قاعدة البيانات وبيبعتوا لنفس الراوتر.
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (!mainWindow) return
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.show()
+    mainWindow.focus()
   })
-})
+
+  app.whenReady().then(() => {
+    const status = startBackend()
+    if (!app.isPackaged) console.log('[backend]', JSON.stringify(status))
+    createWindow()
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
+  })
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

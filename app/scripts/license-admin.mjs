@@ -19,7 +19,7 @@ import { createServer } from 'node:http'
 import { homedir } from 'node:os'
 import { dirname, join, relative, resolve, isAbsolute } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { addMonths, dateText, generateKeys, isRealDate, issueKey, normalizeDevice, publicFromPrivate } from './license-lib.mjs'
+import { addDays, addMonths, dateText, generateKeys, isRealDate, issueKey, issueResetKey, normalizeDevice, normalizeRequest, publicFromPrivate } from './license-lib.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const APP = resolve(HERE, '..')
@@ -130,6 +130,32 @@ function issue(body) {
   return row
 }
 
+function issueReset(body) {
+  if (!existsSync(KEY_FILE)) throw new Refused('no_key')
+  const customer = clean(body.customer, 120)
+  if (!customer) throw new Refused('customer_required')
+  const device = normalizeDevice(body.device)
+  if (!device) throw new Refused('device_invalid')
+  const request = normalizeRequest(body.request)
+  if (!request) throw new Refused('request_invalid')
+  const now = new Date()
+  const expires = addDays(now, 3)
+  const row = {
+    id: randomBytes(8).toString('hex'),
+    kind: 'reset',
+    customer,
+    phone: '',
+    note: '',
+    device,
+    request,
+    expires,
+    issuedAt: now.toISOString(),
+    key: issueResetKey(readFileSync(KEY_FILE), { device, request, expires })
+  }
+  appendFileSync(LOG_FILE, JSON.stringify(row) + '\n', { mode: 0o600 })
+  return row
+}
+
 function keygen() {
   if (existsSync(KEY_FILE)) throw new Refused('key_exists')
   mkdirSync(DIR, { recursive: true })
@@ -155,8 +181,8 @@ const csvCell = (v) => {
 }
 
 function exportCsv() {
-  const head = ['الزبون', 'التلفون', 'كود الجهاز', 'الانتهاء', 'تاريخ الإصدار', 'ملاحظة', 'السيريال']
-  const lines = readRows().rows.map((r) => [r.customer, r.phone, r.device, r.expires ?? 'بدون انتهاء', String(r.issuedAt).slice(0, 10), r.note, r.key].map(csvCell).join(','))
+  const head = ['النوع', 'الزبون', 'التلفون', 'كود الجهاز', 'الانتهاء', 'تاريخ الإصدار', 'ملاحظة', 'السيريال']
+  const lines = readRows().rows.map((r) => [r.kind === 'reset' ? 'استرجاع رمز' : 'ترخيص', r.customer, r.phone, r.device, r.expires ?? 'بدون انتهاء', String(r.issuedAt).slice(0, 10), r.note, r.key].map(csvCell).join(','))
   return '﻿' + [head.map(csvCell).join(','), ...lines].join('\r\n') + '\r\n'
 }
 
@@ -233,6 +259,7 @@ const server = createServer(async (req, res) => {
     const body = await readBody(req)
 
     if (url.pathname === '/api/issue') return json(res, 200, { ok: true, value: issue(body) })
+    if (url.pathname === '/api/issue-reset') return json(res, 200, { ok: true, value: issueReset(body) })
     if (url.pathname === '/api/keygen') {
       keygen()
       return json(res, 200, { ok: true, value: state() })

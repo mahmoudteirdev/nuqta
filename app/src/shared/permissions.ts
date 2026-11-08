@@ -21,6 +21,8 @@ export const PERMISSIONS: Record<keyof Backend, Permission> = {
   status: 'public',
   login: 'public',
   createOwnerPin: 'public',
+  pinResetRequest: 'public',
+  pinResetApply: 'public',
   printJob: 'public',
   printReady: 'public',
   logout: 'any',

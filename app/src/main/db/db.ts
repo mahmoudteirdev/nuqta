@@ -64,11 +64,12 @@ export class Db {
 }
 
 /** بينفذ الترحيلات اللي لسا ما انعملت. بيرجع رقم النسخة بعدها. */
-export function migrate(db: Db): number {
+export function migrate(db: Db, beforeUpgrade?: (db: Db) => void): number {
   const current = Number(db.get<{ user_version: number }>('PRAGMA user_version')?.user_version ?? 0)
   if (current > MIGRATIONS.length) {
     throw new Error(`database version ${current} is newer than this app (${MIGRATIONS.length})`)
   }
+  if (current > 0 && current < MIGRATIONS.length) beforeUpgrade?.(db)
   for (let v = current; v < MIGRATIONS.length; v++) {
     db.tx(() => {
       db.raw.exec(MIGRATIONS[v]!)
@@ -83,7 +84,8 @@ export type OpenResult =
   /** قاعدة البيانات تالفة أو أحدث من البرنامج. ما بنمسح شي: الواجهة بتعرض خيار الاسترجاع. */
   | { ok: false; reason: 'corrupt' | 'too_new' | 'unreadable'; detail: string }
 
-export function openDatabase(path: string): OpenResult {
+/** beforeUpgrade: بيتنادى قبل ما تتعدل قاعدة بيانات قديمة، مش على قاعدة جديدة ولا محدّثة. */
+export function openDatabase(path: string, beforeUpgrade?: (db: Db) => void): OpenResult {
   let db: Db | undefined
   try {
     db = new Db(path)
@@ -92,7 +94,7 @@ export function openDatabase(path: string): OpenResult {
       db.close()
       return { ok: false, reason: 'corrupt', detail: check.map((r) => r.integrity_check).join('; ') }
     }
-    const version = migrate(db)
+    const version = migrate(db, beforeUpgrade)
     const fk = db.all('PRAGMA foreign_key_check')
     if (fk.length) {
       db.close()

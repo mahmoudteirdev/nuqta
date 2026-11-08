@@ -24,6 +24,7 @@
   </section>
 
   <div id="work" class="cols" hidden>
+    <div class="stack">
     <section class="card stack" aria-labelledby="form-t">
       <h1 id="form-t" class="h2">سيريال جديد</h1>
       <form id="form" class="stack" novalidate>
@@ -68,6 +69,34 @@
         <div><button id="result-copy" type="button" class="btn btn-s sm">انسخ السيريال</button></div>
       </section>
     </section>
+
+    <details class="card" id="reset-card">
+      <summary class="h2 reset-sum">زبون نسي رمز المدير</summary>
+      <form id="reset-form" class="stack reset-body" novalidate>
+        <p class="bn wa small">هذا المفتاح بيغيّر رمز المدير عند الزبون. تأكد إنه صاحب الشبكة فعلا قبل ما تبعته. بيشتغل مرة وحدة، وصالح 3 أيام.</p>
+        <div class="fld">
+          <label class="lbl" for="r-customer">اسم الزبون</label>
+          <div class="box" id="r-customer-box"><input id="r-customer" autocomplete="off" maxlength="120"></div>
+        </div>
+        <div class="fld">
+          <label class="lbl" for="r-device">كود الجهاز</label>
+          <div class="box" id="r-device-box" dir="ltr"><input id="r-device" class="mono-in" autocomplete="off" spellcheck="false" placeholder="NQ-XXXX-XXXX"></div>
+        </div>
+        <div class="fld">
+          <label class="lbl" for="r-request">رمز الطلب</label>
+          <div class="box" id="r-request-box" dir="ltr"><input id="r-request" class="mono-in" autocomplete="off" spellcheck="false" placeholder="XXXXXXXX" aria-describedby="r-note"></div>
+          <span id="r-note" class="sub small">الزبون بيلاقي الكودين بشاشة الدخول، تحت «نسيت الرمز؟».</span>
+        </div>
+        <p id="r-err" class="emsg" role="alert" hidden></p>
+        <button id="r-issue" type="submit" class="btn btn-s">أصدر مفتاح الاسترجاع</button>
+      </form>
+      <section id="r-result" class="result stack" hidden aria-labelledby="r-result-t" tabindex="-1">
+        <h2 id="r-result-t" class="lbl"></h2>
+        <code id="r-key" class="keytext" dir="ltr"></code>
+        <div><button id="r-copy" type="button" class="btn btn-s sm">انسخ المفتاح</button></div>
+      </section>
+    </details>
+    </div>
 
     <section class="card stack" aria-labelledby="list-t">
       <div class="listhead">

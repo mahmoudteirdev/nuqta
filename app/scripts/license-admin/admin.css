@@ -51,3 +51,6 @@ p{margin:0}
 @media (max-width:860px){.cols{grid-template-columns:minmax(0,1fr)}.wrap{padding:16px}.rows{max-height:none}}
 @media (max-width:480px){.lic{grid-template-columns:minmax(0,1fr)}.lic .acts{grid-column:1;grid-row:auto}}
 @media (forced-colors:active){.dur:has(input:checked),.tag{border:2px solid CanvasText}}
+.reset-sum{cursor:pointer;font-size:16px;line-height:26px}
+.reset-body{margin-top:14px}
+#r-result{margin-top:14px}

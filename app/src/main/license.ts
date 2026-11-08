@@ -5,7 +5,7 @@
 // صيغة المفتاح: Base32 (Crockford) لـ: payload بطوله (بايت) + payload + توقيع 64 بايت.
 // payload نص UTF-8: «NQ1|<كود الجهاز>|<الانتهاء YYYY-MM-DD أو ->|<الخطة>».
 
-import { createHash, createPublicKey, verify } from 'node:crypto'
+import { createHash, createPublicKey, randomBytes, verify } from 'node:crypto'
 
 const B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 /** كود الجهاز من 31 رمز زي الكروت: بدون 0 O 1 I L. */
@@ -80,11 +80,12 @@ export type KeyCheck =
   | { ok: true; claims: LicenseClaims }
   | { ok: false; reason: 'invalid' | 'other_device' | 'expired' }
 
-export function checkKey(key: string, myDevice: string, publicKeyPem: string, today: string): KeyCheck {
+/** بيفك المفتاح وبيتأكد من التوقيع. بيرجع حقول النص الموقّع، أو null. */
+function signedFields(key: string, publicKeyPem: string): string[] | null {
   const bytes = base32Decode(key)
-  if (!bytes || bytes.length < 2) return { ok: false, reason: 'invalid' }
+  if (!bytes || bytes.length < 2) return null
   const n = bytes[0]!
-  if (bytes.length !== 1 + n + 64) return { ok: false, reason: 'invalid' }
+  if (bytes.length !== 1 + n + 64) return null
   const payload = bytes.subarray(1, 1 + n)
   const sig = bytes.subarray(1 + n)
   let good = false
@@ -93,13 +94,36 @@ export function checkKey(key: string, myDevice: string, publicKeyPem: string, to
   } catch {
     good = false
   }
-  if (!good) return { ok: false, reason: 'invalid' }
-  const parts = new TextDecoder().decode(payload).split('|')
-  if (parts.length !== 4 || parts[0] !== 'NQ1') return { ok: false, reason: 'invalid' }
+  return good ? new TextDecoder().decode(payload).split('|') : null
+}
+
+export function checkKey(key: string, myDevice: string, publicKeyPem: string, today: string): KeyCheck {
+  const parts = signedFields(key, publicKeyPem)
+  if (!parts || parts.length !== 4 || parts[0] !== 'NQ1') return { ok: false, reason: 'invalid' }
   const claims: LicenseClaims = { deviceCode: parts[1]!, expires: parts[2] === '-' ? null : parts[2]!, plan: parts[3]! }
   if (claims.deviceCode !== myDevice) return { ok: false, reason: 'other_device' }
   if (claims.expires && claims.expires < today) return { ok: false, reason: 'expired' }
   return { ok: true, claims }
+}
+
+/** رمز طلب جديد لاسترجاع الرمز. المفتاح الموقّع مربوط فيه، فبيشتغل مرة وحدة. */
+export function newResetRequest(): string {
+  return [...randomBytes(8)].map((b) => DEVICE_ALPHABET[b % DEVICE_ALPHABET.length]).join('')
+}
+
+export type ResetCheck = { ok: true } | { ok: false; reason: 'invalid' | 'other_device' | 'wrong_request' | 'expired' }
+
+/**
+ * مفتاح استرجاع رمز المدير. نص موقّع: «NQR1|<كود الجهاز>|<رمز الطلب>|<الانتهاء>».
+ * بادئة مختلفة عن الترخيص، فمفتاح ترخيص ما بيغيّر رمز، ومفتاح استرجاع ما بيفعّل البرنامج.
+ */
+export function checkResetKey(key: string, myDevice: string, request: string, publicKeyPem: string, today: string): ResetCheck {
+  const parts = signedFields(key, publicKeyPem)
+  if (!parts || parts.length !== 4 || parts[0] !== 'NQR1') return { ok: false, reason: 'invalid' }
+  if (parts[1] !== myDevice) return { ok: false, reason: 'other_device' }
+  if (parts[2] !== request) return { ok: false, reason: 'wrong_request' }
+  if (parts[3]! < today) return { ok: false, reason: 'expired' }
+  return { ok: true }
 }
 
 export type LicenseState =

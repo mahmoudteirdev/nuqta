@@ -47,7 +47,7 @@ export interface BackupInfo {
   file: string
   at: string
   size: number
-  kind: 'auto' | 'manual' | 'before-restore' | 'imported'
+  kind: 'auto' | 'manual' | 'before-restore' | 'before-update' | 'imported'
 }
 
 export type SetupStep = 1 | 2 | 3 | 4
@@ -432,6 +432,9 @@ export interface Backend {
   /** أول رمز لصاحب الشبكة، لما ما في ولا رمز. بيدخل فيه مباشرة. */
   createOwnerPin(pin: string): ActionResult
   login(userId: number, pin: string): ActionResult
+  /** نسيان رمز المدير: كود الجهاز ورمز الطلب اللي بينبعتوا للدعم. */
+  pinResetRequest(): { deviceCode: string; requestCode: string }
+  pinResetApply(key: string, pin: string): ActionResult
   logout(): void
   setUserPin(userId: number, pin: string): ActionResult
   setUserActive(userId: number, active: boolean): ActionResult

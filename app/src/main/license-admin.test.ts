@@ -4,7 +4,7 @@ import { request } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { checkKey, deviceCode } from './license'
+import { checkKey, checkResetKey, deviceCode } from './license'
 
 const SCRIPT = resolve(__dirname, '../../scripts/license-admin.mjs')
 const DEVICE = deviceCode('admin-tool-test-device')
@@ -138,6 +138,27 @@ describe('issuing', () => {
     expect(await issue({ duration: { kind: 'until', date: '2099-02-31' } })).toEqual({ ok: false, error: 'until_invalid' })
     expect(await issue({ duration: { kind: 'months', months: 999 } })).toEqual({ ok: false, error: 'duration_invalid' })
     expect((await getState()).rows).toHaveLength(before)
+  })
+})
+
+describe('PIN recovery keys', () => {
+  it('issues a key the app accepts for that request only, and logs it apart from licenses', async () => {
+    const before = (await getState()).rows.length
+    const r = value(await post<Row & { kind: string; request: string }>('/api/issue-reset', { customer: 'شبكة النور', device: DEVICE, request: 'abcd2345' }))
+    expect(r).toMatchObject({ kind: 'reset', request: 'ABCD2345', device: DEVICE })
+    expect(r.expires! > TODAY).toBe(true)
+    expect(checkResetKey(r.key, DEVICE, 'ABCD2345', appPublicKey(), TODAY)).toEqual({ ok: true })
+    expect(checkResetKey(r.key, DEVICE, 'ZZZZ2345', appPublicKey(), TODAY)).toEqual({ ok: false, reason: 'wrong_request' })
+    expect(checkKey(r.key, DEVICE, appPublicKey(), TODAY)).toEqual({ ok: false, reason: 'invalid' })
+    expect((await getState()).rows).toHaveLength(before + 1)
+  })
+
+  it('refuses a bad request, device or missing customer', async () => {
+    const send = (b: Record<string, string>) => post('/api/issue-reset', { customer: 'شبكة', device: DEVICE, request: 'ABCD2345', ...b })
+    expect(await send({ request: 'short' })).toEqual({ ok: false, error: 'request_invalid' })
+    expect(await send({ request: 'OOOOLLLL' })).toEqual({ ok: false, error: 'request_invalid' })
+    expect(await send({ device: 'NQ-1' })).toEqual({ ok: false, error: 'device_invalid' })
+    expect(await send({ customer: ' ' })).toEqual({ ok: false, error: 'customer_required' })
   })
 })
 

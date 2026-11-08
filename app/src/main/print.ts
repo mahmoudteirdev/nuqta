@@ -6,6 +6,7 @@ import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { BrowserWindow, type WebContentsPrintOptions } from 'electron'
 import type { PrintJob } from '@shared/print'
+import { devEnv } from './dev-env'
 
 const READY_TIMEOUT_MS = 15_000
 
@@ -38,7 +39,7 @@ function pageSize(job: PrintJob): WebContentsPrintOptions['pageSize'] {
  * mode = pdf: بيحفظ الملف بالمسار. NUQTA_PRINT_PDF_DIR بيحول كل الطباعة لـPDF (للفحص بدون طابعة).
  */
 export async function runPrint(job: PrintJob, mode: { kind: 'dialog' } | { kind: 'pdf'; path: string }): Promise<PrintOutcome> {
-  const testDir = process.env['NUQTA_PRINT_PDF_DIR']
+  const testDir = devEnv('NUQTA_PRINT_PDF_DIR')
   if (mode.kind === 'dialog' && testDir) mode = { kind: 'pdf', path: join(testDir, `${job.kind}-${Date.now()}.pdf`) }
 
   const id = randomUUID()
@@ -51,7 +52,7 @@ export async function runPrint(job: PrintJob, mode: { kind: 'dialog' } | { kind:
     webPreferences: { preload: join(__dirname, '../preload/index.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
   })
   try {
-    const devUrl = process.env['ELECTRON_RENDERER_URL']
+    const devUrl = devEnv('ELECTRON_RENDERER_URL')
     if (devUrl) await win.loadURL(`${devUrl}/print.html#${id}`)
     else await win.loadFile(join(__dirname, '../renderer/print.html'), { hash: id })
 

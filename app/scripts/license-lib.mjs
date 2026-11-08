@@ -21,19 +21,34 @@ function base32Encode(bytes) {
 
 /** بيقبل أحرف صغيرة ومسافات، ونسخ الكود بدون شرطات. كود مش مزبوط بيرجع null. */
 export function normalizeDevice(text) {
-  const s = String(text ?? '').toUpperCase().replace(/[\s‎‏‪-‮⁦-⁩-]/g, '')
+  const s = String(text ?? '').toUpperCase().replace(/[\s\u200e\u200f\u202a-\u202e\u2066-\u2069-]/g, '')
   const code = `${s.slice(0, 2)}-${s.slice(2, 6)}-${s.slice(6)}`
   return DEVICE_RE.test(code) ? code : null
 }
 
-export function issueKey(privatePem, { device, expires = null, plan = 'full' }) {
-  const payload = new TextEncoder().encode(`NQ1|${device}|${expires ?? '-'}|${plan}`)
+function signText(privatePem, text) {
+  const payload = new TextEncoder().encode(text)
   const sig = sign(null, payload, createPrivateKey(privatePem))
   const all = new Uint8Array(1 + payload.length + sig.length)
   all[0] = payload.length
   all.set(payload, 1)
   all.set(sig, 1 + payload.length)
   return base32Encode(all).match(/.{1,5}/g).join('-')
+}
+
+export function issueKey(privatePem, { device, expires = null, plan = 'full' }) {
+  return signText(privatePem, `NQ1|${device}|${expires ?? '-'}|${plan}`)
+}
+
+/** مفتاح استرجاع رمز المدير، صالح لهالطلب بس ولأيام قليلة. لازم يطابق checkResetKey بـsrc/main/license.ts. */
+export function issueResetKey(privatePem, { device, request, expires }) {
+  return signText(privatePem, `NQR1|${device}|${request}|${expires}`)
+}
+
+/** رمز الطلب اللي بيطلع عند الزبون: 8 أحرف من نفس أحرف كود الجهاز. */
+export function normalizeRequest(text) {
+  const s = String(text ?? '').toUpperCase().replace(/[\s\u200e\u200f\u202a-\u202e\u2066-\u2069-]/g, '')
+  return /^[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{8}$/.test(s) ? s : null
 }
 
 export function generateKeys() {
@@ -57,6 +72,10 @@ export function addMonths(from, months) {
   const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
   d.setDate(Math.min(from.getDate(), last))
   return dateText(d)
+}
+
+export function addDays(from, days) {
+  return dateText(new Date(from.getFullYear(), from.getMonth(), from.getDate() + days))
 }
 
 export function isRealDate(s) {

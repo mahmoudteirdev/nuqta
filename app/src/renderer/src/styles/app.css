@@ -216,3 +216,7 @@ html,body,#root{height:100%}
 .who-lock{color:var(--nav-text)}
 .who-lock:hover{background:var(--nav-hover);color:#fff}
 .ev .by{display:block}
+.login-forgot{align-self:center}
+.reset-codes{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;background:var(--ground);border-radius:4px;padding:12px}
+.reset-codes code{font-size:16px;text-align:end}
+.reset-codes .btn{grid-column:1 / -1;justify-self:start}

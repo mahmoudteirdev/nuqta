@@ -14,14 +14,15 @@ import { settingsActions } from './actions/settings'
 import { setupActions, setupState } from './actions/setup'
 import { autoBackupIfDue, backupActions } from './actions/backup'
 import { importActions } from './actions/import'
-import { licenseActions } from './actions/license'
+import { licenseActions, pinResetActions } from './actions/license'
 import { deviceCode } from './license'
 import { LICENSE_PUBLIC_KEY } from './license-public-key'
+import { devEnv } from './dev-env'
 import { installedAt, machineId } from './machine'
 import { Auth, type AuthError } from './auth'
 import { allowed } from '@shared/permissions'
 import { readFile } from 'node:fs/promises'
-import { ensureDir, listBackups } from './backup'
+import { ensureDir, listBackups, makeBackup } from './backup'
 import { reportCsv, reportJob, reportsData } from './db/reports'
 import { accountData, homeData } from './db/queries'
 import { markReady, runPrint, takeJob } from './print'
@@ -74,7 +75,7 @@ function hydrateMock(db: Db, mock: MockRouter): void {
  */
 function chooseRouter(db: Db, store: Store, dev: boolean): Pick<Live, 'router' | 'mock' | 'configured'> {
   const cfg = readRouterConfig(store)
-  if (cfg && !process.env['NUQTA_MOCK'] && secrets.available()) {
+  if (cfg && !devEnv('NUQTA_MOCK') && secrets.available()) {
     return { router: clientFromConfig(cfg, { makeClient, secrets }), mock: null, configured: true }
   }
   if (dev) {
@@ -88,9 +89,16 @@ function chooseRouter(db: Db, store: Store, dev: boolean): Pick<Live, 'router' |
 
 export function startBackend(): AppStatus {
   const dev = !app.isPackaged
-  const path = process.env['NUQTA_DB'] || join(app.getPath('userData'), dev ? 'nuqta-dev.db' : 'nuqta.db')
-  const opened = openDatabase(path)
-  const backupDir = ensureDir(process.env['NUQTA_BACKUP_DIR'] || join(app.getPath('userData'), dev ? 'backups-dev' : 'backups'))
+  const path = devEnv('NUQTA_DB') || join(app.getPath('userData'), dev ? 'nuqta-dev.db' : 'nuqta.db')
+  const backupDir = ensureDir(devEnv('NUQTA_BACKUP_DIR') || join(app.getPath('userData'), dev ? 'backups-dev' : 'backups'))
+  // نسخة من الوضع القديم قبل ما التحديث يعدّل الجداول. فشلها ما بيوقف البرنامج: الترقية نفسها بمعاملة.
+  const opened = openDatabase(path, (old) => {
+    try {
+      makeBackup(old, backupDir, 'before-update')
+    } catch (e) {
+      console.error('[backup] backup before update failed', e)
+    }
+  })
   let live: Live | null = null
   let dbStatus: DbStatus
   const router = { up: false, lastSeenAt: null as string | null }
@@ -98,7 +106,7 @@ export function startBackend(): AppStatus {
   if (opened.ok) {
     const { db } = opened
     const store = new Store(db)
-    if (dev && !store.distributors().length && !process.env['NUQTA_NO_SEED']) seedDemo(db)
+    if (dev && !store.distributors().length && !devEnv('NUQTA_NO_SEED')) seedDemo(db)
     const r = chooseRouter(db, store, dev)
     live = { db, store, ...r, service: new RouterService(store, r.router) }
     dbStatus = { ok: true, path, version: opened.version, distributors: store.distributors().length }
@@ -119,9 +127,16 @@ export function startBackend(): AppStatus {
     e ? { ok: false as const, error: { code: `auth_${e}`, held: e === 'locked' && userId ? auth.lockedFor(userId) : undefined } } : { ok: true as const, value: undefined }
   const isTech = () => auth.current?.role === 'technician'
 
+  const device = deviceCode(machineId(app.getPath('userData')))
+  const pinReset = pinResetActions({
+    store: () => live?.store ?? null,
+    device,
+    publicKeyPem: LICENSE_PUBLIC_KEY,
+    resetOwnerPin: (pin) => auth.resetOwnerPin(pin)
+  })
   const lic = licenseActions({
     store: () => live?.store ?? null,
-    device: deviceCode(machineId(app.getPath('userData'))),
+    device,
     installedAt: installedAt(app.getPath('userData')),
     publicKeyPem: LICENSE_PUBLIC_KEY
   })
@@ -223,7 +238,7 @@ export function startBackend(): AppStatus {
       store: () => need().store,
       afterImport: () => void tick(),
       pickFile: async () => {
-        const fixed = process.env['NUQTA_IMPORT_FILE']
+        const fixed = devEnv('NUQTA_IMPORT_FILE')
         const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
         const opts = { title: 'اختر ملف CSV', properties: ['openFile' as const], filters: [{ name: 'CSV', extensions: ['csv', 'txt'] }] }
         const path = fixed || (await (win ? dialog.showOpenDialog(win, opts) : dialog.showOpenDialog(opts))).filePaths[0]
@@ -251,8 +266,9 @@ export function startBackend(): AppStatus {
       const names = { collected: 'المحصل', commission: 'العمولة', stale: 'الكروت-الراكدة' }
       const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
       const opts = { title: 'تصدير التقرير', defaultPath: `نقطة-${names[tab]}-${now.slice(0, 10)}.pdf`, filters: [{ name: 'PDF', extensions: ['pdf'] }] }
-      const pick = process.env['NUQTA_PRINT_PDF_DIR']
-        ? { canceled: false, filePath: join(process.env['NUQTA_PRINT_PDF_DIR'], `report-${tab}.pdf`) }
+      const pdfDir = devEnv('NUQTA_PRINT_PDF_DIR')
+      const pick = pdfDir
+        ? { canceled: false, filePath: join(pdfDir, `report-${tab}.pdf`) }
         : win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts)
       if (pick.canceled || !pick.filePath) return { ok: true, value: { cancelled: true } }
       const job = reportJob(reportsData(l.db, l.store, days, now), tab, l.store.getSetting('network_name') ?? '', now)
@@ -269,6 +285,7 @@ export function startBackend(): AppStatus {
     createOwnerPin: (pin) => authResult(auth.createOwnerPin(pin, new Date().toISOString())),
     login: (id, pin) => authResult(auth.login(id, pin), id),
     logout: () => auth.logout(),
+    ...pinReset,
     setUserPin: (id, pin) => authResult(auth.setPin(id, pin)),
     setUserActive: (id, active) => authResult(auth.setActive(id, active)),
     setLockAfter: (minutes) => {
@@ -282,7 +299,7 @@ export function startBackend(): AppStatus {
     },
     connectRouter: async (input) => {
       const l = need()
-      const devMock = dev && process.env['NUQTA_MOCK'] && l.mock ? l.mock : null
+      const devMock = dev && devEnv('NUQTA_MOCK') && l.mock ? l.mock : null
       const r = await connectRouter(l.store, input, { makeClient: devMock ? () => devMock : makeClient, secrets })
       if (!r.ok) return r
       if (devMock) {
@@ -358,6 +375,6 @@ export function startBackend(): AppStatus {
 /** بس صفحات البرنامج نفسه بتقدر تنادي. */
 function trustedSender(e: IpcMainInvokeEvent): boolean {
   const url = e.senderFrame?.url ?? ''
-  const devUrl = process.env['ELECTRON_RENDERER_URL']
+  const devUrl = devEnv('ELECTRON_RENDERER_URL')
   return url.startsWith('file://') || (!!devUrl && url.startsWith(devUrl))
 }

@@ -37,11 +37,13 @@ interface UserRow {
   role: UserRole
   pin_hash: string | null
   active: number
+  pin_fails: number
+  pin_rounds: number
+  pin_locked_until: number
 }
 
 export class Auth {
   current: { id: number; name: string; role: UserRole } | null = null
-  readonly #fails = new Map<number, { count: number; until: number; rounds: number }>()
 
   constructor(
     private readonly db: () => Db | null,
@@ -50,7 +52,7 @@ export class Auth {
   ) {}
 
   #rows(): UserRow[] {
-    return this.db()?.all<UserRow>('SELECT id, name, role, pin_hash, active FROM users ORDER BY id') ?? []
+    return this.db()?.all<UserRow>('SELECT id, name, role, pin_hash, active, pin_fails, pin_rounds, pin_locked_until FROM users ORDER BY id') ?? []
   }
 
   /** ما في ولا مستخدم إله رمز. */
@@ -86,7 +88,7 @@ export class Auth {
     let owner = this.#rows().find((u) => u.role === 'owner' && u.active)
     if (!owner) {
       const id = db.run("INSERT INTO users(name, role, created_at) VALUES ('صاحب الشبكة', 'owner', ?)", now).id
-      owner = { id, name: 'صاحب الشبكة', role: 'owner', pin_hash: null, active: 1 }
+      owner = { id, name: 'صاحب الشبكة', role: 'owner', pin_hash: null, active: 1, pin_fails: 0, pin_rounds: 0, pin_locked_until: 0 }
     }
     db.run('UPDATE users SET pin_hash = ? WHERE id = ?', hashPin(p), owner.id)
     this.#set({ id: owner.id, name: owner.name, role: 'owner' })
@@ -97,28 +99,29 @@ export class Auth {
     const u = this.#rows().find((x) => x.id === userId)
     if (!u || !u.pin_hash) return 'not_found'
     if (!u.active) return 'inactive'
-    const f = this.#fails.get(userId)
-    if (f && f.until > this.clock()) return 'locked'
+    if (u.pin_locked_until > this.clock()) return 'locked'
     const p = normalizePin(pin)
     if (!p || !verifyPin(p, u.pin_hash)) {
-      const next = { count: (f?.count ?? 0) + 1, until: 0, rounds: f?.rounds ?? 0 }
-      if (next.count >= MAX_TRIES) {
-        next.rounds++
-        next.until = this.clock() + LOCK_MS * next.rounds
-        next.count = 0
+      let fails = u.pin_fails + 1
+      let rounds = u.pin_rounds
+      let until = 0
+      if (fails >= MAX_TRIES) {
+        rounds++
+        until = this.clock() + LOCK_MS * rounds
+        fails = 0
       }
-      this.#fails.set(userId, next)
-      return next.until ? 'locked' : 'pin_wrong'
+      this.db()!.run('UPDATE users SET pin_fails = ?, pin_rounds = ?, pin_locked_until = ? WHERE id = ?', fails, rounds, until, userId)
+      return until ? 'locked' : 'pin_wrong'
     }
-    this.#fails.delete(userId)
+    this.db()!.run('UPDATE users SET pin_fails = 0, pin_rounds = 0, pin_locked_until = 0 WHERE id = ?', userId)
     this.#set({ id: u.id, name: u.name, role: u.role })
     return null
   }
 
   /** ثواني لحد ما يقدر يجرب مرة ثانية. */
   lockedFor(userId: number): number {
-    const f = this.#fails.get(userId)
-    return f && f.until > this.clock() ? Math.ceil((f.until - this.clock()) / 1000) : 0
+    const until = this.#rows().find((u) => u.id === userId)?.pin_locked_until ?? 0
+    return until > this.clock() ? Math.ceil((until - this.clock()) / 1000) : 0
   }
 
   logout(): void {
@@ -128,9 +131,18 @@ export class Auth {
   setPin(userId: number, pin: string): AuthError | null {
     const p = normalizePin(pin)
     if (!p) return 'pin_format'
-    const r = this.db()?.run('UPDATE users SET pin_hash = ? WHERE id = ?', hashPin(p), userId)
+    const r = this.db()?.run('UPDATE users SET pin_hash = ?, pin_fails = 0, pin_rounds = 0, pin_locked_until = 0 WHERE id = ?', hashPin(p), userId)
     if (!r?.changes) return 'not_found'
-    this.#fails.delete(userId)
+    return null
+  }
+
+  /** صاحب الشبكة نسي رمزه: مفتاح استرجاع موقّع انفحص قبل هون. بيغيّر رمز أول مدير شغال وبيدخّله. */
+  resetOwnerPin(pin: string): AuthError | null {
+    const owner = this.#rows().find((u) => u.role === 'owner' && u.active)
+    if (!owner) return 'not_found'
+    const e = this.setPin(owner.id, pin)
+    if (e) return e
+    this.#set({ id: owner.id, name: owner.name, role: 'owner' })
     return null
   }
 

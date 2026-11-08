@@ -8,7 +8,7 @@ const where = (p: string) => methods.filter((m) => PERMISSIONS[m] === p)
 describe('permissions', () => {
   it('locked: only the login door, status and the print window', () => {
     expect(methods.filter((m) => allowed(m, ctx({})))).toEqual(where('public'))
-    expect(where('public').sort()).toEqual(['createOwnerPin', 'login', 'printJob', 'printReady', 'status'])
+    expect(where('public').sort()).toEqual(['createOwnerPin', 'login', 'pinResetApply', 'pinResetRequest', 'printJob', 'printReady', 'status'])
   })
 
   it('technician: day work yes, money and settings no', () => {

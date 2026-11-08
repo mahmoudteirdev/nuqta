@@ -6,7 +6,7 @@ import { basename, join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import type { Db } from './db/db'
 
-export type BackupKind = 'auto' | 'manual' | 'before-restore' | 'imported'
+export type BackupKind = 'auto' | 'manual' | 'before-restore' | 'before-update' | 'imported'
 
 export interface BackupItem {
   file: string
@@ -15,7 +15,7 @@ export interface BackupItem {
   kind: BackupKind
 }
 
-const NAME = /^nuqta-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(?:-\d{3})?Z)-(auto|manual|before-restore|imported)\.db$/
+const NAME = /^nuqta-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(?:-\d{3})?Z)-(auto|manual|before-restore|before-update|imported)\.db$/
 
 /** النسخ التلقائية بتضل آخر هالعدد. اليدوية واللي قبل الاسترجاع ما بتنحذف أبدا. */
 export const KEEP_AUTO = 30

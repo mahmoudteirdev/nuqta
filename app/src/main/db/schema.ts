@@ -217,4 +217,11 @@ ALTER TABLE users ADD COLUMN pin_hash TEXT;
 ALTER TABLE users ADD COLUMN active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1));
 `
 
-export const MIGRATIONS: readonly string[] = [v1, v2, v3, v4, v5]
+// عدّاد المحاولات الغلط بيضل بعد إعادة التشغيل، عشان التسكير والفتح ما يصفّره.
+const v6 = `
+ALTER TABLE users ADD COLUMN pin_fails INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN pin_rounds INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN pin_locked_until INTEGER NOT NULL DEFAULT 0;
+`
+
+export const MIGRATIONS: readonly string[] = [v1, v2, v3, v4, v5, v6]

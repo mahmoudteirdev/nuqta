@@ -10,6 +10,7 @@ const KIND: Record<BackupInfo['kind'], string> = {
   auto: 'تلقائية',
   manual: 'يدوية',
   'before-restore': 'قبل استرجاع',
+  'before-update': 'قبل تحديث',
   imported: 'من ملف'
 }
 

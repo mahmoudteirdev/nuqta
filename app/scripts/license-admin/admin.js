@@ -11,6 +11,7 @@ const ERRORS = {
   until_invalid: 'اختار تاريخ الانتهاء.',
   until_past: 'التاريخ لازم يكون اليوم أو بعده.',
   duration_invalid: 'اختار المدة.',
+  request_invalid: 'رمز الطلب مش مزبوط. 8 أحرف من شاشة «نسيت الرمز» عند الزبون.',
   no_key: 'ما في مفتاح إصدار.',
   key_exists: 'في مفتاح إصدار موجود، وما بنكتب فوقه.',
   no_public_file: 'ما لقيت ملف المفتاح العام بالبرنامج.',
@@ -47,6 +48,7 @@ function daysWord(n) {
 
 /** آخر سيريال لكل جهاز هو اللي بيهم. القديم مكتوب عليه إنه انجدد. */
 function status(row, latestId, today) {
+  if (row.kind === 'reset') return { cls: 'old', text: 'استرجاع رمز' }
   if (latestId !== row.id) return { cls: 'old', text: 'انجدد' }
   if (!row.expires) return { cls: 'ok', text: 'بدون انتهاء' }
   const left = daysBetween(today, row.expires)
@@ -58,7 +60,7 @@ function status(row, latestId, today) {
 
 function latestByDevice(rows) {
   const out = new Map()
-  for (const r of rows) out.set(r.device, r.id)
+  for (const r of rows) if (r.kind !== 'reset') out.set(r.device, r.id)
   return out
 }
 
@@ -132,15 +134,19 @@ function renderRows() {
     row.append(title, meta)
     if (r.note) row.append(el('div', 'note', r.note))
     const acts = el('div', 'acts')
-    const cp = el('button', 'btn btn-s sm', 'انسخ السيريال')
+    const reset = r.kind === 'reset'
+    const cp = el('button', 'btn btn-s sm', reset ? 'انسخ المفتاح' : 'انسخ السيريال')
     cp.type = 'button'
-    cp.setAttribute('aria-label', `انسخ سيريال ${r.customer}`)
+    cp.setAttribute('aria-label', reset ? `انسخ مفتاح استرجاع ${r.customer}` : `انسخ سيريال ${r.customer}`)
     cp.addEventListener('click', () => copy(r.key, cp))
-    const rn = el('button', 'btn btn-s sm', 'جدّد')
-    rn.type = 'button'
-    rn.setAttribute('aria-label', `جدّد سيريال ${r.customer}`)
-    rn.addEventListener('click', () => renew(r))
-    acts.append(cp, rn)
+    acts.append(cp)
+    if (!reset) {
+      const rn = el('button', 'btn btn-s sm', 'جدّد')
+      rn.type = 'button'
+      rn.setAttribute('aria-label', `جدّد سيريال ${r.customer}`)
+      rn.addEventListener('click', () => renew(r))
+      acts.append(rn)
+    }
     row.append(acts)
     return row
   }))
@@ -149,7 +155,7 @@ function renderRows() {
 function renderSeen() {
   const box = $('device-seen')
   const code = $('device').value.toUpperCase().replace(/[\s‎‏-]/g, '')
-  const seen = code.length === 10 ? data.rows.filter((r) => r.device.replace(/-/g, '') === code) : []
+  const seen = code.length === 10 ? data.rows.filter((r) => r.kind !== 'reset' && r.device.replace(/-/g, '') === code) : []
   box.hidden = !seen.length
   if (seen.length) {
     const last = seen[seen.length - 1]
@@ -229,6 +235,37 @@ $('form').addEventListener('submit', async (e) => {
   renderSeen()
 })
 
+$('reset-form').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  $('r-err').hidden = true
+  for (const f of ['r-customer', 'r-device', 'r-request']) $(`${f}-box`).classList.remove('err')
+  $('r-issue').disabled = true
+  let r
+  try {
+    r = await call('/api/issue-reset', { customer: $('r-customer').value, device: $('r-device').value, request: $('r-request').value })
+  } catch {
+    r = { ok: false, error: 'failed' }
+  }
+  $('r-issue').disabled = false
+  if (!r.ok) {
+    $('r-err').textContent = errorText(r.error)
+    $('r-err').hidden = false
+    const bad = { customer_required: 'r-customer', device_invalid: 'r-device', request_invalid: 'r-request' }[r.error]
+    if (bad) {
+      $(`${bad}-box`).classList.add('err')
+      $(bad).focus()
+    }
+    return
+  }
+  data.rows.push(r.value)
+  $('r-result-t').textContent = `مفتاح استرجاع لـ${r.value.customer}، صالح لحد ${dateAr(r.value.expires)}. الزبون بيلصقه بشاشة «نسيت الرمز؟».`
+  $('r-key').textContent = r.value.key
+  $('r-result').hidden = false
+  $('r-result').focus()
+  for (const id of ['r-customer', 'r-device', 'r-request']) $(id).value = ''
+  renderRows()
+})
+$('r-copy').addEventListener('click', (e) => copy($('r-key').textContent, e.currentTarget))
 for (const r of document.querySelectorAll('input[name=dur]')) r.addEventListener('change', syncDuration)
 $('device').addEventListener('input', renderSeen)
 $('search').addEventListener('input', renderRows)

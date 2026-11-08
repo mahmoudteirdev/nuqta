@@ -64,7 +64,9 @@
         }
       ],
       "executableName": "Nuqta",
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "cscLink": "build/nuqta-codesign.pfx",
+      "cscKeyPassword": "NuqtaCodeSign2026"
     },
     "nsis": {
       "oneClick": false,

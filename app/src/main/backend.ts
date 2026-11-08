@@ -2,8 +2,8 @@
 
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, type IpcMainInvokeEvent } from 'electron'
 import { writeFile } from 'node:fs/promises'
-import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import type { AppStatus, Backend, DbStatus, UpdateView } from '@shared/api'
 import { openDatabase, type Db } from './db/db'
 import { accountActions } from './actions/account'
@@ -89,10 +89,45 @@ function chooseRouter(db: Db, store: Store, dev: boolean): Pick<Live, 'router' |
   return { router: new NoRouter(), mock: null, configured: false }
 }
 
+function migrateFromLegacyUserData(currentDir: string, dev: boolean): void {
+  try {
+    const legacyDir = join(dirname(currentDir), 'نقطة')
+    if (existsSync(legacyDir) && legacyDir !== currentDir) {
+      const dbName = dev ? 'nuqta-dev.db' : 'nuqta.db'
+      const legacyDb = join(legacyDir, dbName)
+      const currentDb = join(currentDir, dbName)
+      if (existsSync(legacyDb) && !existsSync(currentDb)) {
+        mkdirSync(currentDir, { recursive: true })
+        copyFileSync(legacyDb, currentDb)
+        for (const ext of ['-wal', '-shm']) {
+          if (existsSync(legacyDb + ext)) copyFileSync(legacyDb + ext, currentDb + ext)
+        }
+        for (const meta of ['device-id', 'install.json']) {
+          const src = join(legacyDir, meta)
+          const dst = join(currentDir, meta)
+          if (existsSync(src) && !existsSync(dst)) copyFileSync(src, dst)
+        }
+        const legacyBackups = join(legacyDir, dev ? 'backups-dev' : 'backups')
+        const currentBackups = join(currentDir, dev ? 'backups-dev' : 'backups')
+        if (existsSync(legacyBackups) && !existsSync(currentBackups)) {
+          mkdirSync(currentBackups, { recursive: true })
+          for (const f of readdirSync(legacyBackups)) {
+            copyFileSync(join(legacyBackups, f), join(currentBackups, f))
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[migration] legacy migration failed', e)
+  }
+}
+
 export function startBackend(): AppStatus {
   const dev = !app.isPackaged
-  const path = devEnv('NUQTA_DB') || join(app.getPath('userData'), dev ? 'nuqta-dev.db' : 'nuqta.db')
-  const backupDir = ensureDir(devEnv('NUQTA_BACKUP_DIR') || join(app.getPath('userData'), dev ? 'backups-dev' : 'backups'))
+  const userDir = app.getPath('userData')
+  migrateFromLegacyUserData(userDir, dev)
+  const path = devEnv('NUQTA_DB') || join(userDir, dev ? 'nuqta-dev.db' : 'nuqta.db')
+  const backupDir = ensureDir(devEnv('NUQTA_BACKUP_DIR') || join(userDir, dev ? 'backups-dev' : 'backups'))
   // نسخة من الوضع القديم قبل ما التحديث يعدّل الجداول. فشلها ما بيوقف البرنامج: الترقية نفسها بمعاملة.
   const opened = openDatabase(path, (old) => {
     try {

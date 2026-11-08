@@ -10,7 +10,7 @@ import { useApi } from '@/lib/useApi'
 import { Dialog } from '@/shell/Dialog'
 import { useToast } from '@/shell/Toast'
 
-const COLS = { gridTemplateColumns: '1.2fr 1fr 1fr 1fr' }
+const COLS = { gridTemplateColumns: '1.2fr 1fr 1fr 1fr 120px', alignItems: 'center' }
 const plain = (ag: number) => (ag % 100 ? (ag / 100).toFixed(2) : String(ag / 100))
 
 /** صف فئة. السعر بينحفظ لما تطلع من الحقل أو تضغط Enter، وبيأثر على الدفعات الجاية بس. */
@@ -20,6 +20,10 @@ function PriceRow({ c }: { c: CategoryRow }) {
   const [whole, setWhole] = useState(plain(c.wholeAg))
   const [sale, setSale] = useState(plain(c.saleAg))
   const [err, setErr] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [delBusy, setDelBusy] = useState(false)
+
   useEffect(() => { setWhole(plain(c.wholeAg)); setSale(plain(c.saleAg)) }, [c.wholeAg, c.saleAg])
 
   const w = parseAgorot(whole)
@@ -39,27 +43,99 @@ function PriceRow({ c }: { c: CategoryRow }) {
   const errId = `pe-${c.id}`
 
   return (
-    <div role="row" className="rowx" style={COLS}>
-      <strong role="cell">{c.name}</strong>
-      <span role="cell" style={{ display: 'contents' }}>
-        <div className={err ? 'box err' : 'box'} dir="ltr"><span aria-hidden="true">₪</span>
-          <input aria-label={`سعر جملة ${c.name}`} inputMode="decimal" value={whole} aria-invalid={!!err} aria-describedby={err ? errId : undefined}
-            onChange={(e) => setWhole(e.target.value)} onBlur={() => void save()} onKeyDown={keys} />
+    <>
+      <div role="row" className="rowx" style={COLS}>
+        <div role="cell" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <strong>{c.name}</strong>
+          <span className="sub small" style={{ fontSize: '11px', opacity: 0.7 }}>{c.routerProfile}</span>
         </div>
-      </span>
-      <span role="cell" style={{ display: 'contents' }}>
-        <div className={err ? 'box err' : 'box'} dir="ltr"><span aria-hidden="true">₪</span>
-          <input aria-label={`سعر بيع ${c.name}`} inputMode="decimal" value={sale} aria-invalid={!!err} aria-describedby={err ? errId : undefined}
-            onChange={(e) => setSale(e.target.value)} onBlur={() => void save()} onKeyDown={keys} />
+        <span role="cell" style={{ display: 'contents' }}>
+          <div className={err ? 'box err' : 'box'} dir="ltr"><span aria-hidden="true">₪</span>
+            <input aria-label={`سعر جملة ${c.name}`} inputMode="decimal" value={whole} aria-invalid={!!err} aria-describedby={err ? errId : undefined}
+              onChange={(e) => setWhole(e.target.value)} onBlur={() => void save()} onKeyDown={keys} />
+          </div>
+        </span>
+        <span role="cell" style={{ display: 'contents' }}>
+          <div className={err ? 'box err' : 'box'} dir="ltr"><span aria-hidden="true">₪</span>
+            <input aria-label={`سعر بيع ${c.name}`} inputMode="decimal" value={sale} aria-invalid={!!err} aria-describedby={err ? errId : undefined}
+              onChange={(e) => setSale(e.target.value)} onBlur={() => void save()} onKeyDown={keys} />
+          </div>
+        </span>
+        <span role="cell">
+          {err ? <span id={errId} className="emsg" role="alert">{err}</span>
+            : margin === null ? '—'
+            : margin < 0 ? <span className="emsg">{t('err.marginNegative')}</span>
+            : <span className="m">{formatMoney(margin)}</span>}
+        </span>
+        <div role="cell" style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+          <button type="button" className="btn btn-g sm" title="تعديل اسم الفئة" onClick={() => setEditing(true)}>تعديل</button>
+          <button type="button" className="btn btn-d sm" title="حذف الفئة" onClick={() => setDeleting(true)}>حذف</button>
         </div>
-      </span>
-      <span role="cell">
-        {err ? <span id={errId} className="emsg" role="alert">{err}</span>
-          : margin === null ? '—'
-          : margin < 0 ? <span className="emsg">{t('err.marginNegative')}</span>
-          : <span className="m">{formatMoney(margin)}</span>}
-      </span>
-    </div>
+      </div>
+
+      {editing && (
+        <EditCategory
+          c={c}
+          onCancel={() => setEditing(false)}
+          onDone={() => {
+            setEditing(false)
+            say('تم تعديل الفئة بنجاح.')
+            dispatch({ type: 'changed' })
+          }}
+        />
+      )}
+
+      {deleting && (
+        <Dialog
+          title={`حذف فئة ${c.name}`}
+          okLabel="نعم، احذف"
+          danger
+          busy={delBusy}
+          onCancel={() => setDeleting(false)}
+          onOk={async () => {
+            setDelBusy(true)
+            const r = await api.deleteCategory(c.id)
+            setDelBusy(false)
+            if (!r.ok) return say(errorText(r.error))
+            setDeleting(false)
+            say(`تم حذف فئة ${c.name}.`)
+            dispatch({ type: 'changed' })
+          }}
+          body="هل أنت متأكد من حذف هذه الفئة؟ إذا كان هناك كروت سابقة عليها فستتم أرشفتها لحفظ الحسابات ولن تظهر في الكروت الجديدة."
+        />
+      )}
+    </>
+  )
+}
+
+function EditCategory({ c, onDone, onCancel }: { c: CategoryRow; onDone: () => void; onCancel: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const profiles = useApi(() => api.routerProfiles())
+  const [name, setName] = useState(c.name)
+  const [profile, setProfile] = useState(c.routerProfile)
+  const [err, setErr] = useState('')
+  const list = profiles.state === 'ready' ? profiles.data : null
+
+  return (
+    <Dialog title={`تعديل فئة ${c.name}`} okLabel="حفظ" error={err} busy={busy} onCancel={onCancel} body="تعديل اسم الفئة أو ملف الراوتر."
+      onOk={async () => {
+        if (!name.trim()) return setErr(t('err.catName'))
+        setBusy(true)
+        const r = await api.updateCategory(c.id, { name: name.trim(), routerProfile: profile.trim() })
+        setBusy(false)
+        if (!r.ok) return setErr(errorText(r.error))
+        onDone()
+      }}>
+      <div className="fld"><label className="lbl" htmlFor="ecn">اسم الفئة</label><div className="box"><input id="ecn" value={name} onChange={(e) => { setName(e.target.value); setErr('') }} /></div></div>
+      <div className="fld">
+        <label className="lbl" htmlFor="ecp">ملف Hotspot على الراوتر</label>
+        <div className="box">
+          {list
+            ? <select id="ecp" value={profile} onChange={(e) => setProfile(e.target.value)}>{list.map((p) => <option key={p} value={p}>{p}</option>)}</select>
+            : <input id="ecp" dir="ltr" value={profile} onChange={(e) => { setProfile(e.target.value); setErr('') }} />}
+        </div>
+      </div>
+    </Dialog>
   )
 }
 
@@ -114,10 +190,11 @@ export function Prices() {
         <button type="button" className="btn btn-s sm" onClick={() => setAdding(true)}>أضف فئة</button>
       </div>
       <div style={{ overflowX: 'auto' }} tabIndex={0} role="group" aria-label="الفئات والأسعار، قابل للتمرير">
-        <div role="table" aria-label="الفئات والأسعار" style={{ minWidth: 640 }}>
+        <div role="table" aria-label="الفئات والأسعار" style={{ minWidth: 680 }}>
           <div role="row" className="rowx thead" style={COLS}>
             <span role="columnheader">الفئة</span><span role="columnheader">سعر الجملة</span>
             <span role="columnheader">سعر البيع</span><span role="columnheader">ربح الموزع</span>
+            <span role="columnheader" style={{ textAlign: 'end' }}>إجراءات</span>
           </div>
           {cats.state === 'ready' && cats.data.map((c) => <PriceRow key={c.id} c={c} />)}
         </div>

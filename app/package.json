@@ -75,7 +75,7 @@
       "shortcutName": "نقطة",
       "uninstallDisplayName": "نقطة",
       "deleteAppDataOnUninstall": false,
-      "language": "1025",
+      "displayLanguageSelector": true,
       "runAfterFinish": true
     },
     "electronFuses": {

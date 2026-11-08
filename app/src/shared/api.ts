@@ -392,6 +392,8 @@ export interface Backend {
   /** السعر الجديد للدفعات الجاية بس. البيع أقل من الجملة تحذير بدون منع. */
   setCategoryPrices(id: number, wholeAg: Agorot, saleAg: Agorot): ActionResult<{ saleBelowWhole: boolean }>
   addCategory(c: { name: string; routerProfile: string; wholeAg: Agorot }): ActionResult<{ id: number }>
+  updateCategory(id: number, c: { name: string; routerProfile?: string }): ActionResult<void>
+  deleteCategory(id: number): ActionResult<void>
   /** ملفات Hotspot على الراوتر. null إذا الراوتر مش راد. */
   routerProfiles(): Promise<string[] | null>
   templateSettings(): TemplateSettings

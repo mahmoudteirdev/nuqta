@@ -22,7 +22,7 @@ export function readTemplate(store: Store): TemplateSettings {
 }
 
 type CardsBackend = Pick<Backend,
-  'batchLog' | 'reprintBatch' | 'categories' | 'setCategoryPrices' | 'addCategory' | 'routerProfiles' | 'templateSettings' | 'saveTemplateSettings'>
+  'batchLog' | 'reprintBatch' | 'categories' | 'setCategoryPrices' | 'addCategory' | 'updateCategory' | 'deleteCategory' | 'routerProfiles' | 'templateSettings' | 'saveTemplateSettings'>
 
 export function cardsActions(ctx: { db: () => Db; store: () => Store; service: () => RouterService; print: (job: CardsJob) => Promise<PrintOutcome> }): CardsBackend {
   const printedTimes = (id: number) => Number(ctx.db().get<{ n: number }>('SELECT count(*) n FROM print_log WHERE batch_id = ?', id)!.n)
@@ -66,6 +66,18 @@ export function cardsActions(ctx: { db: () => Db; store: () => Store; service: (
       // سعر البيع بيبدأ زي الجملة، والمستخدم بيحدده بعدين (زي النموذج).
       const id = ctx.store().addCategory({ name, routerProfile: c.routerProfile.trim(), limitUptime: null, wholeAg: c.wholeAg, saleAg: c.wholeAg })
       return { ok: true, value: { id } }
+    },
+
+    updateCategory: (id, c) => {
+      const name = c.name.trim()
+      if (!name) return { ok: false, error: { code: 'category_name' } }
+      const r = ctx.store().updateCategory(id, { name, routerProfile: c.routerProfile?.trim() })
+      return r.ok ? { ok: true, value: undefined } : { ok: false, error: r.error as ActionError }
+    },
+
+    deleteCategory: (id) => {
+      const r = ctx.store().archiveCategory(id)
+      return r.ok ? { ok: true, value: undefined } : { ok: false, error: r.error as ActionError }
     },
 
     routerProfiles: async () => {

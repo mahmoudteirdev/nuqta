@@ -180,6 +180,28 @@ export class Store {
     ).map((r) => ({ id: r.id, name: r.name, routerProfile: r.router_profile, limitUptime: r.limit_uptime, wholeAg: r.whole_ag, saleAg: r.sale_ag }))
   }
 
+  /** حذف الفئة إذا ما عليها دفعات، أو أرشفتها لحفظ السجلات والدفعات القديمة. */
+  archiveCategory(id: number): StoreResult<void> {
+    const hasBatches = this.db.get<{ c: number }>('SELECT count(*) c FROM batches WHERE category_id = ?', id)?.c ?? 0
+    if (hasBatches === 0) {
+      this.db.run('DELETE FROM categories WHERE id = ?', id)
+    } else {
+      this.db.run("UPDATE categories SET archived_at = datetime('now') WHERE id = ?", id)
+    }
+    return ok(undefined)
+  }
+
+  /** تعديل اسم الفئة أو ملفها على الراوتر. */
+  updateCategory(id: number, c: { name: string; routerProfile?: string }): StoreResult<void> {
+    const name = c.name.trim()
+    if (!name) return fail({ code: 'category_name' })
+    const prev = this.db.get<{ name: string; router_profile: string }>('SELECT name, router_profile FROM categories WHERE id = ? AND archived_at IS NULL', id)
+    if (!prev) return fail({ code: 'not_found', what: 'category' })
+    const profile = c.routerProfile?.trim() || prev.router_profile
+    this.db.run('UPDATE categories SET name = ?, router_profile = ? WHERE id = ?', name, profile, id)
+    return ok(undefined)
+  }
+
   // ───────────────────────── الموزعين
 
   /** بيضيف الموزع مع رصيده الافتتاحي بمعاملة وحدة. نفس opKey مرتين بيرجع نفس الموزع. */

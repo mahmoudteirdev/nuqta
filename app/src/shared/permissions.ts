@@ -60,6 +60,8 @@ export const PERMISSIONS: Record<keyof Backend, Permission> = {
   printStatement: 'owner',
   setCategoryPrices: 'owner',
   addCategory: 'owner',
+  updateCategory: 'owner',
+  deleteCategory: 'owner',
 
   // الإعدادات.
   saveTemplateSettings: 'owner',

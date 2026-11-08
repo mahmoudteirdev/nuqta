@@ -82,6 +82,20 @@ describe('categories and prices', () => {
     expect(api.addCategory({ name: 'x', routerProfile: ' ', wholeAg: 100 })).toEqual({ ok: false, error: { code: 'category_profile' } })
   })
 
+  it('updates and deletes or archives a category', () => {
+    const { id } = ok(api.addCategory({ name: 'تجربة', routerProfile: 'trial', wholeAg: shekels(5) }))
+    ok(api.updateCategory(id, { name: 'تجربة معدلة', routerProfile: 'trial-2' }))
+    expect(api.categories().find((c) => c.id === id)).toMatchObject({ name: 'تجربة معدلة', routerProfile: 'trial-2' })
+
+    // حذف فئة ما عليها دفعات
+    ok(api.deleteCategory(id))
+    expect(api.categories().find((c) => c.id === id)).toBeUndefined()
+
+    // أرشفة فئة عليها دفعات سابقة
+    ok(api.deleteCategory(1))
+    expect(api.categories().find((c) => c.id === 1)).toBeUndefined()
+  })
+
   it('reads hotspot profiles from the router, or null when it is down', async () => {
     expect(await api.routerProfiles()).toEqual(['1h', '3h', 'day', 'week'])
     router.up = false

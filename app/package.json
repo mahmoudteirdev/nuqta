@@ -1,6 +1,6 @@
 {
   "name": "nuqta",
-  "productName": "نقطة",
+  "productName": "Nuqta",
   "version": "0.1.0",
   "private": true,
   "description": "دفتر حسابات لشبكات الهوتسبوت على MikroTik",
@@ -41,7 +41,7 @@
   "homepage": "https://github.com/mahmoudteirdev/nuqta",
   "build": {
     "appId": "com.mahmoudteirdev.nuqta",
-    "productName": "نقطة",
+    "productName": "Nuqta",
     "copyright": "Copyright © 2026 mahmoudteirdev",
     "directories": {
       "output": "dist",

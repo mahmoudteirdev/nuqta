@@ -138,5 +138,10 @@ export class NoRouter implements RouterClient {
   tagUsers = this.#down
   addProfile = this.#down
   extendUserUptime = this.#down
+  pools = this.#down
+  hotspotServers = this.#down
+  addPool = this.#down
+  updatePool = this.#down
+  deletePool = this.#down
   close(): void {}
 }

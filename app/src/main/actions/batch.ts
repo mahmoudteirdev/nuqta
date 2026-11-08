@@ -78,14 +78,22 @@ export function batchActions(ctx: {
   return {
     batchForm: () => {
       const store = ctx.store()
+      const knownServers = new Set<string>()
+      for (const s of ctx.service().cachedServers) if (s.name) knownServers.add(s.name)
+      for (const c of store.categories()) if (c.hotspotServer) knownServers.add(c.hotspotServer)
+      for (const r of ctx.db().all<{ s: string }>('SELECT DISTINCT hotspot_server s FROM batches WHERE hotspot_server IS NOT NULL')) {
+        if (r.s) knownServers.add(r.s)
+      }
+
       return {
         routers: ctx.db().all<{ id: number; name: string }>('SELECT id, name FROM routers ORDER BY id'),
-        categories: store.categories().map((c) => ({ id: c.id, name: c.name, wholeAg: c.wholeAg, saleAg: c.saleAg })),
+        categories: store.categories().map((c) => ({ id: c.id, name: c.name, wholeAg: c.wholeAg, saleAg: c.saleAg, hotspotServer: c.hotspotServer })),
         distributors: store.distributors().map((d) => (ctx.role?.() === 'technician'
           ? { id: d.id, name: d.name, owedAg: 0, creditLimitAg: 0, debtPolicy: d.debtPolicy }
           : { id: d.id, name: d.name, owedAg: d.summary.owedAg, creditLimitAg: d.creditLimitAg, debtPolicy: d.debtPolicy })),
         maxCount: readRules(store).maxBatchCount,
-        template: readTemplate(store).template
+        template: readTemplate(store).template,
+        hotspotServers: Array.from(knownServers)
       }
     },
 

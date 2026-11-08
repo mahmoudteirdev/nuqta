@@ -40,11 +40,14 @@ export const PERMISSIONS: Record<keyof Backend, Permission> = {
   reprintBatch: 'any',
   categories: 'any',
   routerProfiles: 'any',
+  hotspotServers: 'any',
   templateSettings: 'any',
   checkCard: 'any',
   kickSession: 'any',
   extendCard: 'any',
   network: 'any',
+  savePool: 'owner',
+  deletePool: 'owner',
 
   // الحسابات والمال.
   account: 'owner',

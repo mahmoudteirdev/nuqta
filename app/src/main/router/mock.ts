@@ -2,8 +2,8 @@
 // أول إرسال بيأكد جزء بس (88% افتراضيا)، والراوتر ممكن ينقطع، والكروت بتنستخدم.
 
 import {
-  COMMENT_PREFIX, formatUptime, RouterError,
-  type ActiveSession, type HotspotUser, type NewHotspotUser, type RouterClient, type RouterInfo
+  COMMENT_PREFIX, countIpsInRange, formatUptime, RouterError,
+  type ActiveSession, type HotspotServer, type HotspotUser, type IpPool, type NewHotspotUser, type RouterClient, type RouterInfo
 } from './types'
 
 export interface MockOptions {
@@ -22,6 +22,16 @@ export class MockRouter implements RouterClient {
   readonly #rate: number
   readonly #profiles: string[]
   readonly #delay: number
+
+  readonly #pools = new Map<string, { id: string; name: string; ranges: string }>([
+    ['*1', { id: '*1', name: 'pool-wifi', ranges: '192.168.2.10-192.168.2.250' }],
+    ['*2', { id: '*2', name: 'pool-lan', ranges: '192.168.3.10-192.168.3.250' }]
+  ])
+  readonly #servers = new Map<string, { id: string; name: string; interface: string; profile: string; addressPool: string }>([
+    ['*1', { id: '*1', name: 'hotspot-wifi', interface: 'bridge-wifi', profile: 'hsp-wifi', addressPool: 'pool-wifi' }],
+    ['*2', { id: '*2', name: 'hotspot-lan', interface: 'bridge-lan', profile: 'hsp-lan', addressPool: 'pool-lan' }]
+  ])
+  #poolSeq = 2
 
   constructor(o: MockOptions = {}) {
     this.#rate = o.firstSendRate ?? 0.88
@@ -68,9 +78,45 @@ export class MockRouter implements RouterClient {
     return [...this.#sessions.values()].map((s) => ({ ...s }))
   }
 
+  async pools(): Promise<IpPool[]> {
+    await this.#ready()
+    return [...this.#pools.values()].map((p) => ({ ...p, totalIps: countIpsInRange(p.ranges) }))
+  }
+
+  async hotspotServers(): Promise<HotspotServer[]> {
+    await this.#ready()
+    return [...this.#servers.values()].map((s) => ({ ...s }))
+  }
+
+  async addPool(name: string, ranges: string): Promise<void> {
+    await this.#ready()
+    const id = `*${++this.#poolSeq}`
+    this.#pools.set(id, { id, name: name.trim(), ranges: ranges.trim() })
+  }
+
+  async updatePool(nameOrId: string, ranges: string): Promise<void> {
+    await this.#ready()
+    for (const [id, p] of this.#pools.entries()) {
+      if (id === nameOrId || p.name === nameOrId) {
+        p.ranges = ranges.trim()
+        return
+      }
+    }
+  }
+
+  async deletePool(nameOrId: string): Promise<void> {
+    await this.#ready()
+    for (const [id, p] of this.#pools.entries()) {
+      if (id === nameOrId || p.name === nameOrId) {
+        this.#pools.delete(id)
+        return
+      }
+    }
+  }
+
   async kick(sessionId: string): Promise<void> {
     await this.#ready()
-    if (!this.#sessions.delete(sessionId)) throw new RouterError('trap', 'no such item')
+    this.#sessions.delete(sessionId)
   }
 
   async disableUsers(names: readonly string[]): Promise<void> {
@@ -126,7 +172,7 @@ export class MockRouter implements RouterClient {
     if (!u || u.disabled) throw new Error(`cannot use ${code}`)
     u.uptimeSeconds += seconds
     const id = `*${(++this.#sessionSeq).toString(16).toUpperCase()}`
-    this.#sessions.set(id, { id, user: code, mac, address: `10.5.50.${this.#sessionSeq + 1}`, uptimeSeconds: seconds })
+    this.#sessions.set(id, { id, user: code, mac, address: `192.168.2.${(this.#sessionSeq % 200) + 10}`, uptimeSeconds: seconds })
     return id
   }
 

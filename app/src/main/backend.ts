@@ -345,6 +345,26 @@ export function startBackend(): AppStatus {
       const l = need()
       return networkData({ db: l.db, store: l.store, service: l.service, router, mock: !!l.mock, configured: l.configured })
     },
+    hotspotServers: async () => {
+      const l = need()
+      const res = await l.service.hotspotServers()
+      return res.ok ? res.value.map((s) => s.name) : []
+    },
+    savePool: async (p) => {
+      const l = need()
+      const name = p.name.trim()
+      const ranges = p.ranges.trim()
+      if (!name || !ranges) return { ok: false, error: { code: 'field_required' } }
+      const res = p.id ? await l.service.updatePool(p.id, ranges) : await l.service.addPool(name, ranges)
+      if (!res.ok) return { ok: false, error: { code: 'router_unreachable' } }
+      return { ok: true, value: undefined }
+    },
+    deletePool: async (nameOrId) => {
+      const l = need()
+      const res = await l.service.deletePool(nameOrId)
+      if (!res.ok) return { ok: false, error: { code: 'router_unreachable' } }
+      return { ok: true, value: undefined }
+    },
     connectRouter: async (input) => {
       const l = need()
       const devMock = dev && devEnv('NUQTA_MOCK') && l.mock ? l.mock : null

@@ -2,7 +2,10 @@
 // ما في شي هون بيضيع، والدفتر ما بيتأثر إلا بالاستخدام المؤكد.
 
 import type { Store, StoreError } from '../db/store'
-import { COMMENT_PREFIX, RouterError, type ActiveSession, type HotspotUser, type RouterClient, type RouterInfo } from './types'
+import {
+  COMMENT_PREFIX, RouterError,
+  type ActiveSession, type HotspotServer, type HotspotUser, type IpPool, type RouterClient, type RouterInfo
+} from './types'
 
 export type RouterResult<T> = { ok: true; value: T } | { ok: false; error: RouterError | StoreError }
 
@@ -31,6 +34,7 @@ export interface SyncOutcome {
 
 export class RouterService {
   #syncSeq = 0
+  cachedServers: HotspotServer[] = []
 
   constructor(
     private readonly store: Store,
@@ -67,7 +71,13 @@ export class RouterService {
     let routerDown = false
     try {
       const r = await this.router.addUsers(
-        list.codes.map((name) => ({ name, profile: list.profile, limitUptime: list.limitUptime, comment: `${COMMENT_PREFIX}B-${list.no}` }))
+        list.codes.map((name) => ({
+          name,
+          profile: list.profile,
+          limitUptime: list.limitUptime,
+          comment: `${COMMENT_PREFIX}B-${list.no}`,
+          server: list.server
+        }))
       )
       rejected = r.failed
       const present = new Set((await this.router.users()).map((u) => u.name))
@@ -149,11 +159,62 @@ export class RouterService {
     }
   }
 
-  /** كل مستخدمين البرنامج والجلسات المفتوحة، لشاشة الشبكة. */
-  async snapshot(): Promise<RouterResult<{ users: HotspotUser[]; sessions: ActiveSession[] }>> {
+  /** كل مستخدمين البرنامج والجلسات المفتوحة والـ Pools، لشاشة الشبكة. */
+  async snapshot(): Promise<RouterResult<{ users: HotspotUser[]; sessions: ActiveSession[]; pools: IpPool[]; servers: HotspotServer[] }>> {
     try {
-      const [users, sessions] = await Promise.all([this.router.users(), this.router.sessions()])
-      return { ok: true, value: { users, sessions } }
+      const [users, sessions, pools, servers] = await Promise.all([
+        this.router.users(),
+        this.router.sessions(),
+        this.router.pools(),
+        this.router.hotspotServers()
+      ])
+      this.cachedServers = servers
+      return { ok: true, value: { users, sessions, pools, servers } }
+    } catch (e) {
+      return down(e)
+    }
+  }
+
+  async addPool(name: string, ranges: string): Promise<RouterResult<void>> {
+    try {
+      await this.router.addPool(name, ranges)
+      return { ok: true, value: undefined }
+    } catch (e) {
+      return down(e)
+    }
+  }
+
+  async updatePool(nameOrId: string, ranges: string): Promise<RouterResult<void>> {
+    try {
+      await this.router.updatePool(nameOrId, ranges)
+      return { ok: true, value: undefined }
+    } catch (e) {
+      return down(e)
+    }
+  }
+
+  async deletePool(nameOrId: string): Promise<RouterResult<void>> {
+    try {
+      await this.router.deletePool(nameOrId)
+      return { ok: true, value: undefined }
+    } catch (e) {
+      return down(e)
+    }
+  }
+
+  async pools(): Promise<RouterResult<IpPool[]>> {
+    try {
+      return { ok: true, value: await this.router.pools() }
+    } catch (e) {
+      return down(e)
+    }
+  }
+
+  async hotspotServers(): Promise<RouterResult<HotspotServer[]>> {
+    try {
+      const res = await this.router.hotspotServers()
+      this.cachedServers = res
+      return { ok: true, value: res }
     } catch (e) {
       return down(e)
     }

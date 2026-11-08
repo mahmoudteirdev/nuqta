@@ -58,6 +58,34 @@ describe('network data', () => {
     expect(d.routers[0]).toMatchObject({ up: false, sessions: null })
     expect(d.queued).toBe(1)
   })
+
+  it('reports ip pools with active session counts, total ips, and mapped server', async () => {
+    router.use(codes[0]!, 3600, '4F:A2:11:22:33:44') // MockRouter assigns 192.168.88.10 (pool-wifi: 192.168.88.10-192.168.88.254)
+    const d = await data()
+    expect(d.pools.length).toBeGreaterThan(0)
+    const wifiPool = d.pools.find((p) => p.name === 'pool-wifi')
+    expect(wifiPool).toBeDefined()
+    expect(wifiPool?.activeCount).toBe(1)
+    expect(wifiPool?.totalIps).toBe(241)
+    expect(wifiPool?.serverName).toBe('hotspot-wifi')
+    expect(d.sessions?.[0]?.poolName).toBe('pool-wifi')
+  })
+
+  it('manages ip pools: add, update, delete', async () => {
+    await svc.addPool('pool-guest', '10.10.10.2-10.10.10.50')
+    const p1 = await svc.pools()
+    expect(p1.ok && p1.value.some((p) => p.name === 'pool-guest')).toBe(true)
+
+    await svc.updatePool('pool-guest', '10.10.10.2-10.10.10.100')
+    const p2 = await svc.pools()
+    const updated = p2.ok ? p2.value.find((p) => p.name === 'pool-guest') : null
+    expect(updated?.ranges).toBe('10.10.10.2-10.10.10.100')
+    expect(updated?.totalIps).toBe(99)
+
+    await svc.deletePool('pool-guest')
+    const p3 = await svc.pools()
+    expect(p3.ok && p3.value.some((p) => p.name === 'pool-guest')).toBe(false)
+  })
 })
 
 describe('connecting a real router', () => {

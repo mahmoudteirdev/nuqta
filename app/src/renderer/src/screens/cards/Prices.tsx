@@ -47,7 +47,12 @@ function PriceRow({ c }: { c: CategoryRow }) {
       <div role="row" className="rowx" style={COLS}>
         <div role="cell" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <strong>{c.name}</strong>
-          <span className="sub small" style={{ fontSize: '11px', opacity: 0.7 }}>{c.routerProfile}</span>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <span className="sub small" style={{ fontSize: '11px', opacity: 0.7 }}>{c.routerProfile}</span>
+            {c.hotspotServer && (
+              <span className="bn ok sm" style={{ fontSize: '10px', padding: '1px 5px' }}>{c.hotspotServer}</span>
+            )}
+          </div>
         </div>
         <span role="cell" style={{ display: 'contents' }}>
           <div className={err ? 'box err' : 'box'} dir="ltr"><span aria-hidden="true">₪</span>
@@ -111,17 +116,20 @@ function PriceRow({ c }: { c: CategoryRow }) {
 function EditCategory({ c, onDone, onCancel }: { c: CategoryRow; onDone: () => void; onCancel: () => void }) {
   const [busy, setBusy] = useState(false)
   const profiles = useApi(() => api.routerProfiles())
+  const servers = useApi(() => api.hotspotServers())
   const [name, setName] = useState(c.name)
   const [profile, setProfile] = useState(c.routerProfile)
+  const [server, setServer] = useState(c.hotspotServer ?? '')
   const [err, setErr] = useState('')
   const list = profiles.state === 'ready' ? profiles.data : null
+  const srvList = servers.state === 'ready' ? servers.data : []
 
   return (
-    <Dialog title={`تعديل فئة ${c.name}`} okLabel="حفظ" error={err} busy={busy} onCancel={onCancel} body="تعديل اسم الفئة أو ملف الراوتر."
+    <Dialog title={`تعديل فئة ${c.name}`} okLabel="حفظ" error={err} busy={busy} onCancel={onCancel} body="تعديل اسم الفئة أو ملف الراوتر أو السيرفر."
       onOk={async () => {
         if (!name.trim()) return setErr(t('err.catName'))
         setBusy(true)
-        const r = await api.updateCategory(c.id, { name: name.trim(), routerProfile: profile.trim() })
+        const r = await api.updateCategory(c.id, { name: name.trim(), routerProfile: profile.trim(), hotspotServer: server.trim() || null })
         setBusy(false)
         if (!r.ok) return setErr(errorText(r.error))
         onDone()
@@ -135,6 +143,19 @@ function EditCategory({ c, onDone, onCancel }: { c: CategoryRow; onDone: () => v
             : <input id="ecp" dir="ltr" value={profile} onChange={(e) => { setProfile(e.target.value); setErr('') }} />}
         </div>
       </div>
+      {srvList.length > 0 && (
+        <div className="fld">
+          <label className="lbl" htmlFor="ecs">{t('cat.server')}</label>
+          <div className="box">
+            <select id="ecs" value={server} onChange={(e) => setServer(e.target.value)}>
+              <option value="">{t('cat.serverAll')}</option>
+              {srvList.map((srv) => (
+                <option key={srv} value={srv}>{srv}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
     </Dialog>
   )
 }
@@ -142,8 +163,10 @@ function EditCategory({ c, onDone, onCancel }: { c: CategoryRow; onDone: () => v
 function AddCategory({ onDone, onCancel }: { onDone: (name: string) => void; onCancel: () => void }) {
   const [busy, setBusy] = useState(false)
   const profiles = useApi(() => api.routerProfiles())
+  const servers = useApi(() => api.hotspotServers())
   const [name, setName] = useState('')
   const [profile, setProfile] = useState('')
+  const [server, setServer] = useState('')
   const [whole, setWhole] = useState('')
   const [err, setErr] = useState('')
   const [isNewProfile, setIsNewProfile] = useState(false)
@@ -151,6 +174,7 @@ function AddCategory({ onDone, onCancel }: { onDone: (name: string) => void; onC
   const [newRateLimit, setNewRateLimit] = useState('')
 
   const list = profiles.state === 'ready' ? profiles.data : null
+  const srvList = servers.state === 'ready' ? servers.data : []
   useEffect(() => { if (list?.length && !profile) setProfile(list[0]!) }, [list, profile])
 
   return (
@@ -177,12 +201,26 @@ function AddCategory({ onDone, onCancel }: { onDone: (name: string) => void; onC
 
         if (!targetProfile) return setErr('اختار أو اكتب ملف الفئة على الراوتر.')
         setBusy(true)
-        const r = await api.addCategory({ name, routerProfile: targetProfile, wholeAg: w })
+        const r = await api.addCategory({ name, routerProfile: targetProfile, wholeAg: w, hotspotServer: server.trim() || null })
         setBusy(false)
         if (!r.ok) return setErr(errorText(r.error))
         onDone(name.trim())
       }}>
       <div className="fld"><label className="lbl" htmlFor="cn">اسم الفئة</label><div className="box"><input id="cn" value={name} placeholder="مثلاً: ساعة، 3 ساعات، يوم كامل" onChange={(e) => { setName(e.target.value); setErr('') }} /></div></div>
+
+      {srvList.length > 0 && (
+        <div className="fld">
+          <label className="lbl" htmlFor="cs">{t('cat.server')}</label>
+          <div className="box">
+            <select id="cs" value={server} onChange={(e) => setServer(e.target.value)}>
+              <option value="">{t('cat.serverAll')}</option>
+              {srvList.map((srv) => (
+                <option key={srv} value={srv}>{srv}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="fld">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>

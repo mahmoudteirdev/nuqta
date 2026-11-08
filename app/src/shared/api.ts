@@ -167,11 +167,12 @@ export type SettleResult =
 
 export interface BatchForm {
   routers: { id: number; name: string }[]
-  categories: { id: number; name: string; wholeAg: Agorot; saleAg: Agorot }[]
+  categories: { id: number; name: string; wholeAg: Agorot; saleAg: Agorot; hotspotServer?: string | null }[]
   distributors: { id: string; name: string; owedAg: Agorot; creditLimitAg: Agorot; debtPolicy: DebtPolicy }[]
   /** أكبر دفعة مسموحة. حد مؤقت لحد ما نجرب ألف كرت على راوتر حقيقي (HANDOFF القسم 8). */
   maxCount: number
   template: PrintTemplate
+  hotspotServers: string[]
 }
 
 export type BatchStage = 'form' | 'sending' | 'sent' | 'done'
@@ -242,6 +243,7 @@ export interface CategoryRow {
   routerProfile: string
   wholeAg: Agorot
   saleAg: Agorot
+  hotspotServer?: string | null
 }
 
 /** حكم الفحص: ليش الكرت مش شغال، أو إنه سليم. النص بيتركب بالواجهة. */
@@ -286,12 +288,31 @@ export interface CardCheck {
   history: CardEvent[]
 }
 
+export interface NetworkPool {
+  id: string
+  name: string
+  ranges: string
+  activeCount: number
+  totalIps: number
+  serverName?: string
+}
+
+export interface HotspotServerInfo {
+  id: string
+  name: string
+  interface: string
+  profile: string
+  addressPool: string
+}
+
 export interface NetworkData {
   routers: { id: number; name: string; host: string; up: boolean; lastSeenAt: string | null; sessions: number | null }[]
   /** شغل بيستنى الراوتر، مثل إيقاف المرتجع. */
   queued: number
   /** null إذا الراوتر مش راد. */
-  sessions: { id: string; code: string; categoryName: string | null; routerName: string; address: string; mac: string; secondsLeft: number | null; isUnlimited?: boolean }[] | null
+  sessions: { id: string; code: string; categoryName: string | null; routerName: string; address: string; mac: string; secondsLeft: number | null; isUnlimited?: boolean; poolName?: string }[] | null
+  pools: NetworkPool[]
+  servers: HotspotServerInfo[]
   mock: boolean
   configured: boolean
 }
@@ -378,7 +399,7 @@ export interface Backend {
   batchForm(): BatchForm
   batchView(batchId: number): BatchView | null
   /** بيولد الدفعة وبيبعتها للراوتر بنفس الطلب. */
-  createBatch(b: { routerId: number; categoryId: number; distributorId: string | null; count: number; codeFormat?: 'alphanumeric' | 'numeric' | 'alpha'; codeLength?: number }, opKey: string): Promise<ActionResult<SendOutcomeView>>
+  createBatch(b: { routerId: number; categoryId: number; distributorId: string | null; count: number; codeFormat?: 'alphanumeric' | 'numeric' | 'alpha'; codeLength?: number; hotspotServer?: string | null }, opKey: string): Promise<ActionResult<SendOutcomeView>>
   /** إعادة إرسال الناقص بنفس الأكواد. */
   resendBatch(batchId: number): Promise<ActionResult<SendOutcomeView>>
   /**
@@ -393,9 +414,12 @@ export interface Backend {
   categories(): CategoryRow[]
   /** السعر الجديد للدفعات الجاية بس. البيع أقل من الجملة تحذير بدون منع. */
   setCategoryPrices(id: number, wholeAg: Agorot, saleAg: Agorot): ActionResult<{ saleBelowWhole: boolean }>
-  addCategory(c: { name: string; routerProfile: string; wholeAg: Agorot }): ActionResult<{ id: number }>
-  updateCategory(id: number, c: { name: string; routerProfile?: string }): ActionResult<void>
+  addCategory(c: { name: string; routerProfile: string; wholeAg: Agorot; hotspotServer?: string | null }): ActionResult<{ id: number }>
+  updateCategory(id: number, c: { name: string; routerProfile?: string; hotspotServer?: string | null }): ActionResult<void>
   deleteCategory(id: number): ActionResult<void>
+  hotspotServers(): Promise<string[]>
+  savePool(p: { id?: string; name: string; ranges: string }): Promise<ActionResult<void>>
+  deletePool(nameOrId: string): Promise<ActionResult<void>>
   /** ملفات Hotspot على الراوتر. null إذا الراوتر مش راد. */
   addRouterProfile(p: { name: string; rateLimit?: string; sharedUsers?: number }): Promise<ActionResult<{ name: string }>>
   routerProfiles(): Promise<string[] | null>

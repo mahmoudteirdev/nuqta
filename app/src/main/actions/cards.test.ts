@@ -76,7 +76,7 @@ describe('categories and prices', () => {
 
   it('adds a category with sale price starting at wholesale', () => {
     const { id } = ok(api.addCategory({ name: ' شهر ', routerProfile: 'month', wholeAg: shekels(40) }))
-    expect(api.categories().find((c) => c.id === id)).toEqual({ id, name: 'شهر', routerProfile: 'month', wholeAg: shekels(40), saleAg: shekels(40) })
+    expect(api.categories().find((c) => c.id === id)).toEqual({ id, name: 'شهر', routerProfile: 'month', wholeAg: shekels(40), saleAg: shekels(40), hotspotServer: null })
     expect(api.addCategory({ name: '', routerProfile: 'x', wholeAg: 100 })).toEqual({ ok: false, error: { code: 'category_name' } })
     expect(api.addCategory({ name: 'x', routerProfile: 'x', wholeAg: 0 })).toEqual({ ok: false, error: { code: 'category_whole' } })
     expect(api.addCategory({ name: 'x', routerProfile: ' ', wholeAg: 100 })).toEqual({ ok: false, error: { code: 'category_profile' } })

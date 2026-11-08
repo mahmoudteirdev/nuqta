@@ -38,6 +38,7 @@ function Generate({ form }: { form: BatchForm }) {
   const [dist, setDist] = useState<string>(state.distributorId ?? form.distributors[0]?.id ?? DIRECT)
   const [countErr, setCountErr] = useState('')
   const [codeStyle, setCodeStyle] = useState<string>(() => localStorage.getItem('nuqta_code_style') ?? 'alphanumeric_8')
+  const [hotspotServer, setHotspotServer] = useState<string>('all')
 
   const [batch, setBatch] = useState<BatchView | null>(null)
   const [sending, setSending] = useState(false)
@@ -62,6 +63,13 @@ function Generate({ form }: { form: BatchForm }) {
       setDist(v.distributorId ?? DIRECT)
     })
   }, [state.batchId])
+
+  useEffect(() => {
+    const selected = form.categories.find((c) => c.id === categoryId)
+    if (selected?.hotspotServer) {
+      setHotspotServer(selected.hotspotServer)
+    }
+  }, [categoryId, form.categories])
 
   const cat = form.categories.find((c) => c.id === categoryId)
   const d = form.distributors.find((x) => x.id === dist)
@@ -95,7 +103,8 @@ function Generate({ form }: { form: BatchForm }) {
       distributorId: dist === DIRECT ? null : dist,
       count: n,
       codeFormat,
-      codeLength
+      codeLength,
+      hotspotServer: hotspotServer === 'all' ? null : hotspotServer
     }, createOp.key())
     setSending(false)
     if (!r.ok) return setCountErr(errorText(r.error))
@@ -210,6 +219,24 @@ function Generate({ form }: { form: BatchForm }) {
             </select>
           </div>
         </div>
+        {form.hotspotServers && form.hotspotServers.length > 0 && (
+          <div className="fld">
+            <label className="lbl" htmlFor="bhs">{t('batch.gen.server')}</label>
+            <div className="box">
+              <select
+                id="bhs"
+                value={hotspotServer}
+                disabled={locked}
+                onChange={(e) => setHotspotServer(e.target.value)}
+              >
+                <option value="all">{t('batch.gen.serverAll')}</option>
+                {form.hotspotServers.map((srv) => (
+                  <option key={srv} value={srv}>{srv}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
         <div className="fld">
           <label className="lbl" htmlFor="bd">الموزع</label>
           <div className="box"><select id="bd" value={dist} disabled={locked} onChange={(e) => setDist(e.target.value)}>

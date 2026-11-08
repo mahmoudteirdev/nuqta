@@ -4,8 +4,8 @@
 
 import { ApiConnection, type ConnectionOptions } from './connection'
 import {
-  COMMENT_PREFIX, formatUptime, parseUptime, RouterError,
-  type ActiveSession, type HotspotUser, type NewHotspotUser, type RouterClient, type RouterInfo
+  COMMENT_PREFIX, countIpsInRange, formatUptime, parseUptime, RouterError,
+  type ActiveSession, type HotspotServer, type HotspotUser, type IpPool, type NewHotspotUser, type RouterClient, type RouterInfo
 } from './types'
 
 /** كم أمر بيمشوا مع بعض. الراوتر بيرد على كل واحد بوسمه. */
@@ -24,29 +24,36 @@ export class RouterOsClient implements RouterClient {
   /** إذا الاتصال انقطع، المرة الجاية بيفتح واحد جديد. */
   async #run<T>(fn: (c: ApiConnection) => Promise<T>): Promise<T> {
     try {
-      return await fn(await this.#c())
+      const c = await this.#c()
+      return await fn(c)
     } catch (e) {
-      if (e instanceof RouterError && e.isDown) {
-        this.#conn?.close()
-        this.#conn = null
-      }
+      this.#conn?.close()
+      this.#conn = null
       throw e
     }
   }
 
   info(): Promise<RouterInfo> {
     return this.#run(async (c) => {
-      const [res, id, profiles] = await Promise.all([
-        c.command(['/system/resource/print', '=.proplist=version,board-name']),
-        c.command(['/system/identity/print']),
-        c.command(['/ip/hotspot/user/profile/print', '=.proplist=name'])
-      ])
-      return {
-        identity: id.rows[0]?.['name'] ?? '',
-        version: res.rows[0]?.['version'] ?? '',
-        board: res.rows[0]?.['board-name'] ?? '',
-        profiles: profiles.rows.map((r) => r['name'] ?? '').filter(Boolean),
-        fingerprint: c.fingerprint
+      try {
+        const [identityRes, resourceRes, profilesRes] = await Promise.all([
+          c.command(['/system/identity/print']),
+          c.command(['/system/resource/print']),
+          c.command(['/ip/hotspot/user/profile/print', '=.proplist=name'])
+        ])
+        const id = identityRes.rows[0]?.['name'] ?? 'MikroTik'
+        const res = resourceRes.rows[0] ?? {}
+        const profiles = profilesRes.rows.map((p) => p['name'] ?? '').filter(Boolean)
+        return {
+          identity: id,
+          version: res['version'] ?? '',
+          board: res['board-name'] ?? '',
+          profiles,
+          fingerprint: c.fingerprint
+        }
+      } catch (e) {
+        if (!(e instanceof RouterError) || e.code !== 'trap') throw e
+        throw new RouterError('auth', e.message)
       }
     })
   }
@@ -59,6 +66,7 @@ export class RouterOsClient implements RouterClient {
         while (next < users.length) {
           const u = users[next++]!
           const words = ['/ip/hotspot/user/add', `=name=${u.name}`, `=profile=${u.profile}`, `=comment=${u.comment}`]
+          if (u.server && u.server !== 'all') words.push(`=server=${u.server}`)
           if (u.limitUptime) words.push(`=limit-uptime=${u.limitUptime}`)
           try {
             await c.command(words)
@@ -89,6 +97,49 @@ export class RouterOsClient implements RouterClient {
       return r.rows.map((s) => ({
         id: s['.id'] ?? '', user: s['user'] ?? '', mac: s['mac-address'] ?? '', address: s['address'] ?? '', uptimeSeconds: parseUptime(s['uptime']), ...(s['comment'] ? { comment: s['comment'] } : {})
       }))
+    })
+  }
+
+  pools(): Promise<IpPool[]> {
+    return this.#run(async (c) => {
+      const r = await c.command(['/ip/pool/print', '=.proplist=.id,name,ranges'])
+      return r.rows.map((row) => ({
+        id: row['.id'] ?? '',
+        name: row['name'] ?? '',
+        ranges: row['ranges'] ?? '',
+        totalIps: countIpsInRange(row['ranges'] ?? '')
+      }))
+    })
+  }
+
+  hotspotServers(): Promise<HotspotServer[]> {
+    return this.#run(async (c) => {
+      const r = await c.command(['/ip/hotspot/print', '=.proplist=.id,name,interface,profile,address-pool'])
+      return r.rows.map((row) => ({
+        id: row['.id'] ?? '',
+        name: row['name'] ?? '',
+        interface: row['interface'] ?? '',
+        profile: row['profile'] ?? '',
+        addressPool: row['address-pool'] ?? ''
+      }))
+    })
+  }
+
+  addPool(name: string, ranges: string): Promise<void> {
+    return this.#run(async (c) => {
+      await c.command(['/ip/pool/add', `=name=${name.trim()}`, `=ranges=${ranges.trim()}`])
+    })
+  }
+
+  updatePool(nameOrId: string, ranges: string): Promise<void> {
+    return this.#run(async (c) => {
+      await c.command(['/ip/pool/set', `=numbers=${nameOrId}`, `=ranges=${ranges.trim()}`])
+    })
+  }
+
+  deletePool(nameOrId: string): Promise<void> {
+    return this.#run(async (c) => {
+      await c.command(['/ip/pool/remove', `=numbers=${nameOrId}`])
     })
   }
 

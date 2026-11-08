@@ -110,10 +110,11 @@ describe('batch flow', () => {
   it('the form lists routers, categories with prices, and distributors with their limits', () => {
     expect(api.batchForm()).toEqual({
       routers: [{ id: ids.router, name: 'الراوتر الرئيسي' }],
-      categories: [{ id: ids.h3, name: '3 ساعات', wholeAg: shekels(2), saleAg: shekels(3) }],
+      categories: [{ id: ids.h3, name: '3 ساعات', wholeAg: shekels(2), saleAg: shekels(3), hotspotServer: null }],
       distributors: [{ id: ids.dist, name: 'مكتبة الأمل', owedAg: 0, creditLimitAg: shekels(1000), debtPolicy: 'on_use' }],
       maxCount: 1000,
-      template: 'a4-12'
+      template: 'a4-12',
+      hotspotServers: []
     })
   })
 })

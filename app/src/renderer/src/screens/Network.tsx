@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { NetworkData } from '@shared/api'
+import type { NetworkData, NetworkPool } from '@shared/api'
 import { api } from '@/lib/api'
 import { connectError, errorText } from '@/lib/actions'
 import { leftText } from '@/lib/format'
@@ -25,6 +25,66 @@ function lastSeen(iso: string | null, isEn: boolean): string {
   const dayMonth = new Intl.DateTimeFormat(isEn ? 'en-US' : 'ar-u-nu-latn', { day: 'numeric', month: 'long' })
   const at = new Date().toDateString() === d.toDateString() ? clock.format(d) : dayMonth.format(d)
   return t('network.lastSeenAt', { at })
+}
+
+function PoolDialog({
+  pool,
+  onDone,
+  onCancel
+}: {
+  pool?: NetworkPool | null
+  onDone: () => void
+  onCancel: () => void
+}) {
+  const [name, setName] = useState(pool?.name ?? '')
+  const [ranges, setRanges] = useState(pool?.ranges ?? '')
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const isEdit = !!pool
+
+  return (
+    <Dialog
+      title={isEdit ? t('network.editPool') : t('network.addPool')}
+      okLabel={isEdit ? 'حفظ' : 'إضافة'}
+      busy={busy}
+      error={err}
+      onCancel={onCancel}
+      body={isEdit ? `تعديل نطاق العناوين للـ Pool (${pool.name}).` : 'إضافة IP Pool جديد على الراوتر.'}
+      onOk={async () => {
+        if (!name.trim()) return setErr('اكتب اسم الـ Pool')
+        if (!ranges.trim()) return setErr('اكتب نطاق العناوين (مثال: 192.168.88.10-192.168.88.254)')
+        setBusy(true)
+        const r = await api.savePool({ id: pool?.id, name: name.trim(), ranges: ranges.trim() })
+        setBusy(false)
+        if (!r.ok) return setErr(errorText(r.error))
+        onDone()
+      }}
+    >
+      <div className="fld">
+        <label className="lbl" htmlFor="pname">{t('network.poolName')}</label>
+        <div className="box" dir="ltr">
+          <input
+            id="pname"
+            value={name}
+            disabled={isEdit}
+            placeholder="pool-wifi"
+            onChange={(e) => { setName(e.target.value); setErr('') }}
+          />
+        </div>
+      </div>
+      <div className="fld">
+        <label className="lbl" htmlFor="pranges">{t('network.poolRanges')}</label>
+        <div className="box" dir="ltr">
+          <input
+            id="pranges"
+            value={ranges}
+            placeholder={t('network.poolRangesHint')}
+            onChange={(e) => { setRanges(e.target.value); setErr('') }}
+          />
+        </div>
+      </div>
+    </Dialog>
+  )
 }
 
 function ConnectDialog({ onDone, onCancel }: { onDone: (name: string) => void; onCancel: () => void }) {
@@ -67,6 +127,11 @@ export function Network() {
   const [kickErr, setKickErr] = useState('')
   const [extending, setExtending] = useState<string | null>(null)
 
+  const [poolModal, setPoolModal] = useState<NetworkPool | 'new' | null>(null)
+  const [deletingPool, setDeletingPool] = useState<NetworkPool | null>(null)
+  const [delPoolBusy, setDelPoolBusy] = useState(false)
+  const [selectedPool, setSelectedPool] = useState<string | null>(null)
+
   useEffect(() => {
     const id = setInterval(() => setN((x) => x + 1), REFRESH_MS)
     return () => clearInterval(id)
@@ -97,6 +162,11 @@ export function Network() {
     )
   }
 
+  const allSessions = d.sessions
+  const displayedSessions = allSessions
+    ? (selectedPool ? allSessions.filter((s) => s.poolName === selectedPool) : allSessions)
+    : null
+
   return (
     <div className="scr stack" style={{ gap: 24 }}>
       <header className="head" style={{ alignItems: 'center', gap: 16 }}>
@@ -122,32 +192,134 @@ export function Network() {
         </div>
       </section>
 
-      <section aria-labelledby="on" className="panel">
-        <div className="panel-head">
-          <h2 id="on" className="h2">{d.sessions ? t('network.sessionsTitle', { n: d.sessions.length }) : t('network.sessionsTitleNone')}</h2>
+      {/* نطاقات الآي بي (IP Pools) */}
+      <section aria-label={t('network.poolsTitle')} className="panel">
+        <div className="panel-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 className="h2">{t('network.poolsTitle')}</h2>
+            <span className="sub small">إدارة نطاقات الآي بي ومتابعة الاستهلاك ومطابقة السيرفرات (Wi-Fi / LAN)</span>
+          </div>
+          <button type="button" className="btn btn-s sm" onClick={() => setPoolModal('new')}>{t('network.addPool')}</button>
         </div>
-        {!d.sessions ? (
+
+        {d.pools && d.pools.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px', marginTop: '12px' }}>
+            {d.pools.map((p) => {
+              const pct = p.totalIps > 0 ? Math.min(100, Math.round((p.activeCount / p.totalIps) * 100)) : 0
+              return (
+                <div key={p.name} className="card" style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <strong style={{ fontSize: '15px' }}>{p.name}</strong>
+                      {p.serverName && (
+                        <div style={{ marginTop: '2px' }}>
+                          <span className="bn ok sm" style={{ fontSize: '11px', padding: '2px 6px' }}>{p.serverName}</span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="mono bold" style={{ fontSize: '13px', color: pct > 85 ? 'var(--er)' : 'var(--fg)' }}>
+                      {p.activeCount} / {p.totalIps}
+                    </span>
+                  </div>
+
+                  <div className="mono small sub" dir="ltr" style={{ fontSize: '12px', background: 'var(--bg-sub)', padding: '4px 8px', borderRadius: '4px' }}>
+                    {p.ranges}
+                  </div>
+
+                  {/* شريط الاستهلاك */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${pct}%`,
+                          background: pct > 90 ? 'var(--er)' : pct > 75 ? 'var(--wa)' : 'var(--p)',
+                          transition: 'width 0.3s'
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--fg-sub)' }}>
+                      <span>{t('network.poolUsage', { used: p.activeCount, total: p.totalIps })}</span>
+                      <span>{pct}%</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                    <button type="button" className="btn btn-g sm" style={{ fontSize: '12px', padding: '2px 10px' }} onClick={() => setPoolModal(p)}>
+                      {t('network.editPool')}
+                    </button>
+                    <button type="button" className="btn btn-d sm" style={{ fontSize: '12px', padding: '2px 10px' }} onClick={() => setDeletingPool(p)}>
+                      حذف
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="empty-row bordered">لا توجد Pools معرفة على الراوتر.</div>
+        )}
+      </section>
+
+      {/* المتصلين الآن */}
+      <section aria-labelledby="on" className="panel">
+        <div className="panel-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <h2 id="on" className="h2">{allSessions ? t('network.sessionsTitle', { n: allSessions.length }) : t('network.sessionsTitleNone')}</h2>
+
+          {/* فلاتر الـ Pools */}
+          {d.pools && d.pools.length > 0 && allSessions && (
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className={`btn sm ${selectedPool === null ? 'btn-p' : 'btn-g'}`}
+                style={{ fontSize: '12px' }}
+                onClick={() => setSelectedPool(null)}
+              >
+                {t('network.filterAll')} ({allSessions.length})
+              </button>
+              {d.pools.map((p) => (
+                <button
+                  key={p.name}
+                  type="button"
+                  className={`btn sm ${selectedPool === p.name ? 'btn-p' : 'btn-g'}`}
+                  style={{ fontSize: '12px' }}
+                  onClick={() => setSelectedPool(p.name)}
+                >
+                  {p.name} ({p.activeCount})
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {!displayedSessions ? (
           <div className="empty-row bordered">
             <strong>{t('network.sessionsFail')}</strong>
             <span className="sub">{t('network.sessionsFailSub')}</span>
           </div>
-        ) : !d.sessions.length ? (
-          <div className="empty-row bordered">{t('network.sessionsEmpty')}</div>
+        ) : !displayedSessions.length ? (
+          <div className="empty-row bordered">{selectedPool ? `لا يوجد متصلين حالياً على ${selectedPool}.` : t('network.sessionsEmpty')}</div>
         ) : (
           <div style={{ overflowX: 'auto' }} tabIndex={0} role="group" aria-label={t('network.sessionsTitleNone')}>
-            <div role="table" aria-label={t('network.sessionsTitleNone')} style={{ minWidth: 760 }}>
+            <div role="table" aria-label={t('network.sessionsTitleNone')} style={{ minWidth: 840 }}>
               <div role="row" className="ses thead">
                 <span role="columnheader">{t('network.colCard')}</span>
                 <span role="columnheader">{t('network.colCategory')}</span>
+                <span role="columnheader">{t('network.colPool')}</span>
                 <span role="columnheader">{t('network.colRouter')}</span>
                 <span role="columnheader">{t('network.colIp')}</span>
                 <span role="columnheader">{t('network.colTimeLeft')}</span>
                 <span role="columnheader" className="kick-col"><span className="sr">{t('network.colActions')}</span></span>
               </div>
-              {d.sessions.map((s) => (
+              {displayedSessions.map((s) => (
                 <div key={s.id} role="row" className="ses">
                   <span role="cell" className="mono">{s.code}</span>
                   <span role="cell">{s.categoryName ?? '—'}</span>
+                  <span role="cell">
+                    {s.poolName ? (
+                      <span className="bn ok sm" style={{ fontSize: '11px', padding: '1px 6px' }}>{s.poolName}</span>
+                    ) : '—'}
+                  </span>
                   <span role="cell">{s.routerName}</span>
                   <span role="cell" className="mono">{s.address}</span>
                   <span role="cell">{s.isUnlimited ? t('network.unlimited') : leftText(s.secondsLeft, null, state.lang)}</span>
@@ -163,6 +335,38 @@ export function Network() {
       </section>
 
       {connectDlg}
+
+      {poolModal && (
+        <PoolDialog
+          pool={poolModal === 'new' ? null : poolModal}
+          onCancel={() => setPoolModal(null)}
+          onDone={() => {
+            setPoolModal(null)
+            say('تم حفظ الـ Pool بنجاح.')
+            setN((x) => x + 1)
+          }}
+        />
+      )}
+
+      {deletingPool && (
+        <Dialog
+          title={`حذف Pool ${deletingPool.name}`}
+          body={`هل أنت متأكد من حذف الـ Pool (${deletingPool.name}) من الراوتر؟ تأكد من عدم اعتماده في سيرفرات الهوتسبوت أو الـ DHCP.`}
+          okLabel="نعم، احذف"
+          danger
+          busy={delPoolBusy}
+          onCancel={() => setDeletingPool(null)}
+          onOk={async () => {
+            setDelPoolBusy(true)
+            const r = await api.deletePool(deletingPool.name)
+            setDelPoolBusy(false)
+            if (!r.ok) return say(errorText(r.error))
+            say(`تم حذف ${deletingPool.name} من الراوتر.`)
+            setDeletingPool(null)
+            setN((x) => x + 1)
+          }}
+        />
+      )}
 
       {extending && (
         <ExtendDialog

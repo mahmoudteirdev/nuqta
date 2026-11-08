@@ -224,4 +224,10 @@ ALTER TABLE users ADD COLUMN pin_rounds INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN pin_locked_until INTEGER NOT NULL DEFAULT 0;
 `
 
-export const MIGRATIONS: readonly string[] = [v1, v2, v3, v4, v5, v6]
+// ربط الفئات والدفعات بسيرفر هوتسبوت محدد (مثلا hotspot-wifi أو hotspot-lan). null للجميع.
+const v7 = `
+ALTER TABLE categories ADD COLUMN hotspot_server TEXT;
+ALTER TABLE batches ADD COLUMN hotspot_server TEXT;
+`
+
+export const MIGRATIONS: readonly string[] = [v1, v2, v3, v4, v5, v6, v7]

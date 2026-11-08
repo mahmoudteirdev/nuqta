@@ -74,6 +74,7 @@ export interface Category {
   limitUptime: string | null
   wholeAg: Agorot
   saleAg: Agorot
+  hotspotServer?: string | null
 }
 
 export interface Batch {
@@ -85,6 +86,7 @@ export interface Batch {
   count: number
   wholeAg: Agorot
   saleAg: Agorot
+  hotspotServer?: string | null
   status: BatchStatus
   createdAt: string
 }
@@ -163,8 +165,8 @@ export class Store {
 
   addCategory(c: Omit<Category, 'id'>): number {
     return this.db.run(
-      'INSERT INTO categories(name, router_profile, limit_uptime, whole_ag, sale_ag) VALUES (?, ?, ?, ?, ?)',
-      c.name, c.routerProfile, c.limitUptime, c.wholeAg, c.saleAg
+      'INSERT INTO categories(name, router_profile, limit_uptime, whole_ag, sale_ag, hotspot_server) VALUES (?, ?, ?, ?, ?, ?)',
+      c.name, c.routerProfile, c.limitUptime, c.wholeAg, c.saleAg, c.hotspotServer ?? null
     ).id
   }
 
@@ -176,9 +178,17 @@ export class Store {
   }
 
   categories(): Category[] {
-    return this.db.all<{ id: number; name: string; router_profile: string; limit_uptime: string | null; whole_ag: number; sale_ag: number }>(
-      'SELECT * FROM categories WHERE archived_at IS NULL ORDER BY id'
-    ).map((r) => ({ id: r.id, name: r.name, routerProfile: r.router_profile, limitUptime: r.limit_uptime, wholeAg: r.whole_ag, saleAg: r.sale_ag }))
+    return this.db.all<{ id: number; name: string; router_profile: string; limit_uptime: string | null; whole_ag: number; sale_ag: number; hotspot_server: string | null }>(
+      'SELECT id, name, router_profile, limit_uptime, whole_ag, sale_ag, hotspot_server FROM categories WHERE archived_at IS NULL ORDER BY id'
+    ).map((r) => ({
+      id: r.id,
+      name: r.name,
+      routerProfile: r.router_profile,
+      limitUptime: r.limit_uptime,
+      wholeAg: r.whole_ag,
+      saleAg: r.sale_ag,
+      hotspotServer: r.hotspot_server
+    }))
   }
 
   /** حذف الفئة إذا ما عليها دفعات، أو أرشفتها لحفظ السجلات والدفعات القديمة. */
@@ -192,14 +202,15 @@ export class Store {
     return ok(undefined)
   }
 
-  /** تعديل اسم الفئة أو ملفها على الراوتر. */
-  updateCategory(id: number, c: { name: string; routerProfile?: string }): StoreResult<void> {
+  /** تعديل اسم الفئة أو ملفها على الراوتر أو سيرفر الهوتسبوت. */
+  updateCategory(id: number, c: { name: string; routerProfile?: string; hotspotServer?: string | null }): StoreResult<void> {
     const name = c.name.trim()
     if (!name) return fail({ code: 'category_name' })
-    const prev = this.db.get<{ name: string; router_profile: string }>('SELECT name, router_profile FROM categories WHERE id = ? AND archived_at IS NULL', id)
+    const prev = this.db.get<{ name: string; router_profile: string; hotspot_server: string | null }>('SELECT name, router_profile, hotspot_server FROM categories WHERE id = ? AND archived_at IS NULL', id)
     if (!prev) return fail({ code: 'not_found', what: 'category' })
     const profile = c.routerProfile?.trim() || prev.router_profile
-    this.db.run('UPDATE categories SET name = ?, router_profile = ? WHERE id = ?', name, profile, id)
+    const server = c.hotspotServer !== undefined ? (c.hotspotServer?.trim() || null) : prev.hotspot_server
+    this.db.run('UPDATE categories SET name = ?, router_profile = ?, hotspot_server = ? WHERE id = ?', name, profile, server, id)
     return ok(undefined)
   }
 
@@ -323,7 +334,7 @@ export class Store {
    * distributorId = null يعني بيع مباشر.
    */
   createBatch(
-    b: { categoryId: number; routerId: number; distributorId: string | null; count: number; codeFormat?: CodeFormat; codeLength?: number },
+    b: { categoryId: number; routerId: number; distributorId: string | null; count: number; codeFormat?: CodeFormat; codeLength?: number; hotspotServer?: string | null },
     opKey: string
   ): StoreResult<{ batch: Batch; codes: string[]; duplicate: boolean }> {
     if (!Number.isSafeInteger(b.count) || b.count <= 0) return fail({ code: 'count_invalid' })
@@ -331,15 +342,16 @@ export class Store {
       const prev = this.db.get<{ id: number }>('SELECT id FROM batches WHERE op_key = ?', opKey)
       if (prev) return ok({ batch: this.batch(prev.id)!, codes: this.batchCodes(prev.id), duplicate: true })
 
-      const cat = this.db.get<{ whole_ag: number; sale_ag: number }>('SELECT whole_ag, sale_ag FROM categories WHERE id = ? AND archived_at IS NULL', b.categoryId)
+      const cat = this.db.get<{ whole_ag: number; sale_ag: number; hotspot_server: string | null }>('SELECT whole_ag, sale_ag, hotspot_server FROM categories WHERE id = ? AND archived_at IS NULL', b.categoryId)
       if (!cat) return fail({ code: 'not_found', what: 'category' })
       if (b.distributorId !== null && !this.distributor(b.distributorId)) return fail({ code: 'not_found', what: 'distributor' })
 
+      const server = b.hotspotServer !== undefined ? (b.hotspotServer?.trim() || null) : cat.hotspot_server
       const no = Number(this.db.get<{ n: number | null }>('SELECT max(no) AS n FROM batches')?.n ?? FIRST_BATCH_NO - 1) + 1
       const id = this.db.run(
-        `INSERT INTO batches(no, category_id, router_id, distributor_id, count, whole_ag, sale_ag, op_key, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        no, b.categoryId, b.routerId, idOrNull(b.distributorId), b.count, cat.whole_ag, cat.sale_ag, opKey, this.clock()
+        `INSERT INTO batches(no, category_id, router_id, distributor_id, count, whole_ag, sale_ag, op_key, created_at, hotspot_server)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        no, b.categoryId, b.routerId, idOrNull(b.distributorId), b.count, cat.whole_ag, cat.sale_ag, opKey, this.clock(), server
       ).id
 
       const exists = this.db.raw.prepare('SELECT 1 FROM cards WHERE code = ?')
@@ -351,11 +363,11 @@ export class Store {
   }
 
   batch(id: number): Batch | null {
-    const r = this.db.get<{ id: number; no: number; category_id: number; router_id: number; distributor_id: number | null; count: number; whole_ag: number; sale_ag: number; status: BatchStatus; created_at: string }>(
-      'SELECT * FROM batches WHERE id = ?', id
+    const r = this.db.get<{ id: number; no: number; category_id: number; router_id: number; distributor_id: number | null; count: number; whole_ag: number; sale_ag: number; status: BatchStatus; created_at: string; hotspot_server: string | null }>(
+      'SELECT id, no, category_id, router_id, distributor_id, count, whole_ag, sale_ag, status, created_at, hotspot_server FROM batches WHERE id = ?', id
     )
     return r
-      ? { id: r.id, no: r.no, categoryId: r.category_id, routerId: r.router_id, distributorId: r.distributor_id, count: r.count, wholeAg: r.whole_ag, saleAg: r.sale_ag, status: r.status, createdAt: r.created_at }
+      ? { id: r.id, no: r.no, categoryId: r.category_id, routerId: r.router_id, distributorId: r.distributor_id, count: r.count, wholeAg: r.whole_ag, saleAg: r.sale_ag, status: r.status, createdAt: r.created_at, hotspotServer: r.hotspot_server }
       : null
   }
 
@@ -366,14 +378,14 @@ export class Store {
     return rows.map((r) => r.code)
   }
 
-  /** اللي لازم ينبعت للراوتر من الدفعة: الجديد واللي بالانتظار، مع فئة الراوتر. */
-  sendList(batchId: number): { no: number; profile: string; limitUptime: string | null; codes: string[] } | null {
-    const r = this.db.get<{ no: number; router_profile: string; limit_uptime: string | null }>(
-      'SELECT b.no, k.router_profile, k.limit_uptime FROM batches b JOIN categories k ON k.id = b.category_id WHERE b.id = ?', batchId
+  /** اللي لازم ينبعت للراوتر من الدفعة: الجديد واللي بالانتظار، مع فئة الراوتر والسيرفر. */
+  sendList(batchId: number): { no: number; profile: string; limitUptime: string | null; server: string | null; codes: string[] } | null {
+    const r = this.db.get<{ no: number; router_profile: string; limit_uptime: string | null; hotspot_server: string | null }>(
+      'SELECT b.no, k.router_profile, k.limit_uptime, COALESCE(b.hotspot_server, k.hotspot_server) AS hotspot_server FROM batches b JOIN categories k ON k.id = b.category_id WHERE b.id = ?', batchId
     )
     if (!r) return null
     const codes = this.db.all<{ code: string }>("SELECT code FROM cards WHERE batch_id = ? AND status IN ('generated', 'pending') ORDER BY rowid", batchId)
-    return { no: r.no, profile: r.router_profile, limitUptime: r.limit_uptime, codes: codes.map((c) => c.code) }
+    return { no: r.no, profile: r.router_profile, limitUptime: r.limit_uptime, server: r.hotspot_server, codes: codes.map((c) => c.code) }
   }
 
   codesWithStatus(statuses: readonly CardStatus[]): string[] {

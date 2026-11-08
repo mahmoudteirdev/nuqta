@@ -51,7 +51,7 @@ export function cardsActions(ctx: { db: () => Db; store: () => Store; service: (
       return r.ok ? { ok: true, value: { printedTimes: printedTimes(id) } } : r
     },
 
-    categories: () => ctx.store().categories().map((c) => ({ id: c.id, name: c.name, routerProfile: c.routerProfile, wholeAg: c.wholeAg, saleAg: c.saleAg })),
+    categories: () => ctx.store().categories().map((c) => ({ id: c.id, name: c.name, routerProfile: c.routerProfile, wholeAg: c.wholeAg, saleAg: c.saleAg, hotspotServer: c.hotspotServer })),
 
     setCategoryPrices: (id, wholeAg, saleAg) => {
       if (!isAgorot(wholeAg) || !isAgorot(saleAg) || wholeAg <= 0 || saleAg <= 0) return { ok: false, error: { code: 'amount_invalid' } }
@@ -65,14 +65,14 @@ export function cardsActions(ctx: { db: () => Db; store: () => Store; service: (
       if (!isAgorot(c.wholeAg) || c.wholeAg <= 0) return { ok: false, error: { code: 'category_whole' } }
       if (!c.routerProfile.trim()) return { ok: false, error: { code: 'category_profile' } }
       // سعر البيع بيبدأ زي الجملة، والمستخدم بيحدده بعدين (زي النموذج).
-      const id = ctx.store().addCategory({ name, routerProfile: c.routerProfile.trim(), limitUptime: null, wholeAg: c.wholeAg, saleAg: c.wholeAg })
+      const id = ctx.store().addCategory({ name, routerProfile: c.routerProfile.trim(), limitUptime: null, wholeAg: c.wholeAg, saleAg: c.wholeAg, hotspotServer: c.hotspotServer?.trim() || null })
       return { ok: true, value: { id } }
     },
 
     updateCategory: (id, c) => {
       const name = c.name.trim()
       if (!name) return { ok: false, error: { code: 'category_name' } }
-      const r = ctx.store().updateCategory(id, { name, routerProfile: c.routerProfile?.trim() })
+      const r = ctx.store().updateCategory(id, { name, routerProfile: c.routerProfile?.trim(), hotspotServer: c.hotspotServer })
       return r.ok ? { ok: true, value: undefined } : { ok: false, error: r.error as ActionError }
     },
 

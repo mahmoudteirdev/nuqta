@@ -38,6 +38,15 @@ export class RouterService {
     private readonly clock: () => string = () => new Date().toISOString()
   ) {}
 
+  async addProfile(p: { name: string; rateLimit?: string; sharedUsers?: number }): Promise<RouterResult<void>> {
+    try {
+      await this.router.addProfile(p)
+      return { ok: true, value: undefined }
+    } catch (e) {
+      return down(e)
+    }
+  }
+
   async test(): Promise<RouterResult<RouterInfo>> {
     try {
       return { ok: true, value: await this.router.info() }

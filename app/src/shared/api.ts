@@ -376,7 +376,7 @@ export interface Backend {
   batchForm(): BatchForm
   batchView(batchId: number): BatchView | null
   /** بيولد الدفعة وبيبعتها للراوتر بنفس الطلب. */
-  createBatch(b: { routerId: number; categoryId: number; distributorId: string | null; count: number }, opKey: string): Promise<ActionResult<SendOutcomeView>>
+  createBatch(b: { routerId: number; categoryId: number; distributorId: string | null; count: number; codeFormat?: 'alphanumeric' | 'numeric' | 'alpha'; codeLength?: number }, opKey: string): Promise<ActionResult<SendOutcomeView>>
   /** إعادة إرسال الناقص بنفس الأكواد. */
   resendBatch(batchId: number): Promise<ActionResult<SendOutcomeView>>
   /**
@@ -395,6 +395,7 @@ export interface Backend {
   updateCategory(id: number, c: { name: string; routerProfile?: string }): ActionResult<void>
   deleteCategory(id: number): ActionResult<void>
   /** ملفات Hotspot على الراوتر. null إذا الراوتر مش راد. */
+  addRouterProfile(p: { name: string; rateLimit?: string; sharedUsers?: number }): Promise<ActionResult<{ name: string }>>
   routerProfiles(): Promise<string[] | null>
   templateSettings(): TemplateSettings
   saveTemplateSettings(t: TemplateSettings): ActionResult

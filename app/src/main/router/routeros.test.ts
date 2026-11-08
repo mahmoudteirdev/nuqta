@@ -41,6 +41,7 @@ class FakeRouterOs {
           switch (cmd) {
             case '/system/resource/print': send('!re', '=version=7.16.2', '=board-name=hAP ax2', tag); done(); break
             case '/system/identity/print': send('!re', '=name=شبكة النور', tag); done(); break
+            case '/ip/hotspot/user/profile/add': this.profiles = (this.profiles || ['1h', '3h']); this.profiles.push(a['name']); done(); break
             case '/ip/hotspot/user/profile/print': for (const p of ['1h', '3h']) send('!re', `=name=${p}`, tag); done(); break
             case '/ip/hotspot/user/add':
               if (!['1h', '3h'].includes(a['profile']!)) trap('input does not match any value of profile')

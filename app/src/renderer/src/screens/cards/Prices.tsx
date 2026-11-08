@@ -68,7 +68,7 @@ function PriceRow({ c }: { c: CategoryRow }) {
             : <span className="m">{formatMoney(margin)}</span>}
         </span>
         <div role="cell" style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-          <button type="button" className="btn btn-g sm" title="تعديل اسم الفئة" onClick={() => setEditing(true)}>تعديل</button>
+          <button type="button" className="btn btn-g sm" title="تعديل الفئة" onClick={() => setEditing(true)}>تعديل</button>
           <button type="button" className="btn btn-d sm" title="حذف الفئة" onClick={() => setDeleting(true)}>حذف</button>
         </div>
       </div>
@@ -146,6 +146,10 @@ function AddCategory({ onDone, onCancel }: { onDone: (name: string) => void; onC
   const [profile, setProfile] = useState('')
   const [whole, setWhole] = useState('')
   const [err, setErr] = useState('')
+  const [isNewProfile, setIsNewProfile] = useState(false)
+  const [newProfileName, setNewProfileName] = useState('')
+  const [newRateLimit, setNewRateLimit] = useState('')
+
   const list = profiles.state === 'ready' ? profiles.data : null
   useEffect(() => { if (list?.length && !profile) setProfile(list[0]!) }, [list, profile])
 
@@ -155,23 +159,58 @@ function AddCategory({ onDone, onCancel }: { onDone: (name: string) => void; onC
         const w = parseAgorot(whole)
         if (!name.trim()) return setErr(t('err.catName'))
         if (!(w > 0)) return setErr(t('err.catWhole'))
-        if (!profile.trim()) return setErr('اختار ملف الفئة على الراوتر.')
+
+        let targetProfile = profile.trim()
+        if (isNewProfile) {
+          if (!newProfileName.trim()) return setErr('اكتب اسم ملف الـ Hotspot الجديد على الراوتر.')
+          setBusy(true)
+          const pRes = await api.addRouterProfile({
+            name: newProfileName.trim(),
+            rateLimit: newRateLimit.trim() || undefined
+          })
+          if (!pRes.ok) {
+            setBusy(false)
+            return setErr('تعذر إنشاء الملف على الراوتر. تأكد من اتصال الراوتر.')
+          }
+          targetProfile = newProfileName.trim()
+        }
+
+        if (!targetProfile) return setErr('اختار أو اكتب ملف الفئة على الراوتر.')
         setBusy(true)
-        const r = await api.addCategory({ name, routerProfile: profile, wholeAg: w })
+        const r = await api.addCategory({ name, routerProfile: targetProfile, wholeAg: w })
         setBusy(false)
         if (!r.ok) return setErr(errorText(r.error))
         onDone(name.trim())
       }}>
-      <div className="fld"><label className="lbl" htmlFor="cn">اسم الفئة</label><div className="box"><input id="cn" value={name} onChange={(e) => { setName(e.target.value); setErr('') }} /></div></div>
+      <div className="fld"><label className="lbl" htmlFor="cn">اسم الفئة</label><div className="box"><input id="cn" value={name} placeholder="مثلاً: ساعة، 3 ساعات، يوم كامل" onChange={(e) => { setName(e.target.value); setErr('') }} /></div></div>
+
       <div className="fld">
-        <label className="lbl" htmlFor="cp">ملف Hotspot على الراوتر</label>
-        <div className="box">
-          {list
-            ? <select id="cp" value={profile} onChange={(e) => setProfile(e.target.value)}>{list.map((p) => <option key={p} value={p}>{p}</option>)}</select>
-            : <input id="cp" dir="ltr" value={profile} placeholder="3h" onChange={(e) => { setProfile(e.target.value); setErr('') }} />}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <label className="lbl" htmlFor="cp" style={{ marginBottom: 0 }}>ملف Hotspot على الراوتر</label>
+          <button type="button" className="btn btn-g sm" style={{ padding: '0 8px', minHeight: '28px', fontSize: '12px' }} onClick={() => setIsNewProfile(!isNewProfile)}>
+            {isNewProfile ? '← اختر من ملفات الراوتر' : '+ إنشاء ملف جديد على الراوتر'}
+          </button>
         </div>
-        {profiles.state === 'ready' && !list && <span className="sub small">الراوتر مش راد، فاكتب اسم الملف بإيدك.</span>}
+
+        {!isNewProfile ? (
+          <div className="box">
+            {list
+              ? <select id="cp" value={profile} onChange={(e) => setProfile(e.target.value)}>{list.map((p) => <option key={p} value={p}>{p}</option>)}</select>
+              : <input id="cp" dir="ltr" value={profile} placeholder="3h" onChange={(e) => { setProfile(e.target.value); setErr('') }} />}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="box">
+              <input id="npn" dir="ltr" value={newProfileName} placeholder="اسم الملف بالراوتر (مثلاً: 10M أو 2h)" onChange={(e) => { setNewProfileName(e.target.value); setErr('') }} />
+            </div>
+            <div className="box">
+              <input id="npr" dir="ltr" value={newRateLimit} placeholder="سرعة النت Rate Limit (اختياري: مثلاً 5M/10M)" onChange={(e) => { setNewRateLimit(e.target.value); setErr('') }} />
+            </div>
+            <span className="sub small">سيتم إنشاء البروفايل مباشرة بالراوتر مع ضبط الحذف التلقائي للكروت المنتهية.</span>
+          </div>
+        )}
       </div>
+
       <div className="fld"><label className="lbl" htmlFor="cw">سعر الجملة</label><div className="box" dir="ltr"><span aria-hidden="true">₪</span><input id="cw" inputMode="decimal" value={whole} onChange={(e) => { setWhole(e.target.value); setErr('') }} /></div></div>
     </Dialog>
   )

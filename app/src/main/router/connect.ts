@@ -136,5 +136,6 @@ export class NoRouter implements RouterClient {
   kick = this.#down
   disableUsers = this.#down
   tagUsers = this.#down
+  addProfile = this.#down
   close(): void {}
 }

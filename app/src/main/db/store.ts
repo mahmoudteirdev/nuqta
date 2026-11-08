@@ -2,7 +2,7 @@
 // وهون بنطبقها جوا معاملة وحدة عشان ما يصير سباق بين طلبين.
 
 import type { BatchStatus, CardStatus } from '@shared/cards'
-import { generateCodes, type RandomBytes } from '@shared/codes'
+import { generateCodes, type RandomBytes, type CodeFormat } from '@shared/codes'
 import {
   correction, delivery, disputeClose, disputeOpen, opening, returnCards, settlement, summarize, usage,
   type DebtPolicy, type LedgerEntry, type LedgerError, type NewEntry, type Result, type SettlementPlan, type Summary
@@ -322,7 +322,7 @@ export class Store {
    * distributorId = null يعني بيع مباشر.
    */
   createBatch(
-    b: { categoryId: number; routerId: number; distributorId: string | null; count: number },
+    b: { categoryId: number; routerId: number; distributorId: string | null; count: number; codeFormat?: CodeFormat; codeLength?: number },
     opKey: string
   ): StoreResult<{ batch: Batch; codes: string[]; duplicate: boolean }> {
     if (!Number.isSafeInteger(b.count) || b.count <= 0) return fail({ code: 'count_invalid' })
@@ -342,7 +342,7 @@ export class Store {
       ).id
 
       const exists = this.db.raw.prepare('SELECT 1 FROM cards WHERE code = ?')
-      const codes = generateCodes(b.count, (c) => exists.get(c) !== undefined, this.random)
+      const codes = generateCodes(b.count, (c) => exists.get(c) !== undefined, { format: b.codeFormat, length: b.codeLength }, this.random)
       const insert = this.db.raw.prepare('INSERT INTO cards(code, batch_id) VALUES (?, ?)')
       for (const c of codes) insert.run(c, id)
       return ok({ batch: this.batch(id)!, codes, duplicate: false })

@@ -83,6 +83,11 @@ export class MockRouter implements RouterClient {
     }
   }
 
+  async addProfile(p: { name: string; rateLimit?: string; sharedUsers?: number }): Promise<void> {
+    const n = p.name.trim()
+    if (!this.profiles.includes(n)) this.profiles.push(n)
+  }
+
   async tagUsers(names: readonly string[], comment: string): Promise<number> {
     await this.#ready()
     let n = 0

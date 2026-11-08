@@ -71,6 +71,9 @@ export function diagnose(c: CardRecord, r: RouterView): CardCheck {
 }
 
 export function cardRecord(db: Db, code: string): CardRecord | null {
+  const raw = code.trim()
+  const norm = normCode(code)
+  const unhyphenated = raw.replace(/-/g, '')
   const r = db.get<{
     code: string; status: CardStatus; created_at: string; confirmed_at: string | null; delivered_at: string | null
     first_used_at: string | null; first_mac: string | null; returned_at: string | null; batch_id: number; no: number
@@ -80,8 +83,8 @@ export function cardRecord(db: Db, code: string): CardRecord | null {
        c.batch_id, b.no, k.name cat, k.limit_uptime, d.name dist, c.printed_times times,
        (SELECT min(at) FROM print_log p WHERE p.batch_id = c.batch_id) first_print
      FROM cards c JOIN batches b ON b.id = c.batch_id JOIN categories k ON k.id = b.category_id
-     LEFT JOIN distributors d ON d.id = b.distributor_id WHERE c.code = ?`,
-    code
+     LEFT JOIN distributors d ON d.id = b.distributor_id WHERE c.code = ? OR c.code = ? OR c.code = ?`,
+    raw, norm, unhyphenated
   )
   return r
     ? {

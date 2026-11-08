@@ -75,6 +75,7 @@ export interface RouterClient {
   disableUsers(names: readonly string[]): Promise<void>
   /** بيعلّم مستخدمين موجودين (كروت مستوردة) بتعليق البرنامج. اللي مش موجود بيتجاوز. بيرجع عدد اللي انعلّموا. */
   tagUsers(names: readonly string[], comment: string): Promise<number>
+  addProfile(p: { name: string; rateLimit?: string; sharedUsers?: number }): Promise<void>
   close(): void
 }
 

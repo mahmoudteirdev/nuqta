@@ -37,6 +37,7 @@ function Generate({ form }: { form: BatchForm }) {
   const [count, setCount] = useState('100')
   const [dist, setDist] = useState<string>(state.distributorId ?? form.distributors[0]?.id ?? DIRECT)
   const [countErr, setCountErr] = useState('')
+  const [codeStyle, setCodeStyle] = useState<string>(() => localStorage.getItem('nuqta_code_style') ?? 'alphanumeric_8')
 
   const [batch, setBatch] = useState<BatchView | null>(null)
   const [sending, setSending] = useState(false)
@@ -85,7 +86,17 @@ function Generate({ form }: { form: BatchForm }) {
     setSending(true)
     setNote('')
     setDone(null)
-    const r = await api.createBatch({ routerId, categoryId, distributorId: dist === DIRECT ? null : dist, count: n }, createOp.key())
+    const [fmt, lenStr] = codeStyle.split('_')
+    const codeFormat = fmt as 'alphanumeric' | 'numeric' | 'alpha'
+    const codeLength = Number(lenStr) || 8
+    const r = await api.createBatch({
+      routerId,
+      categoryId,
+      distributorId: dist === DIRECT ? null : dist,
+      count: n,
+      codeFormat,
+      codeLength
+    }, createOp.key())
     setSending(false)
     if (!r.ok) return setCountErr(errorText(r.error))
     createOp.renew()
@@ -179,6 +190,25 @@ function Generate({ form }: { form: BatchForm }) {
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); send() } }} />
           </div>
           {countErr && <span id="bnE" className="emsg" role="alert">{countErr}</span>}
+        </div>
+        <div className="fld">
+          <label className="lbl" htmlFor="bcs">نمط الكود</label>
+          <div className="box">
+            <select
+              id="bcs"
+              value={codeStyle}
+              disabled={locked}
+              onChange={(e) => {
+                setCodeStyle(e.target.value)
+                localStorage.setItem('nuqta_code_style', e.target.value)
+              }}
+            >
+              <option value="alphanumeric_8">أرقام وحروف (XXXX-XXXX)</option>
+              <option value="numeric_6">أرقام فقط (6 أرقام - 849201)</option>
+              <option value="numeric_8">أرقام فقط (8 أرقام - 74928165)</option>
+              <option value="alpha_8">حروف فقط (8 أحرف - ABCD-EFGH)</option>
+            </select>
+          </div>
         </div>
         <div className="fld">
           <label className="lbl" htmlFor="bd">الموزع</label>

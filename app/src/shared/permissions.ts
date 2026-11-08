@@ -62,6 +62,7 @@ export const PERMISSIONS: Record<keyof Backend, Permission> = {
   addCategory: 'owner',
   updateCategory: 'owner',
   deleteCategory: 'owner',
+  addRouterProfile: 'owner',
 
   // الإعدادات.
   saveTemplateSettings: 'owner',

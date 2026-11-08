@@ -104,6 +104,16 @@ export class RouterOsClient implements RouterClient {
     })
   }
 
+  addProfile(p: { name: string; rateLimit?: string; sharedUsers?: number }): Promise<void> {
+    return this.#run(async (c) => {
+      const words = ['/ip/hotspot/user/profile/add', `=name=${p.name.trim()}`]
+      if (p.rateLimit?.trim()) words.push(`=rate-limit=${p.rateLimit.trim()}`)
+      if (p.sharedUsers) words.push(`=shared-users=${p.sharedUsers}`)
+      words.push('=on-logout={ :local u $user; :if ($uptime >= $limit_uptime) do={ /ip hotspot user remove [find name=$u] } }')
+      await c.command(words)
+    })
+  }
+
   tagUsers(names: readonly string[], comment: string): Promise<number> {
     return this.#run(async (c) => {
       let n = 0

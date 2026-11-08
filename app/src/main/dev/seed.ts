@@ -4,6 +4,7 @@
 import { shekels } from '@shared/money'
 import type { Db } from '../db/db'
 import { Store } from '../db/store'
+import { hashPin } from '../auth'
 
 export function seedDemo(db: Db, now = new Date()): void {
   let cur = now.toISOString()
@@ -25,6 +26,10 @@ export function seedDemo(db: Db, now = new Date()): void {
   db.tx(() => {
     on(40)
     store.setSetting('network_name', 'شبكة النور')
+    // مستخدمين للتجربة بس: صاحب الشبكة برمز 1234، والفني سامي برمز 5678.
+    db.run("INSERT INTO users(name, role, pin_hash, created_at) VALUES ('صاحب الشبكة', 'owner', ?, ?)", hashPin('1234'), cur)
+    db.run("INSERT INTO users(name, role, pin_hash, created_at) VALUES ('سامي', 'technician', ?, ?)", hashPin('5678'), cur)
+    store.actor = 'u:1'
     const router = store.addRouter({ name: 'الراوتر الرئيسي', host: '192.168.88.1' })
     const cat = {
       h1: store.addCategory({ name: 'ساعة', routerProfile: '1h', limitUptime: '1h', wholeAg: shekels(1), saleAg: shekels(2) }),

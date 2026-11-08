@@ -122,7 +122,7 @@ function DistributorsStep({ back, next }: { back: () => void; next: () => void }
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
-  useEffect(() => { void api.account(null).then((a) => setAdded(a.distributors.map((d) => d.name))) }, [])
+  useEffect(() => { void api.setupDistributors().then(setAdded) }, [])
 
   const add = async () => {
     if (!name.trim()) return setErr(t('err.distNameFirst'))

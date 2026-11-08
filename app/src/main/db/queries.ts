@@ -100,6 +100,8 @@ export function accountData(db: Db, store: Store, distributorId: string | null, 
       .map((r) => [String(r.id), r.no])
   )
   const lastSettlement = [...entries].reverse().find((e) => e.type === 'settlement' && !corrected.has(e.id))
+  const names = new Map(db.all<{ id: number; name: string }>('SELECT id, name FROM users').map((u) => [`u:${u.id}`, u.name]))
+  const byName = (by: string) => names.get(by) ?? (by === 'router' ? 'الراوتر' : by === 'owner' ? 'صاحب الشبكة' : by)
   const last = [...entries].reverse().find((e) => e.type !== 'dispute_open' && e.type !== 'dispute_close')
 
   return {
@@ -128,7 +130,8 @@ export function accountData(db: Db, store: Store, distributorId: string | null, 
           balanceAg: balances[i]!,
           batchNo: e.batchId ? (batchNo.get(e.batchId) ?? null) : null,
           note: e.note,
-          corrected: corrected.has(e.id)
+          corrected: corrected.has(e.id),
+          byName: byName(e.createdBy)
         }))
         .reverse(),
       correctable: last && last.type === 'settlement' && !corrected.has(last.id) ? { id: last.id, paidAg: last.paidAg } : null

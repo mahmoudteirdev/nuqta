@@ -49,3 +49,4 @@ html,body{margin:0;padding:0;background:#fff;color:#13201D;font-family:'IBM Plex
 .doc-note{margin-top:6mm;color:#55625D}
 
 @page{margin:0}
+.doc-by{color:#55625D;font-size:11px;line-height:16px}

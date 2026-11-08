@@ -42,6 +42,15 @@ describe('when setup shows', () => {
     expect(setupState(store).needed).toBe(false)
   })
 
+  it('stays open after the categories are saved, until it is finished', () => {
+    api.setSetupStep(2)
+    store.addCategory({ name: '3 ساعات', routerProfile: '3h', limitUptime: '3h', wholeAg: 200, saleAg: 300 })
+    expect(setupState(store)).toEqual({ needed: true, step: 2 })
+    expect(api.setupDistributors()).toEqual([])
+    api.finishSetup()
+    expect(setupState(store).needed).toBe(false)
+  })
+
   it('remembers the step, so closing the app halfway resumes there', () => {
     api.setSetupStep(3)
     expect(setupState(store)).toEqual({ needed: true, step: 3 })

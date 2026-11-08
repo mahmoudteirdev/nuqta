@@ -50,12 +50,19 @@ describe('network settings', () => {
 })
 
 describe('users', () => {
-  it('the network owner always exists, and technicians can be added', () => {
-    expect(api.users()).toEqual([{ id: 1, name: 'صاحب الشبكة', role: 'owner' }])
-    ok(api.addUser({ name: ' سامي ', role: 'technician' }))
-    expect(api.users().map((u) => [u.name, u.role])).toEqual([['صاحب الشبكة', 'owner'], ['سامي', 'technician']])
-    expect(api.addUser({ name: '', role: 'technician' })).toEqual({ ok: false, error: { code: 'user_name' } })
-    expect(api.addUser({ name: 'x', role: 'boss' as 'owner' })).toEqual({ ok: false, error: { code: 'user_role' } })
+  it('lists users with whether they have a PIN; a new user needs a valid PIN and a unique name', () => {
+    expect(api.users()).toEqual([
+      { id: 1, name: 'صاحب الشبكة', role: 'owner', hasPin: true, active: true },
+      { id: 2, name: 'سامي', role: 'technician', hasPin: true, active: true }
+    ])
+    expect(api.addUser({ name: 'رامي', role: 'technician', pin: '12' })).toEqual({ ok: false, error: { code: 'pin_format' } })
+    expect(api.addUser({ name: 'سامي', role: 'technician', pin: '4321' })).toEqual({ ok: false, error: { code: 'user_exists' } })
+    expect(api.addUser({ name: '', role: 'technician', pin: '4321' })).toEqual({ ok: false, error: { code: 'user_name' } })
+    expect(api.addUser({ name: 'x', role: 'boss' as 'owner', pin: '4321' })).toEqual({ ok: false, error: { code: 'user_role' } })
+    ok(api.addUser({ name: ' رامي ', role: 'technician', pin: '٤٣٢١' }))
+    expect(api.users().at(-1)).toEqual({ id: 3, name: 'رامي', role: 'technician', hasPin: true, active: true })
+    // الرمز نفسه ما بينحفظ.
+    expect(JSON.stringify(db.all('SELECT * FROM users'))).not.toContain('4321')
   })
 })
 

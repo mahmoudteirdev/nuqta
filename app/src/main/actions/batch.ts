@@ -63,6 +63,8 @@ export function batchActions(ctx: {
   print: (job: CardsJob) => Promise<PrintOutcome>
   /** بعد انتهاء التجربة بدون ترخيص: توليد دفعات جديدة بيوقف بس. */
   canGenerate?: () => boolean
+  /** الفني ما بيشوف ديون الموزعين، وما بيسلّم لموزع فوق سقفه: هذا قرار صاحب الشبكة. */
+  role?: () => 'owner' | 'technician' | null
 }): BatchBackend {
   const view = (id: number) => batchView(ctx.db(), id)!
 
@@ -79,7 +81,9 @@ export function batchActions(ctx: {
       return {
         routers: ctx.db().all<{ id: number; name: string }>('SELECT id, name FROM routers ORDER BY id'),
         categories: store.categories().map((c) => ({ id: c.id, name: c.name, wholeAg: c.wholeAg, saleAg: c.saleAg })),
-        distributors: store.distributors().map((d) => ({ id: d.id, name: d.name, owedAg: d.summary.owedAg, creditLimitAg: d.creditLimitAg, debtPolicy: d.debtPolicy })),
+        distributors: store.distributors().map((d) => (ctx.role?.() === 'technician'
+          ? { id: d.id, name: d.name, owedAg: 0, creditLimitAg: 0, debtPolicy: d.debtPolicy }
+          : { id: d.id, name: d.name, owedAg: d.summary.owedAg, creditLimitAg: d.creditLimitAg, debtPolicy: d.debtPolicy })),
         maxCount: readRules(store).maxBatchCount,
         template: readTemplate(store).template
       }
@@ -89,6 +93,10 @@ export function batchActions(ctx: {
 
     createBatch: async (b, opKey) => {
       if (ctx.canGenerate && !ctx.canGenerate()) return { ok: false, error: { code: 'license_required' } }
+      if (b.distributorId && ctx.role?.() === 'technician') {
+        const d = ctx.store().distributors().find((x) => x.id === b.distributorId)
+        if (d && d.summary.owedAg > d.creditLimitAg) return { ok: false, error: { code: 'owner_required' } }
+      }
       const max = readRules(ctx.store()).maxBatchCount
       if (!Number.isSafeInteger(b.count) || b.count <= 0 || b.count > max) return { ok: false, error: { code: 'count_invalid' } }
       const r = ctx.store().createBatch(b, opKey)
@@ -133,6 +141,6 @@ export async function printCards(
     categoryName: v.categoryName, saleAg: v.saleAg, batchNo: v.no, codes
   })
   if (!out.ok) return { ok: false, error: { code: out.reason === 'cancelled' ? 'print_cancelled' : 'print_failed' } }
-  const r = store.printBatch(batchId, tpl.template, 'owner', scope, codes)
+  const r = store.printBatch(batchId, tpl.template, store.actor, scope, codes)
   return r.ok ? { ok: true, value: r.value } : { ok: false, error: r.error as ActionError }
 }

@@ -8,24 +8,12 @@
 //   node scripts/license.mjs issue --key <license-private.pem> --device NQ-XXXX-XXXX [--days 365 | --until 2027-12-31] [--plan full]
 //       بيطبع مفتاح التفعيل للزبون. بدون --days أو --until: بدون انتهاء.
 //
+// للاستخدام اليومي في أداة أسهل بصفحة وسجل زباين: npm run license:admin
 // الصيغة لازم تطابق src/main/license.ts (اختبار license.test.ts بيتأكد).
 
-import { generateKeyPairSync, createPrivateKey, sign } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-
-const B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
-
-function base32Encode(bytes) {
-  let bits = 0, value = 0, out = ''
-  for (const b of bytes) {
-    value = (value << 8) | b
-    bits += 8
-    while (bits >= 5) { out += B32[(value >>> (bits - 5)) & 31]; bits -= 5 }
-  }
-  if (bits > 0) out += B32[(value << (5 - bits)) & 31]
-  return out
-}
+import { generateKeys, issueKey, normalizeDevice } from './license-lib.mjs'
 
 function arg(name) {
   const i = process.argv.indexOf(name)
@@ -44,16 +32,16 @@ if (cmd === 'keygen') {
   const file = join(dir, 'license-private.pem')
   if (existsSync(file)) fail(`في مفتاح خاص موجود أصلا: ${file}\nما بنكتب فوقه، لأن كل التراخيص القديمة مربوطة فيه.`)
   mkdirSync(dir, { recursive: true })
-  const { privateKey, publicKey } = generateKeyPairSync('ed25519')
-  writeFileSync(file, privateKey.export({ type: 'pkcs8', format: 'pem' }), { mode: 0o600 })
+  const { privatePem, publicPem } = generateKeys()
+  writeFileSync(file, privatePem, { mode: 0o600 })
   console.log(`انحفظ المفتاح الخاص: ${file}`)
   console.log('انسخه احتياط بمكان آمن. بدونه ما بتقدر تصدر تراخيص للبرنامج المنشور.\n')
   console.log('المفتاح العام (حطه بـsrc/main/license-public-key.ts):\n')
-  console.log(publicKey.export({ type: 'spki', format: 'pem' }))
+  console.log(publicPem)
 } else if (cmd === 'issue') {
   const keyFile = arg('--key') || fail('--key <license-private.pem> مطلوب')
-  const device = (arg('--device') || fail('--device NQ-XXXX-XXXX مطلوب')).trim().toUpperCase()
-  if (!/^NQ-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(device)) fail(`كود الجهاز مش مزبوط: ${device}`)
+  const given = arg('--device') || fail('--device NQ-XXXX-XXXX مطلوب')
+  const device = normalizeDevice(given) || fail(`كود الجهاز مش مزبوط: ${given}`)
   const plan = arg('--plan') || 'full'
   let expires = '-'
   if (arg('--until')) {
@@ -64,13 +52,7 @@ if (cmd === 'keygen') {
     if (!Number.isInteger(days) || days <= 0) fail('--days رقم صحيح')
     expires = new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10)
   }
-  const payload = new TextEncoder().encode(`NQ1|${device}|${expires}|${plan}`)
-  const sig = sign(null, payload, createPrivateKey(readFileSync(keyFile)))
-  const all = new Uint8Array(1 + payload.length + sig.length)
-  all[0] = payload.length
-  all.set(payload, 1)
-  all.set(sig, 1 + payload.length)
-  console.log(base32Encode(all).match(/.{1,5}/g).join('-'))
+  console.log(issueKey(readFileSync(keyFile), { device, expires: expires === '-' ? null : expires, plan }))
 } else {
   fail('الأوامر: keygen <مجلد> | issue --key <ملف> --device NQ-XXXX-XXXX [--days N | --until YYYY-MM-DD] [--plan full]')
 }

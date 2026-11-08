@@ -204,3 +204,15 @@ html,body,#root{height:100%}
   .dot.on,.dot.done{border:2px solid Highlight}
   .bar span{background:Highlight;forced-color-adjust:none}
 }
+
+/* الدخول */
+.login{min-height:calc(100vh - 60px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px 16px;box-sizing:border-box}
+.login-brand{display:flex;align-items:center;gap:10px}
+.login-brand strong{font-size:22px;line-height:32px}
+.login-card{width:min(420px,100%);display:flex;flex-direction:column;gap:14px}
+.login-users{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.login-users .chip strong{display:block;font-weight:600}
+.who{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;color:var(--nav-text);border-top:1px solid #2A3632}
+.who-lock{color:var(--nav-text)}
+.who-lock:hover{background:var(--nav-hover);color:#fff}
+.ev .by{display:block}

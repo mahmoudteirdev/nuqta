@@ -25,6 +25,7 @@ export function errorText(e: ActionError): string {
     case 'no_open_dispute': return 'ما في خلاف مفتوح.'
     case 'not_found': return 'ما لقيناه. يمكن انحذف من جهاز ثاني.'
     case 'nothing_to_print': return 'ما في كروت مؤكدة للطباعة.'
+    case 'owner_required': return 'هذا الموزع فوق سقف الدين. صاحب الشبكة لازم يقرر إذا بيسلّمه.'
     case 'license_required': return 'انتهت التجربة. فعّل البرنامج من الإعدادات عشان تولّد كروت جديدة.'
     case 'print_cancelled': return 'الطباعة ما تمت، وما تغير شي. لما تجرب، بتنطبع نفس الأكواد.'
     case 'print_failed': return 'الطباعة فشلت، وما تغير شي. لما تجرب، بتنطبع نفس الأكواد.'

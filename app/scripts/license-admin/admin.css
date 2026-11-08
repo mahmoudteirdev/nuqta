@@ -1,0 +1,53 @@
+@font-face{font-family:'NQ Sans';font-weight:400;src:url(/fonts/ar-400.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+200C-200F,U+FB50-FDFF,U+FE70-FEFF}
+@font-face{font-family:'NQ Sans';font-weight:600;src:url(/fonts/ar-600.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+200C-200F,U+FB50-FDFF,U+FE70-FEFF}
+@font-face{font-family:'NQ Sans';font-weight:400;src:url(/fonts/la-400.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F}
+@font-face{font-family:'NQ Sans';font-weight:600;src:url(/fonts/la-600.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F}
+@font-face{font-family:'NQ Mono';font-weight:600;src:url(/fonts/mono-600.woff2) format('woff2')}
+html,body{margin:0;background:var(--ground);color:var(--ink);font:400 16px/26px 'NQ Sans',Tahoma,sans-serif}
+[hidden]{display:none!important}
+.top{display:flex;gap:12px;align-items:baseline;padding:14px 24px;background:var(--nav-bg);color:var(--nav-text)}
+.top strong{color:#fff;font-size:20px;font-weight:600}
+.wrap{max-width:1240px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:16px;box-sizing:border-box}
+.stack{display:flex;flex-direction:column;gap:14px}
+.stack:empty{display:none}
+.card{background:#fff;border:1px solid var(--line);border-radius:4px;padding:20px;min-width:0}
+.cols{display:grid;grid-template-columns:minmax(320px,400px) minmax(0,1fr);gap:16px;align-items:start}
+.small{font-size:14px;line-height:22px}
+p{margin:0}
+.path{font-family:'NQ Mono',Consolas,monospace;font-size:14px;direction:ltr;unicode-bidi:isolate;overflow-wrap:anywhere}
+.mono-in{font-family:'NQ Mono',Consolas,monospace!important;font-weight:600}
+.plain{border:0;margin:0;padding:0;min-width:0}
+.durs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.dur{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--ctl);border-radius:4px;cursor:pointer;box-sizing:border-box}
+.dur:hover{border-color:var(--ink)}
+.dur:has(input:checked){background:var(--pri-t);border:2px solid var(--pri);padding:0 11px;color:var(--ok);font-weight:600}
+.dur:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.dur input{accent-color:var(--pri);margin:0;width:16px;height:16px}
+.seen{background:var(--warn-t);color:var(--warn);border-radius:4px;padding:8px 12px;font-size:14px;line-height:22px}
+.result{background:var(--pri-t);border-radius:4px;padding:14px;outline:0}
+.result h2{margin:0;color:var(--ok)}
+.keytext{display:block;background:#fff;border:1px solid var(--line);border-radius:4px;padding:10px 12px;font:600 14px/24px 'NQ Mono',Consolas,monospace;word-break:break-all;text-align:left;user-select:all}
+.listhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.listhead .btn{text-decoration:none}
+.rows{display:flex;flex-direction:column;max-height:calc(100vh - 250px);min-height:120px;overflow:auto;border-top:1px solid var(--line)}
+.rows:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.lic{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.lic strong{font-weight:600}
+.lic .meta{grid-column:1;display:flex;flex-wrap:wrap;gap:2px 14px;color:var(--muted);font-size:14px;line-height:22px}
+.lic .note{grid-column:1;color:var(--muted);font-size:14px;line-height:22px;overflow-wrap:anywhere}
+.lic .acts{grid-column:2;grid-row:1 / span 3;display:flex;gap:8px;align-items:flex-start}
+.code-t{font-family:'NQ Mono',Consolas,monospace;font-weight:600;font-size:13px;direction:ltr;unicode-bidi:isolate}
+.tag{display:inline-block;padding:0 8px;border-radius:4px;font-size:13px;line-height:22px;font-weight:600;margin-inline-start:8px}
+.tag.ok{background:var(--pri-t);color:var(--ok)}
+.tag.wa{background:var(--warn-t);color:var(--warn)}
+.tag.er{background:var(--err-t);color:var(--err)}
+.tag.old{background:var(--fill);color:var(--muted)}
+.dlg-n{border:1px solid var(--line);border-radius:4px;padding:20px;max-width:440px;color:var(--ink)}
+.dlg-n::backdrop{background:rgba(19,32,29,.5)}
+.dlg-n p{margin:12px 0 16px}
+.dlg-acts{display:flex;gap:8px}
+.bn>div{flex:1 1 auto;min-width:0}
+.bn .btn{flex:none}
+@media (max-width:860px){.cols{grid-template-columns:minmax(0,1fr)}.wrap{padding:16px}.rows{max-height:none}}
+@media (max-width:480px){.lic{grid-template-columns:minmax(0,1fr)}.lic .acts{grid-column:1;grid-row:auto}}
+@media (forced-colors:active){.dur:has(input:checked),.tag{border:2px solid CanvasText}}

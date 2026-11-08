@@ -12,6 +12,7 @@ import { StateView } from '@/shell/StateView'
 import { BackupTab } from '@/shell/Backups'
 import { ImportTab } from '@/shell/ImportTab'
 import { LicenseTab } from '@/shell/LicenseTab'
+import { UsersTab } from '@/shell/UsersTab'
 import { Tabs } from '@/shell/Tabs'
 import { useToast } from '@/shell/Toast'
 
@@ -75,61 +76,6 @@ function NetTab() {
         {busy && <span className="spin" aria-hidden="true" />}
         {busy ? 'جاري الحفظ' : 'احفظ'}
       </button>
-    </section>
-  )
-}
-
-function UsersTab() {
-  const say = useToast()
-  const [n, setN] = useState(0)
-  const [adding, setAdding] = useState(false)
-  const [name, setName] = useState('')
-  const [role, setRole] = useState<UserRole>('technician')
-  const [err, setErr] = useState('')
-  const [busy, setBusy] = useState(false)
-  const list = useApi(() => api.users(), [n])
-  const data = list.state === 'ready' ? list.data : []
-
-  return (
-    <section className="panel scr" aria-label="المستخدمون">
-      <div className="panel-head">
-        <div>
-          <h2 className="h2">المستخدمون والصلاحيات</h2>
-          <span className="sub small">الفني بيدير الراوتر والكروت، وما بيشوف الحسابات.</span>
-        </div>
-        <button type="button" className="btn btn-s sm" onClick={() => { setName(''); setErr(''); setRole('technician'); setAdding(true) }}>أضف مستخدم</button>
-      </div>
-      {data.map((u) => (
-        <div key={u.id} className="rowx" style={{ gridTemplateColumns: '1.4fr 1fr auto' }}>
-          <strong>{u.name}</strong><span>{ROLE[u.role].name}</span><span className="sub">{ROLE[u.role].note}</span>
-        </div>
-      ))}
-      <div className="bn wa users-note"><span>الصلاحيات معروضة بس، ولسا ما بتنطبق: البرنامج ما فيه تسجيل دخول لكل مستخدم.</span></div>
-      {adding && (
-        <Dialog title="أضف مستخدم" okLabel="أضف" busy={busy} error={err} onCancel={() => setAdding(false)}
-          onOk={async () => {
-            if (!name.trim()) return setErr(t('err.userName'))
-            setBusy(true)
-            const r = await api.addUser({ name, role })
-            setBusy(false)
-            if (!r.ok) return setErr(errorText(r.error))
-            setAdding(false)
-            say(`انضاف ${name.trim()}.`)
-            setN((x) => x + 1)
-          }}>
-          <div className="fld"><label className="lbl" htmlFor="un">الاسم</label><div className="box"><input id="un" value={name} onChange={(e) => { setName(e.target.value); setErr('') }} /></div></div>
-          <div className="fld">
-            <span className="lbl" id="ur">الدور</span>
-            <div role="group" aria-labelledby="ur" className="tpl-list">
-              {(Object.keys(ROLE) as UserRole[]).map((k) => (
-                <button key={k} type="button" className={role === k ? 'chip on' : 'chip'} aria-pressed={role === k} style={{ minHeight: 56 }} onClick={() => setRole(k)}>
-                  <strong>{ROLE[k].name}</strong><span>{ROLE[k].note}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </Dialog>
-      )}
     </section>
   )
 }

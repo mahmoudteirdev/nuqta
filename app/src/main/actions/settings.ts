@@ -4,6 +4,7 @@ import type { Backend, UserRole } from '@shared/api'
 import type { Db } from '../db/db'
 import type { Store } from '../db/store'
 import { invalidRule, LIMITS, readRules, saveRules } from '../rules'
+import { hashPin, normalizePin } from '../auth'
 
 const ROLES: readonly UserRole[] = ['owner', 'technician']
 /** أرقام ومسافات وشرطة و+ بس، عشان الرقم يطلع مزبوط على الكرت. */
@@ -13,12 +14,6 @@ type SettingsBackend = Pick<Backend, 'networkSettings' | 'saveNetworkSettings' |
 
 export function settingsActions(ctx: { db: () => Db; store: () => Store; now?: () => string }): SettingsBackend {
   const now = ctx.now ?? (() => new Date().toISOString())
-
-  /** صاحب الشبكة موجود دايما كأول مستخدم. */
-  const ensureOwner = () => {
-    const db = ctx.db()
-    if (!db.get('SELECT 1 FROM users LIMIT 1')) db.run("INSERT INTO users(name, role, created_at) VALUES ('صاحب الشبكة', 'owner', ?)", now())
-  }
 
   return {
     networkSettings: () => ({ networkName: ctx.store().getSetting('network_name') ?? '', phone: ctx.store().getSetting('support_phone') ?? '' }),
@@ -33,17 +28,18 @@ export function settingsActions(ctx: { db: () => Db; store: () => Store; now?: (
       return { ok: true, value: undefined }
     },
 
-    users: () => {
-      ensureOwner()
-      return ctx.db().all<{ id: number; name: string; role: UserRole }>('SELECT id, name, role FROM users ORDER BY id')
-    },
+    users: () =>
+      ctx.db().all<{ id: number; name: string; role: UserRole; pin_hash: string | null; active: number }>('SELECT id, name, role, pin_hash, active FROM users ORDER BY id')
+        .map((u) => ({ id: u.id, name: u.name, role: u.role, hasPin: !!u.pin_hash, active: !!u.active })),
 
     addUser: (u) => {
       const name = u.name.trim()
       if (!name) return { ok: false, error: { code: 'user_name' } }
       if (!ROLES.includes(u.role)) return { ok: false, error: { code: 'user_role' } }
-      ensureOwner()
-      const id = ctx.db().run('INSERT INTO users(name, role, created_at) VALUES (?, ?, ?)', name, u.role, now()).id
+      const pin = normalizePin(u.pin)
+      if (!pin) return { ok: false, error: { code: 'pin_format' } }
+      if (ctx.db().get('SELECT 1 FROM users WHERE name = ? AND active = 1', name)) return { ok: false, error: { code: 'user_exists' } }
+      const id = ctx.db().run('INSERT INTO users(name, role, pin_hash, created_at) VALUES (?, ?, ?, ?)', name, u.role, hashPin(pin), now()).id
       return { ok: true, value: { id } }
     },
 

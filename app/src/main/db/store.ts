@@ -113,6 +113,9 @@ const PRINT_SCOPE: Record<PrintScope, readonly CardStatus[]> = {
 }
 
 export class Store {
+  /** مين بيكتب هلأ: u:<id> للمستخدم الداخل. الدخول بيغيره. */
+  actor = 'owner'
+
   constructor(
     private readonly db: Db,
     private readonly clock: () => string = () => new Date().toISOString(),
@@ -183,7 +186,7 @@ export class Store {
   addDistributor(
     d: { name: string; area?: string; creditLimitAg: Agorot; debtPolicy?: DebtPolicy; openingAg?: Agorot },
     opKey: string,
-    by = 'owner'
+    by = this.actor
   ): StoreResult<{ id: string; duplicate: boolean }> {
     return this.atomic<{ id: string; duplicate: boolean }>(() => {
       const prev = this.db.get<{ distributor_id: number }>('SELECT distributor_id FROM ledger WHERE op_key = ?', opKey)
@@ -255,7 +258,7 @@ export class Store {
     distributorId: string,
     opKey: string,
     build: (entries: LedgerEntry[]) => Result<NewEntry>,
-    by = 'owner'
+    by = this.actor
   ): StoreResult<{ entry: LedgerEntry; duplicate: boolean }> {
     return this.db.tx(() => {
       const prev = this.entryByOpKey(opKey)
@@ -267,7 +270,7 @@ export class Store {
     })
   }
 
-  settle(distributorId: string, paidAg: Agorot, opKey: string, by = 'owner'): StoreResult<{ entry: LedgerEntry; duplicate: boolean; plan: SettlementPlan | null }> {
+  settle(distributorId: string, paidAg: Agorot, opKey: string, by = this.actor): StoreResult<{ entry: LedgerEntry; duplicate: boolean; plan: SettlementPlan | null }> {
     let plan: SettlementPlan | null = null
     const r = this.record(distributorId, opKey, (es) => {
       const p = settlement(es, distributorId, paidAg, opKey)
@@ -278,15 +281,15 @@ export class Store {
     return r.ok ? ok({ ...r.value, plan }) : r
   }
 
-  correct(distributorId: string, targetId: string, reason: string, opKey: string, by = 'owner') {
+  correct(distributorId: string, targetId: string, reason: string, opKey: string, by = this.actor) {
     return this.record(distributorId, opKey, (es) => correction(es, targetId, reason, opKey), by)
   }
 
-  openDispute(distributorId: string, note: string, opKey: string, by = 'owner') {
+  openDispute(distributorId: string, note: string, opKey: string, by = this.actor) {
     return this.record(distributorId, opKey, (es) => disputeOpen(es, distributorId, note, opKey), by)
   }
 
-  closeDispute(distributorId: string, note: string, opKey: string, by = 'owner') {
+  closeDispute(distributorId: string, note: string, opKey: string, by = this.actor) {
     return this.record(distributorId, opKey, (es) => disputeClose(es, distributorId, note, opKey), by)
   }
 
@@ -393,7 +396,7 @@ export class Store {
   }
 
   /** only: الأكواد اللي انطبعت فعلا. بدونها، كل اللي بالنطاق. */
-  printBatch(batchId: number, template: string, by = 'owner', scope: PrintScope = 'all', only?: readonly string[]): StoreResult<{ codes: string[] }> {
+  printBatch(batchId: number, template: string, by = this.actor, scope: PrintScope = 'all', only?: readonly string[]): StoreResult<{ codes: string[] }> {
     const statuses = PRINT_SCOPE[scope]
     const inList = statuses.map((x) => `'${x}'`).join(', ')
     return this.db.tx(() => {
@@ -416,7 +419,7 @@ export class Store {
    * بيسلم الكروت المطبوعة. للموزع بتنضاف حركة تسليم بسعر الدفعة وسياسته الحالية،
    * وللبيع المباشر ما في دين. الدفعة بتصير done لما ما يضل فيها كروت بالانتظار.
    */
-  deliverBatch(batchId: number, opKey: string, by = 'owner'): StoreResult<{ delivered: number; entry: LedgerEntry | null; duplicate: boolean }> {
+  deliverBatch(batchId: number, opKey: string, by = this.actor): StoreResult<{ delivered: number; entry: LedgerEntry | null; duplicate: boolean }> {
     return this.db.tx(() => {
       const prev = this.entryByOpKey(opKey)
       if (prev) return ok({ delivered: prev.cardsDelta, entry: prev, duplicate: true })
@@ -492,7 +495,7 @@ export class Store {
   /**
    * مرتجع من موزع بالأكواد. الكروت بتنوقف، وأمر الإيقاف بيدخل الطابور لحين ما يرد الراوتر.
    */
-  returnCards(distributorId: string, codes: readonly string[], opKey: string, by = 'owner'): StoreResult<{ entries: LedgerEntry[]; duplicate: boolean }> {
+  returnCards(distributorId: string, codes: readonly string[], opKey: string, by = this.actor): StoreResult<{ entries: LedgerEntry[]; duplicate: boolean }> {
     return this.atomic(() => {
       const prefix = `${opKey}:`
       const done = this.db.all<LedgerRow>('SELECT * FROM ledger WHERE substr(op_key, 1, ?) = ? ORDER BY id', prefix.length, prefix)

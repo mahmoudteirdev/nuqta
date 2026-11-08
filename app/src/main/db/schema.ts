@@ -211,4 +211,10 @@ CREATE TRIGGER card_code_fixed BEFORE UPDATE OF code, batch_id ON cards
 BEGIN SELECT RAISE(ABORT, 'card code is fixed'); END;
 `
 
-export const MIGRATIONS: readonly string[] = [v1, v2, v3, v4]
+// الدخول برمز لكل مستخدم. الرمز نفسه ما بينحفظ: hash بـscrypt. والمستخدم الموقوف ما بيدخل.
+const v5 = `
+ALTER TABLE users ADD COLUMN pin_hash TEXT;
+ALTER TABLE users ADD COLUMN active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1));
+`
+
+export const MIGRATIONS: readonly string[] = [v1, v2, v3, v4, v5]

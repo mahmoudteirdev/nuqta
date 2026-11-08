@@ -265,6 +265,7 @@ function Statement({ cur, newId, onCorrect }: { cur: AccountDetail; newId: strin
                   <span role="cell">
                     {actionText(e)}
                     {e.corrected && <span className="sub"> (انصححت)</span>}
+                    <span className="by sub small">{e.byName}</span>
                     {usage && (
                       <><br /><button type="button" className="btn btn-g sm lnk-btn" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : e.id)}>
                         {isOpen ? 'إخفاء الكروت' : 'شوف الكروت'}

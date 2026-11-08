@@ -18,6 +18,8 @@ import { licenseActions } from './actions/license'
 import { deviceCode } from './license'
 import { LICENSE_PUBLIC_KEY } from './license-public-key'
 import { installedAt, machineId } from './machine'
+import { Auth, type AuthError } from './auth'
+import { allowed } from '@shared/permissions'
 import { readFile } from 'node:fs/promises'
 import { ensureDir, listBackups } from './backup'
 import { reportCsv, reportJob, reportsData } from './db/reports'
@@ -110,6 +112,13 @@ export function startBackend(): AppStatus {
     console.error(`[db] ${opened.reason}: ${opened.detail}`)
   }
 
+  // الدخول: الجلسة هون بس، والكاتب بالدفتر بيتبع المستخدم الداخل.
+  const auth = new Auth(() => live?.db ?? null, Date.now, (actor) => { if (live) live.store.actor = actor })
+  const lockAfter = () => Number(live?.store.getSetting('lock_after_minutes') ?? 15)
+  const authResult = (e: AuthError | null, userId?: number) =>
+    e ? { ok: false as const, error: { code: `auth_${e}`, held: e === 'locked' && userId ? auth.lockedFor(userId) : undefined } } : { ok: true as const, value: undefined }
+  const isTech = () => auth.current?.role === 'technician'
+
   const lic = licenseActions({
     store: () => live?.store ?? null,
     device: deviceCode(machineId(app.getPath('userData'))),
@@ -154,7 +163,8 @@ export function startBackend(): AppStatus {
     dev,
     setup: live ? setupState(live.store) : { needed: false, step: 1 },
     lastBackupAt: listBackups(backupDir)[0]?.at ?? null,
-    license: lic.info()
+    license: lic.info(),
+    session: auth.info(lockAfter())
   })
 
   const backend: Backend = {
@@ -178,7 +188,8 @@ export function startBackend(): AppStatus {
         if (up) router.lastSeenAt = new Date().toISOString()
       },
       print: (job) => runPrint(job, { kind: 'dialog' }),
-      canGenerate: () => lic.info().state !== 'expired'
+      canGenerate: () => lic.info().state !== 'expired',
+      role: () => auth.current?.role ?? null
     }),
     license: lic.license,
     activateLicense: lic.activateLicense,
@@ -250,7 +261,20 @@ export function startBackend(): AppStatus {
     },
     home: () => {
       const l = need()
-      return homeData(l.db, l.store, { now: new Date().toISOString(), routerUp: router.up })
+      const h = homeData(l.db, l.store, { now: new Date().toISOString(), routerUp: router.up })
+      // الفني ما بيشوف المال: بيشوف مهام الراوتر والدفعات والمخزون بس.
+      if (!isTech()) return h
+      return { usedTodayAg: 0, collectedTodayAg: 0, owedTotalAg: 0, usageToday: [], limited: true, tasks: h.tasks.filter((t) => t.kind === 'router' || t.kind === 'pending' || t.kind === 'stock') }
+    },
+    createOwnerPin: (pin) => authResult(auth.createOwnerPin(pin, new Date().toISOString())),
+    login: (id, pin) => authResult(auth.login(id, pin), id),
+    logout: () => auth.logout(),
+    setUserPin: (id, pin) => authResult(auth.setPin(id, pin)),
+    setUserActive: (id, active) => authResult(auth.setActive(id, active)),
+    setLockAfter: (minutes) => {
+      if (![0, 5, 15, 30, 60].includes(minutes)) return { ok: false, error: { code: 'amount_invalid' } }
+      need().store.setSetting('lock_after_minutes', String(minutes))
+      return { ok: true, value: undefined }
     },
     network: () => {
       const l = need()
@@ -309,6 +333,14 @@ export function startBackend(): AppStatus {
   ipcMain.handle('api', async (e: IpcMainInvokeEvent, method: unknown, args: unknown) => {
     if (!trustedSender(e)) throw new Error('untrusted sender')
     if (typeof method !== 'string' || !Object.hasOwn(backend, method) || !Array.isArray(args)) throw new Error(`unknown method ${String(method)}`)
+    // الصلاحية بتنفحص هون، مش بالواجهة: الواجهة بتخبي بس.
+    const access = {
+      role: auth.current?.role ?? null,
+      setupOpen: !!live && setupState(live.store).needed && auth.needsOwnerPin(),
+      dbBroken: !live,
+      dev
+    }
+    if (!allowed(method as keyof Backend, access)) throw new Error(`not_allowed:${method}`)
     // بعد أي كتابة، الحالة لازم تكون جديدة عند الواجهة. tick بيضمن إن حالة الراوتر محدثة لأول طلب.
     if (method === 'status' && ticking) await ticking
     return (backend[method as keyof Backend] as (...a: unknown[]) => unknown)(...args)

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نقطة: إصدار التراخيص</title>
+<link rel="stylesheet" href="/tokens.css">
+<link rel="stylesheet" href="/components.css">
+<link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+<a class="skip" href="#main">انتقل للمحتوى</a>
+<header class="top">
+  <strong>نقطة</strong>
+  <span>إصدار التراخيص</span>
+</header>
+<main id="main" class="wrap">
+  <div id="notice" class="stack"></div>
+
+  <section id="nokey" class="card stack" hidden aria-labelledby="nokey-t">
+    <h1 id="nokey-t" class="h2">ما في مفتاح إصدار بعد</h1>
+    <p class="sub">المفتاح الخاص هو اللي بيوقّع كل السيريالات. رح ينحفظ بالمجلد: <bdi id="nokey-dir" class="path"></bdi></p>
+    <div><button id="keygen" type="button" class="btn btn-p">اعمل مفتاح الإصدار</button></div>
+  </section>
+
+  <div id="work" class="cols" hidden>
+    <section class="card stack" aria-labelledby="form-t">
+      <h1 id="form-t" class="h2">سيريال جديد</h1>
+      <form id="form" class="stack" novalidate>
+        <div class="fld">
+          <label class="lbl" for="customer">اسم الزبون</label>
+          <div class="box" id="customer-box"><input id="customer" autocomplete="off" maxlength="120"></div>
+        </div>
+        <div class="fld">
+          <label class="lbl" for="device">كود الجهاز</label>
+          <div class="box" id="device-box" dir="ltr"><input id="device" class="mono-in" autocomplete="off" spellcheck="false" placeholder="NQ-XXXX-XXXX" aria-describedby="device-note"></div>
+          <span id="device-note" class="sub small">الزبون بيلاقيه بالإعدادات، تبويب الترخيص.</span>
+          <div id="device-seen" class="seen" hidden></div>
+        </div>
+        <fieldset class="fld plain">
+          <legend class="lbl">المدة</legend>
+          <div class="durs">
+            <label class="dur"><input type="radio" name="dur" value="12" checked> سنة</label>
+            <label class="dur"><input type="radio" name="dur" value="6"> 6 شهور</label>
+            <label class="dur"><input type="radio" name="dur" value="until"> لتاريخ</label>
+            <label class="dur"><input type="radio" name="dur" value="forever"> بدون انتهاء</label>
+          </div>
+        </fieldset>
+        <div class="fld" id="until-fld" hidden>
+          <label class="lbl" for="until">لحد تاريخ</label>
+          <div class="box" id="until-box" dir="ltr"><input id="until" type="date"></div>
+        </div>
+        <p id="forever-note" class="bn wa small" hidden>سيريال بدون انتهاء ما بتقدر توقفه أبدا، حتى لو الزبون ما دفع.</p>
+        <div class="fld">
+          <label class="lbl" for="phone">التلفون (اختياري)</label>
+          <div class="box" dir="ltr"><input id="phone" autocomplete="off" maxlength="40" inputmode="tel"></div>
+        </div>
+        <div class="fld">
+          <label class="lbl" for="note">ملاحظة (اختياري)</label>
+          <div class="box"><input id="note" autocomplete="off" maxlength="300"></div>
+        </div>
+        <p id="form-err" class="emsg" role="alert" hidden></p>
+        <button id="issue" type="submit" class="btn btn-p">أصدر السيريال</button>
+      </form>
+      <section id="result" class="result stack" hidden aria-labelledby="result-t" tabindex="-1">
+        <h2 id="result-t" class="lbl"></h2>
+        <code id="result-key" class="keytext" dir="ltr"></code>
+        <div><button id="result-copy" type="button" class="btn btn-s sm">انسخ السيريال</button></div>
+      </section>
+    </section>
+
+    <section class="card stack" aria-labelledby="list-t">
+      <div class="listhead">
+        <h1 id="list-t" class="h2">الزباين <span id="count" class="sub"></span></h1>
+        <a id="export" class="btn btn-s sm" download>صدّر لـExcel</a>
+      </div>
+      <div class="box"><label class="sr" for="search">دور باسم أو تلفون أو كود جهاز</label><input id="search" placeholder="دور باسم أو تلفون أو كود جهاز" autocomplete="off"></div>
+      <div id="rows" class="rows" tabindex="0" role="region" aria-labelledby="list-t"></div>
+      <p id="empty" class="sub" hidden></p>
+    </section>
+  </div>
+</main>
+
+<dialog id="sync-dlg" class="dlg-n" aria-labelledby="sync-t">
+  <h2 id="sync-t" class="h2">تغيير المفتاح بالبرنامج</h2>
+  <p>كل سيريال انصدر بمفتاح قديم رح يبطل بأي نسخة تنبني بعد هالتغيير. بعد التغيير لازم تبني البرنامج من جديد.</p>
+  <div class="dlg-acts">
+    <button id="sync-yes" type="button" class="btn btn-d">غيّر المفتاح</button>
+    <button id="sync-no" type="button" class="btn btn-s">لا، خليه</button>
+  </div>
+</dialog>
+<div id="live" class="sr" role="status" aria-live="polite"></div>
+<script src="/admin.js"></script>
+</body>
+</html>

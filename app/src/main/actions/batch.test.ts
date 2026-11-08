@@ -158,3 +158,28 @@ describe('printing for real', () => {
     expect(api.batchView(sent.view.id)).toMatchObject({ toDeliver: 88, toPrint: 12 })
   })
 })
+
+describe('technician limits', () => {
+  const asTech = () => {
+    const service = new RouterService(store, router)
+    return batchActions({ db: () => db, store: () => store, service: () => service, afterSend: () => {}, print: async () => ({ ok: true }), role: () => 'technician' })
+  }
+
+  it('hides what distributors owe, and leaves over-limit decisions to the owner', async () => {
+    store.setDebtPolicy(ids.dist, 'on_delivery')
+    store.actor = 'u:2'
+    const sent = ok(await api.createBatch(params(100), 't1'))
+    ok(await api.printBatch(sent.view.id, 'new'))
+    ok(api.deliverBatch(sent.view.id, 't2'))
+    expect(store.entries(ids.dist).at(-1)!.createdBy).toBe('u:2')
+
+    const tech = asTech()
+    expect(tech.batchForm().distributors[0]).toMatchObject({ owedAg: 0, creditLimitAg: 0 })
+    expect(ok(await tech.createBatch(params(10), 't3')).view.count).toBe(10)
+
+    store.setCreditLimit(ids.dist, shekels(100))
+    expect(await tech.createBatch(params(10), 't4')).toEqual({ ok: false, error: { code: 'owner_required' } })
+    expect(ok(await tech.createBatch(params(10, null), 't5')).view.count).toBe(10)
+    expect(ok(await api.createBatch(params(10), 't6')).view.count).toBe(10)
+  })
+})

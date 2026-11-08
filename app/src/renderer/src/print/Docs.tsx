@@ -70,7 +70,7 @@ export function StatementDoc({ job }: { job: StatementJob }) {
             return (
               <tr key={e.id}>
                 <td>{dateText(e.at)}</td>
-                <td>{actionText(e)}{e.corrected ? ' (انصححت)' : ''}</td>
+                <td>{actionText(e)}{e.corrected ? ' (انصححت)' : ''}<div className="doc-by">{e.byName}</div></td>
                 <td className="n">{cardsCell(e.cardsDelta)}</td>
                 <td className="n">{e.chargeAg ? formatSigned(e.chargeAg) : '—'}</td>
                 <td className="n">{e.paidAg ? formatSigned(e.paidAg) : '—'}</td>

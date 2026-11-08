@@ -23,6 +23,18 @@ export interface AppStatus {
   /** آخر نسخة على الجهاز. null = ما في نسخ. */
   lastBackupAt: string | null
   license: LicenseInfo
+  session: SessionInfo
+}
+
+/** مين فاتح البرنامج هلأ. */
+export interface SessionInfo {
+  user: { id: number; name: string; role: UserRole } | null
+  /** ما في ولا مستخدم إله رمز: لازم صاحب الشبكة يعمل رمزه أول (نسخة قديمة أو تثبيت جديد). */
+  needsOwnerPin: boolean
+  /** للشاشة: أسماء اللي بيقدروا يدخلوا. */
+  users: { id: number; name: string; role: UserRole }[]
+  /** البرنامج بيقفل حاله بعد هالدقائق بدون استخدام. 0 = ما بيقفل. */
+  lockAfterMinutes: number
 }
 
 export type LicenseInfo =
@@ -66,6 +78,8 @@ export interface HomeData {
   tasks: HomeTask[]
   /** null للبيع المباشر. مرتبة من الأكبر. */
   usageToday: { distributorId: string | null; name: string | null; valueAg: Agorot }[]
+  /** للفني: بدون أرقام المال. */
+  limited?: boolean
 }
 
 export interface DistributorRow {
@@ -89,6 +103,8 @@ export interface StatementEntry {
   batchNo: number | null
   note: string
   corrected: boolean
+  /** مين سجّل الحركة: اسم المستخدم، أو «الراوتر» للاستخدام. */
+  byName: string
 }
 
 export interface AccountDetail {
@@ -294,6 +310,8 @@ export interface UserRow {
   id: number
   name: string
   role: UserRole
+  hasPin: boolean
+  active: boolean
 }
 
 export interface NetworkSettings {
@@ -379,13 +397,14 @@ export interface Backend {
   networkSettings(): NetworkSettings
   saveNetworkSettings(s: NetworkSettings): ActionResult
   users(): UserRow[]
-  addUser(u: { name: string; role: UserRole }): ActionResult<{ id: number }>
+  addUser(u: { name: string; role: UserRole; pin: string }): ActionResult<{ id: number }>
   rules(): Rules
   saveRules(r: Rules): ActionResult
   /** ملفات الراوتر مع اقتراح اسم ووقت لكل واحد، والفئات اللي انحفظت قبل. */
   setupCategories(): Promise<{ drafts: SetupCategoryDraft[] | null; saved: CategoryRow[] }>
   saveSetupCategories(rows: SetupCategoryDraft[]): ActionResult<{ count: number }>
   setSetupStep(step: SetupStep): void
+  setupDistributors(): string[]
   /** بيولد كرت تجربة واحد بيع مباشر وبيبعته للراوتر. نفس الكرت إذا انطلب مرة ثانية. */
   setupTestCard(): Promise<ActionResult<{ code: string; confirmed: boolean }>>
   finishSetup(): void
@@ -410,6 +429,13 @@ export interface Backend {
   importCommit(token: string, choice: ImportChoice, opKey: string): ActionResult<{ imported: number; skipped: number; batches: number[] }>
   license(): LicenseInfo
   activateLicense(key: string): ActionResult<LicenseInfo>
+  /** أول رمز لصاحب الشبكة، لما ما في ولا رمز. بيدخل فيه مباشرة. */
+  createOwnerPin(pin: string): ActionResult
+  login(userId: number, pin: string): ActionResult
+  logout(): void
+  setUserPin(userId: number, pin: string): ActionResult
+  setUserActive(userId: number, active: boolean): ActionResult
+  setLockAfter(minutes: number): ActionResult
   /** وضع التطوير بس. */
   devSetRouter(up: boolean): void
 }

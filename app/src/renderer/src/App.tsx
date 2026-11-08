@@ -3,6 +3,8 @@ import { api } from '@/lib/api'
 import { useStore } from '@/lib/store'
 import { SCREENS } from '@/screens'
 import { Setup } from '@/screens/Setup'
+import { Login } from '@/screens/Login'
+import { OWNER_SCREENS } from '@shared/permissions'
 import { RestoreList } from '@/shell/Backups'
 import { DevBar } from '@/shell/DevBar'
 import { Sidebar } from '@/shell/Sidebar'
@@ -59,11 +61,32 @@ function DbError({ reason }: { reason: string }) {
   )
 }
 
+/** بيقفل البرنامج بعد دقائق بدون حركة. 0 = ما بيقفل. */
+function useIdleLock(minutes: number): void {
+  const { dispatch } = useStore()
+  useEffect(() => {
+    if (!minutes) return
+    let last = Date.now()
+    const touch = () => { last = Date.now() }
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'wheel'] as const
+    events.forEach((e) => window.addEventListener(e, touch, { passive: true }))
+    const timer = setInterval(async () => {
+      if (Date.now() - last < minutes * 60_000) return
+      await api.logout()
+      dispatch({ type: 'status', status: await api.status() })
+    }, 15_000)
+    return () => {
+      clearInterval(timer)
+      events.forEach((e) => window.removeEventListener(e, touch))
+    }
+  }, [minutes, dispatch])
+}
+
 export function App() {
-  const { state } = useStore()
+  const { state, dispatch } = useStore()
   useLiveStatus()
   const setup = state.status?.setup.needed ? state.status.setup : null
-  const view = (setup ? 'setup:' : '') + state.stateMode + ':' + state.screen + ':' + state.cardCode
+  const view = (setup ? 'setup:' : '') + (state.status?.session.user?.id ?? 'out') + ':' + state.stateMode + ':' + state.screen + ':' + state.cardCode
   const first = useRef(true)
 
   // تغيير الشاشة بينقل التركيز للعنوان، وبيغير عنوان النافذة.
@@ -90,11 +113,33 @@ export function App() {
 
   const Screen = SCREENS[state.screen]
   const db = state.status?.db
-  if (setup && db?.ok) {
+  // الشاشة اللي الدور ما بيسمح فيها (مثلا بعد ما دخل فني) بترجع للرئيسية.
+  useEffect(() => {
+    const role = state.status?.session.user?.role
+    if (role === 'technician' && OWNER_SCREENS.has(state.screen)) dispatch({ type: 'go', screen: 'home' })
+  }, [state.status?.session.user?.role, state.screen, dispatch])
+
+  useIdleLock(state.status?.session.user ? state.status.session.lockAfterMinutes : 0)
+
+  // لحد ما توصل الحالة ما منعرف مين داخل، فما منفتح ولا شاشة.
+  if (!state.status) return <div className="app" />
+
+  // إذا في رموز محفوظة، المعالج نفسه بدو دخول.
+  const session = state.status.session
+  if (setup && db?.ok && (session.user || session.needsOwnerPin)) {
     return (
       <div className="app">
         {state.status?.dev && <DevBar />}
         <Setup initial={setup.step} />
+      </div>
+    )
+  }
+
+  if (db?.ok && state.status && !state.status.session.user) {
+    return (
+      <div className="app">
+        {state.status.dev && <DevBar />}
+        <Login session={state.status.session} network={state.status.networkName} />
       </div>
     )
   }

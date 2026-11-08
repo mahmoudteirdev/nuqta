@@ -11,9 +11,13 @@ const STEP = 'setup_step'
 const DONE = 'setup_done'
 const TEST_BATCH = 'setup_test_batch'
 
-/** أول تشغيل لازم إذا ما خلص قبل وما في فئات. قاعدة بيانات فيها شغل ما بتنسأل من جديد. */
+/**
+ * أول تشغيل لازم إذا ما خلص قبل وما في فئات. قاعدة بيانات فيها شغل ما بتنسأل من جديد.
+ * اللي بلّش المعالج بيضل فيه لحد ما يخلصه، حتى بعد ما تنحفظ الفئات.
+ */
 export function setupState(store: Store): { needed: boolean; step: SetupStep } {
-  const needed = store.getSetting(DONE) !== '1' && store.categories().length === 0 && store.distributors().length === 0
+  const started = store.getSetting(STEP) !== null
+  const needed = store.getSetting(DONE) !== '1' && (started || (store.categories().length === 0 && store.distributors().length === 0))
   const step = Number(store.getSetting(STEP) ?? 1)
   return { needed, step: (step >= 1 && step <= 4 ? step : 1) as SetupStep }
 }
@@ -31,7 +35,7 @@ export function draftFor(profile: string): Omit<SetupCategoryDraft, 'wholeAg' | 
   return { name: profile, profile, limitUptime: parseUptime(p) > 0 ? p : '' }
 }
 
-type SetupBackend = Pick<Backend, 'setupCategories' | 'saveSetupCategories' | 'setSetupStep' | 'setupTestCard' | 'finishSetup'>
+type SetupBackend = Pick<Backend, 'setupCategories' | 'saveSetupCategories' | 'setSetupStep' | 'setupDistributors' | 'setupTestCard' | 'finishSetup'>
 
 export function setupActions(ctx: { store: () => Store; service: () => RouterService }): SetupBackend {
   return {
@@ -72,6 +76,8 @@ export function setupActions(ctx: { store: () => Store; service: () => RouterSer
     },
 
     setSetupStep: (step) => ctx.store().setSetting(STEP, String(step)),
+
+    setupDistributors: () => ctx.store().distributors().map((d) => d.name),
 
     setupTestCard: async () => {
       const store = ctx.store()

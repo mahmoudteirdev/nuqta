@@ -115,16 +115,16 @@ export function Home() {
         </div>
         <button type="button" className="btn btn-p" onClick={() => dispatch({ type: 'go', screen: 'batch', batchId: null })}>توليد كروت</button>
       </header>
-      <section aria-label="أرقام اليوم" className="sk-grid">
+      {!d.limited && <section aria-label="أرقام اليوم" className="sk-grid">
         <Stat label="كروت انستخدمت اليوم" value={d.usedTodayAg} />
         <Stat label="محصّل اليوم" value={d.collectedTodayAg} />
         <Stat label="مستحق على الموزعين" value={d.owedTotalAg} top />
-      </section>
+      </section>}
       <div className="home-cols">
         <section aria-label="المهام" className="tasks">
           <Tasks tasks={d.tasks} />
         </section>
-        <UsageToday rows={d.usageToday} />
+        {!d.limited && <UsageToday rows={d.usageToday} />}
       </div>
     </div>
   )

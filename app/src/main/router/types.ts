@@ -25,6 +25,7 @@ export interface ActiveSession {
   mac: string
   address: string
   uptimeSeconds: number
+  comment?: string
 }
 
 export interface RouterInfo {

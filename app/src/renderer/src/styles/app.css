@@ -1,5 +1,8 @@
 /* تخطيط الإطار: منقول من الأنماط المضمّنة في reference/Final-Prototype.dc.html */
 html,body,#root{height:100%}
+/* إخفاء شريط التمرير الافتراضي لإعطاء مظهر تطبيقي أنيق وحديث */
+*,html,body{scrollbar-width:none!important;-ms-overflow-style:none!important}
+*::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
 .app{min-height:100vh;background:var(--ground);color:var(--ink);font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif;font-size:16px;line-height:26px;display:flex;flex-direction:column}
 .shell{flex:1 1 auto;display:flex;flex-wrap:wrap}
 

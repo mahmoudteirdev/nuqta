@@ -85,9 +85,9 @@ export class RouterOsClient implements RouterClient {
 
   sessions(): Promise<ActiveSession[]> {
     return this.#run(async (c) => {
-      const r = await c.command(['/ip/hotspot/active/print', '=.proplist=.id,user,mac-address,address,uptime'])
+      const r = await c.command(['/ip/hotspot/active/print', '=.proplist=.id,user,mac-address,address,uptime,comment'])
       return r.rows.map((s) => ({
-        id: s['.id'] ?? '', user: s['user'] ?? '', mac: s['mac-address'] ?? '', address: s['address'] ?? '', uptimeSeconds: parseUptime(s['uptime'])
+        id: s['.id'] ?? '', user: s['user'] ?? '', mac: s['mac-address'] ?? '', address: s['address'] ?? '', uptimeSeconds: parseUptime(s['uptime']), ...(s['comment'] ? { comment: s['comment'] } : {})
       }))
     })
   }

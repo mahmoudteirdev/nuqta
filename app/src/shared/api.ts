@@ -290,7 +290,7 @@ export interface NetworkData {
   /** شغل بيستنى الراوتر، مثل إيقاف المرتجع. */
   queued: number
   /** null إذا الراوتر مش راد. */
-  sessions: { id: string; code: string; categoryName: string | null; routerName: string; address: string; mac: string; secondsLeft: number | null }[] | null
+  sessions: { id: string; code: string; categoryName: string | null; routerName: string; address: string; mac: string; secondsLeft: number | null; isUnlimited?: boolean }[] | null
   mock: boolean
   configured: boolean
 }

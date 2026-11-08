@@ -27,11 +27,14 @@ export async function networkData(ctx: {
     )
     sessions = snap.value.sessions.map((s) => {
       const row = lookup.get(s.user) as { cat: string; lim: string | null } | undefined
+      const isNuqta = !!row
       const limit = row?.lim ? parseUptime(row.lim) : 0
       const used = uptime.get(s.user) ?? s.uptimeSeconds
+      const catName = row?.cat ?? (s.comment?.trim() ? s.comment.trim() : 'مشترك (راوتر)')
       return {
-        id: s.id, code: s.user, categoryName: row?.cat ?? null, routerName: active?.name ?? '', address: s.address, mac: s.mac,
-        secondsLeft: limit ? Math.max(limit - used, 0) : null
+        id: s.id, code: s.user, categoryName: catName, routerName: active?.name ?? '', address: s.address, mac: s.mac,
+        secondsLeft: limit ? Math.max(limit - used, 0) : null,
+        isUnlimited: !isNuqta && !limit
       }
     })
   }

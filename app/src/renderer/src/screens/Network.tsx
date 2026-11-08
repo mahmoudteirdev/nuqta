@@ -140,7 +140,7 @@ export function Network() {
                   <span role="cell">{s.categoryName ?? '—'}</span>
                   <span role="cell">{s.routerName}</span>
                   <span role="cell" className="mono">{s.address}</span>
-                  <span role="cell">{leftText(s.secondsLeft, null)}</span>
+                  <span role="cell">{s.isUnlimited ? 'مفتوح (اشتراك)' : leftText(s.secondsLeft, null)}</span>
                   <span role="cell" style={{ display: 'contents' }}>
                     <button type="button" className="btn btn-d sm kick-col" aria-label={`افصل الكرت ${s.code}`} onClick={() => { setKickErr(''); setKick(s) }}>افصل</button>
                   </span>

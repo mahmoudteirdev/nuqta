@@ -1,7 +1,7 @@
 import { createServer, type Server } from 'node:http'
 import * as http from 'node:http'
-import { createHash } from 'node:crypto'
-import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
+import { createHash, generateKeyPairSync } from 'node:crypto'
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir, homedir } from 'node:os'
 import { createRequire } from 'node:module'
@@ -55,9 +55,11 @@ describe('e2e real update flow with electron-updater NsisUpdater', () => {
   const PORT = 4892
 
   beforeAll(async () => {
-    // مفتاح المالك
+    // استخدام مفتاح المالك إذا وُجد، أو توليد مفتاح تجريبي لبيئة الفحص الآلي (CI)
     const keyFile = join(homedir(), '.nuqta-vendor', 'license-private.pem')
-    const privatePem = readFileSync(keyFile)
+    const privatePem = existsSync(keyFile)
+      ? readFileSync(keyFile)
+      : generateKeyPairSync('ed25519').privateKey.export({ type: 'pkcs8', format: 'pem' })
     publicPem = publicFromPrivate(privatePem)
 
     testDir = join(tmpdir(), 'nuqta-update-e2e-' + Date.now())
@@ -112,10 +114,12 @@ nuqtaSignature: ${currentSig}
   })
 
   afterAll(async () => {
-    await new Promise<void>((resolve) => server.close(() => resolve()))
-    try {
-      rmSync(testDir, { recursive: true, force: true })
-    } catch {}
+    if (server) await new Promise<void>((resolve) => server.close(() => resolve()))
+    if (testDir) {
+      try {
+        rmSync(testDir, { recursive: true, force: true })
+      } catch {}
+    }
   })
 
   const createAppAdapter = () => ({

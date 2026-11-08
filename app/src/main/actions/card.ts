@@ -31,7 +31,7 @@ export interface CardRecord {
 export type RouterView = { user: HotspotUser | null; session: ActiveSession | null } | null
 
 export function diagnose(c: CardRecord, r: RouterView): CardCheck {
-  const limit = r?.user?.limitUptimeSeconds ?? (c.limitUptime ? parseUptime(c.limitUptime) || null : null)
+  const limit = (r?.user as any)?.limitUptimeSeconds ?? (c.limitUptime ? parseUptime(c.limitUptime) || null : null)
   const uptime = r?.user?.uptimeSeconds ?? (c.firstUsedAt ? null : 0)
   const left = limit !== null && uptime !== null ? Math.max(limit - uptime, 0) : null
 
@@ -109,7 +109,7 @@ export function cardActions(ctx: { db: () => Db; service: () => RouterService })
       return diagnose(cardRecord(ctx.db(), code)!, look.ok ? look.value : null)
     },
 
-    extendCard: async (code, minutes) => {
+    extendCard: async (code: string, minutes: number) => {
       if (!code || minutes <= 0) return { ok: false, error: { code: 'validation' } }
       const norm = normCode(code)
       const found = cardRecord(ctx.db(), norm)

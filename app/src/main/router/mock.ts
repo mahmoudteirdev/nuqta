@@ -85,7 +85,7 @@ export class MockRouter implements RouterClient {
 
   async addProfile(p: { name: string; rateLimit?: string; sharedUsers?: number }): Promise<void> {
     const n = p.name.trim()
-    if (!this.profiles.includes(n)) this.profiles.push(n)
+    if (!this.#profiles.includes(n)) this.#profiles.push(n)
   }
 
   async tagUsers(names: readonly string[], comment: string): Promise<number> {
@@ -102,9 +102,9 @@ export class MockRouter implements RouterClient {
     await this.#ready()
     const u = this.#users.get(name)
     if (!u) throw new RouterError('trap', `user ${name} not found on router`)
-    const curSec = u.limitUptimeSeconds ?? 3600
-    const newSec = curSec + extraSeconds
-    u.limitUptimeSeconds = newSec
+    const curSec = (u as any).limitUptimeSeconds ?? 3600
+    const newSec = curSec + extraSeconds;
+    (u as any).limitUptimeSeconds = newSec
     return { oldLimit: formatUptime(curSec), newLimit: formatUptime(newSec) }
   }
 

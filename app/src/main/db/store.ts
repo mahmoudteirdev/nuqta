@@ -17,6 +17,7 @@ export type StoreError =
   | { code: 'nothing_to_deliver' }
   | { code: 'not_held'; codes: string[] }
   | { code: 'batch_not_editable'; status: BatchStatus }
+  | { code: 'category_name' }
 
 export type StoreResult<T> = { ok: true; value: T } | { ok: false; error: StoreError }
 

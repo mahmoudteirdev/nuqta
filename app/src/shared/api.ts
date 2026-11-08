@@ -403,6 +403,7 @@ export interface Backend {
   /** null إذا الكود مش موجود. */
   checkCard(code: string): Promise<CardCheck | null>
   kickSession(sessionId: string): Promise<ActionResult>
+  extendCard(code: string, minutes: number): Promise<ActionResult<{ newLimit: string }>>
   network(): Promise<NetworkData>
   /** بيجرب الاتصال عبر api-ssl، وإذا نجح بيحفظه وبيبدّل البرنامج عليه. */
   connectRouter(r: { host: string; port?: number; user: string; password: string }): Promise<ActionResult<{ name: string; profiles: string[] }>>

@@ -52,7 +52,7 @@ export async function connectRouter(
   let port = input.port
   if (host.includes(':')) {
     const [h, p] = host.split(':')
-    host = h.trim()
+    if (h) host = h.trim()
     const parsedPort = Number(p)
     if (!Number.isNaN(parsedPort) && parsedPort > 0) port = parsedPort
   }
@@ -137,5 +137,6 @@ export class NoRouter implements RouterClient {
   disableUsers = this.#down
   tagUsers = this.#down
   addProfile = this.#down
+  extendUserUptime = this.#down
   close(): void {}
 }

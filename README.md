@@ -1,38 +1,32 @@
-<!-- 1. الهيدر -->
+<!-- 1. Header -->
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0A5C56,100:13201D&height=220&section=header&text=%D9%86%D9%8F%D9%82%D8%B7%D8%A9&fontSize=80&fontColor=F4F5F0&fontAlignY=36&animation=fadeIn&desc=%D8%AF%D9%81%D8%AA%D8%B1%20%D8%AD%D8%B3%D8%A7%D8%A8%D8%A7%D8%AA%20%D9%84%D8%B4%D8%A8%D9%83%D8%A7%D8%AA%20%D8%A7%D9%84%D9%87%D9%88%D8%AA%D8%B3%D8%A8%D9%88%D8%AA&descSize=20&descAlignY=58" alt="نُقطة: دفتر حسابات لشبكات الهوتسبوت على MikroTik" width="100%" />
+  <img src="docs/readme/header.svg" alt="Nuqta, the offline ledger for MikroTik hotspot networks" width="100%" />
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Electron-45-47848F?style=for-the-badge&logo=electron&logoColor=white" alt="Electron 45" />
-  <img src="https://img.shields.io/badge/React-19-149ECA?style=for-the-badge&logo=react&logoColor=white" alt="React 19" />
-  <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript strict" />
-  <img src="https://img.shields.io/badge/SQLite-local-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite local" />
-  <br />
-  <img src="https://img.shields.io/badge/tests-315%20passing-0A5C56?style=for-the-badge&logo=vitest&logoColor=white" alt="315 tests passing" />
-  <img src="https://img.shields.io/badge/offline-first-13201D?style=for-the-badge" alt="Offline first" />
-  <img src="https://img.shields.io/badge/RTL-%D8%B9%D8%B1%D8%A8%D9%8A-F26B21?style=for-the-badge" alt="RTL Arabic" />
-  <img src="https://img.shields.io/badge/Windows-desktop-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Windows desktop" />
+  <a href="#-about"><img src="https://img.shields.io/badge/About-13201D?style=for-the-badge" alt="About" /></a>
+  <a href="#-see-it"><img src="https://img.shields.io/badge/Screens-0A5C56?style=for-the-badge" alt="Screens" /></a>
+  <a href="#-tools-and-tech"><img src="https://img.shields.io/badge/Tech-13201D?style=for-the-badge" alt="Tech" /></a>
+  <a href="#-run-it"><img src="https://img.shields.io/badge/Run_it-F26B21?style=for-the-badge" alt="Run it" /></a>
+  <a href="#-security"><img src="https://img.shields.io/badge/Security-0A5C56?style=for-the-badge" alt="Security" /></a>
+  <a href="#-before-launch"><img src="https://img.shields.io/badge/Roadmap-13201D?style=for-the-badge" alt="Roadmap" /></a>
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/home.png" alt="شاشة شغل اليوم: المستحق على الموزعين، ومهام التحصيل والمخزون بترتيب الأولوية" width="88%" />
+  <img src="https://img.shields.io/badge/tests-315%20passing-0A5C56?style=flat-square&logo=vitest&logoColor=white" alt="315 tests passing" />
+  <img src="https://img.shields.io/badge/works-offline-13201D?style=flat-square" alt="Works offline" />
+  <img src="https://img.shields.io/badge/UI-Arabic%20RTL-F26B21?style=flat-square" alt="Arabic, right to left" />
+  <img src="https://img.shields.io/badge/Windows-desktop-0078D4?style=flat-square" alt="Windows desktop" />
 </p>
 
-<div dir="rtl">
+Hotspot owners sell internet vouchers through shops and kiosks, then chase who holds how many cards and who owes what, usually on paper. **Nuqta** (نُقطة) keeps that whole business in one desktop app: it creates the cards, sends them to the MikroTik router, prints them, and turns real card usage into a ledger you can trust. No internet needed.
 
-## 👋 أهلا
+<p align="center">
+  <img src="docs/readme/flow.svg" alt="The life of a voucher card: generate, send, print, deliver, first use, settle" width="100%" />
+</p>
 
-**نُقطة** دفتر حسابات لأصحاب شبكات الهوتسبوت على MikroTik، اللي بيبيعوا كروت الإنترنت عبر موزعين. بيولّد الكروت وبيبعتها للراوتر، وبيطبعها، وبيتابع مين معه كم كرت وكم عليه، من غير ما يحتاج نت.
-
-</div>
-
-<!-- 2. عن المشروع -->
-<div dir="rtl">
-
-## 👨‍💻 عن المشروع
-
-</div>
+<!-- 2. About -->
+## 👨‍💻 About
 
 ```yaml
 project:   Nuqta (نُقطة)
@@ -42,20 +36,43 @@ does:
   - keep an append-only ledger per distributor, in integer agorot (no floats)
   - read card usage from the router and turn it into debt, once per card
   - settle, return cards, open disputes, correct with linked reverse entries
-  - reports: collected vs used, per-batch commission, stale cards
-  - sign in per user with a PIN; owner and technician roles; auto lock
+  - report collected vs used, per-batch commission, and stale cards
+  - sign in per user with a PIN, with owner and technician roles and auto lock
 works:     fully offline; the router is on the local network
 language:  Arabic, right to left
 platform:  Windows desktop (Electron)
-status:    first version built, 7/10 acceptance items automated and passing; no installer yet
+status:    first version built; 7 of 10 acceptance items automated and passing; no installer yet
 ```
 
-<!-- 3. الأدوات والتقنيات -->
-<div dir="rtl">
+## 👀 See it
 
-## 🧰 الأدوات والتقنيات
+The interface is in Arabic, right to left, built for the people who use it every day.
 
-</div>
+<p align="center">
+  <img src="docs/screenshots/home.png" alt="Today's work: amounts owed by distributors, with collection and stock tasks in priority order" width="88%" />
+</p>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/account.png" alt="Distributor account: cards held, used value, collected, owed, with settlement and statement" /></td>
+    <td width="50%"><img src="docs/screenshots/card.png" alt="Card check: why a card isn't working, time left, and its history" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Distributor account and statement</b></td>
+    <td align="center"><b>Card check</b></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/network.png" alt="Network: router status, queue, and who is online, with a disconnect action" /></td>
+    <td width="50%"><img src="docs/screenshots/reports.png" alt="Reports: collected against used for each distributor" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Network and live sessions</b></td>
+    <td align="center"><b>Reports</b></td>
+  </tr>
+</table>
+
+<!-- 3. Tools and tech -->
+## 🧰 Tools and tech
 
 <p align="center">
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/electron/electron-original.svg" alt="Electron" width="52" height="52" />&nbsp;&nbsp;
@@ -67,189 +84,152 @@ status:    first version built, 7/10 acceptance items automated and passing; no 
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/windows8/windows8-original.svg" alt="Windows" width="52" height="52" />
 </p>
 
-<div dir="rtl">
-
-| الطبقة | الأداة | ليش |
+| Layer | Tool | Why |
 |---|---|---|
-| البرنامج | Electron 45 + React 19 + TypeScript | برنامج سطح مكتب بالعربي وRTL، بنافذة معزولة وبدون وصول للنظام من الواجهة |
-| قاعدة البيانات | SQLite عبر `node:sqlite` المدمجة | بدون مكتبة native، والدفتر محمي بـtriggers ما بتسمح بتعديل ولا حذف |
-| الراوتر | RouterOS API عبر api-ssl | مكتوب من الصفر، مع تثبيت بصمة الشهادة، وراوتر وهمي للتطوير |
-| الطباعة | نافذة طباعة مخفية من نفس البناء | A4 بـ12 و24 كرت، وحرارية 80mm، وكشف الحساب، وتقارير PDF |
-| الترخيص | Ed25519 | كود جهاز ومفتاح موقّع بيشتغل بدون نت |
-| الدخول | scrypt لكل رمز | الصلاحيات بتنفحص بالعملية الرئيسية، مش بالواجهة |
-| الاختبار | Vitest | 315 اختبار، منهم اختبارات القبول |
-| الخطوط | IBM Plex Sans Arabic وIBM Plex Mono | محلية، عشان البرنامج يشتغل بدون نت |
+| App | Electron 45, React 19, TypeScript (strict) | Arabic desktop app in a sandboxed window with no system access from the UI |
+| Database | SQLite through the built-in `node:sqlite` | No native dependency, and triggers block any edit or delete in the ledger |
+| Router | RouterOS API over api-ssl | Written from scratch, with certificate pinning and a mock router for development |
+| Printing | A hidden print window from the same build | A4 with 12 or 24 cards, thermal 80mm, statements, and PDF reports |
+| Sign-in | scrypt-hashed PINs | Roles are enforced in the main process, not in the UI |
+| Licensing | Ed25519 | A device code and a signed key that work without internet |
+| Testing | Vitest | 315 tests, including the acceptance tests |
+| Fonts | IBM Plex Sans Arabic, IBM Plex Mono | Bundled locally, so everything works offline |
 
-</div>
+<!-- 4. Project history -->
+## 📈 Project status
 
-<!-- 4. حالة المشروع -->
-<div dir="rtl">
+<p align="center">
+  <img src="https://img.shields.io/github/last-commit/mahmoudteirdev/nuqta?style=for-the-badge&color=0A5C56" alt="Last commit" />
+  <img src="https://img.shields.io/github/commit-activity/t/mahmoudteirdev/nuqta?style=for-the-badge&color=13201D" alt="Total commits" />
+  <img src="https://img.shields.io/github/languages/top/mahmoudteirdev/nuqta?style=for-the-badge&color=3178C6" alt="Top language" />
+  <img src="https://img.shields.io/github/repo-size/mahmoudteirdev/nuqta?style=for-the-badge&color=F26B21" alt="Repository size" />
+</p>
 
-## 📈 حالة المشروع
+Acceptance results, from section 12 of [HANDOFF.md](HANDOFF.md). Evidence is in [app/ACCEPTANCE.md](app/ACCEPTANCE.md). Both documents are in Arabic.
 
-### الشاشات
-
-</div>
-
-<table>
-  <tr>
-    <td width="50%"><img src="docs/screenshots/account.png" alt="حساب الموزع وكشفه: كروت عنده، قيمة المستخدم، المحصّل، والمستحق، مع التسوية والكشف" /></td>
-    <td width="50%"><img src="docs/screenshots/card.png" alt="فحص كرت: سبب عدم اشتغاله، والوقت الباقي، وسجله" /></td>
-  </tr>
-  <tr>
-    <td align="center" dir="rtl"><b>الموزع وكشف حسابه</b></td>
-    <td align="center" dir="rtl"><b>فحص كرت</b></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="docs/screenshots/network.png" alt="الشبكة: حالة الراوتر والطابور والمتصلين الآن مع فصل الجلسة" /></td>
-    <td width="50%"><img src="docs/screenshots/reports.png" alt="التقارير: المحصّل مقابل المستخدم لكل موزع" /></td>
-  </tr>
-  <tr>
-    <td align="center" dir="rtl"><b>الشبكة والمتصلين</b></td>
-    <td align="center" dir="rtl"><b>التقارير</b></td>
-  </tr>
-</table>
-
-<div dir="rtl">
-
-### اختبارات القبول
-
-من ملف التسليم ([HANDOFF.md](HANDOFF.md)، القسم 12). التفاصيل والأدلة بـ[app/ACCEPTANCE.md](app/ACCEPTANCE.md).
-
-| | البند | الحالة |
+| # | Item | Status |
 |---|---|---|
-| 1 | 1,000 حركة عشوائية: المستحق = مجموع الدفتر، بدون float | ✅ |
-| 2 | تغيير سعر فئة ما بيغير أي مبلغ قديم | ✅ |
-| 3 | ما في طريقة تعدل حركة بالدفتر | ✅ |
-| 4 | قطع الراوتر وسط إرسال دفعة: ما في كرت بينطبع قبل تأكيده، وما في كود بيضيع | ✅ |
-| 5 | يوم كامل بدون اتصال، ثم مزامنة بدون تكرار | ✅ للراوتر |
-| 6 | «سجّل التسوية» مرتين بسرعة بتسجل مرة | ✅ |
-| 7 | `num()` و`normCode()` نفس نتيجة النموذج | ✅ |
-| 8 | الطباعة العربية على A4 وحرارية 80mm | 🟡 PDF سليم، والطابعة الحقيقية لسا |
-| 9 | إمكانية الوصول على النسخة المبنية | 🟡 الفحص الآلي نظيف، وNVDA واللمس بدهم إنسان |
-| 10 | مقاييس أول دفعة والتسوية | ⬜ بده جلسات مع مستخدمين |
+| 1 | 1,000 random operations: amount owed equals the ledger total, with no floats | ✅ |
+| 2 | Changing a category price leaves every past amount unchanged | ✅ |
+| 3 | No way to edit a ledger entry | ✅ |
+| 4 | Router cut off mid-batch: no card prints before it's confirmed, and no code is lost | ✅ |
+| 5 | A full day offline, then a sync with no duplicates | ✅ for the router |
+| 6 | Pressing "record settlement" twice quickly records it once | ✅ |
+| 7 | `num()` and `normCode()` match the prototype | ✅ |
+| 8 | Arabic printing on A4 and thermal 80mm | 🟡 PDF checked, real printers still to test |
+| 9 | Accessibility on the built app | 🟡 Automated audit clean; NVDA and touch need a person |
+| 10 | First batch and settlement time targets | ⬜ Needs sessions with real users |
 
-### شغّله
+## 🚀 Run it
 
-</div>
+There's no installer yet, so run it from source:
 
 ```bash
 git clone https://github.com/mahmoudteirdev/nuqta.git
 cd nuqta/app
 npm install
-npm run dev        # البرنامج بوضع التطوير، مع بيانات تجربة وراوتر وهمي
-npm test           # كل الاختبارات
-npm run build      # بناء البرنامج
+npm run dev        # development mode, with demo data and a mock router
+npm test           # all tests
+npm run build      # build the app
 ```
 
-<div dir="rtl">
+The demo data has two users: the owner (PIN `1234`) and a technician, Sami (PIN `5678`). They exist in development mode only. A real install asks the owner to create a PIN after first-run setup.
 
-بيانات التجربة فيها مستخدمين: صاحب الشبكة برمز `1234`، والفني سامي برمز `5678`. هدول بوضع التطوير بس، والنسخة الحقيقية بتطلب رمز جديد لصاحب الشبكة بعد أول تشغيل.
+<details>
+<summary><b>Development settings</b></summary>
 
-متغيرات للتطوير والفحص بس، والنسخة المبنية بتتجاهلها كلها:
+Packaged builds ignore all of these.
 
-| المتغير | شو بيعمل |
+| Variable | What it does |
 |---|---|
-| `NUQTA_DB` | قاعدة بيانات بمسار ثاني |
-| `NUQTA_MOCK=1` | الراوتر الوهمي حتى لو في راوتر حقيقي محفوظ |
-| `NUQTA_NO_SEED=1` | بدون بيانات تجربة، عشان تشوف أول تشغيل |
-| `NUQTA_PRINT_PDF_DIR` | كل الطباعة بتصير ملفات PDF بهالمجلد |
-| `NUQTA_BACKUP_DIR` | مجلد نسخ ثاني |
-| `NUQTA_IMPORT_FILE` | ملف استيراد بدون نافذة الاختيار |
-| `NUQTA_MACHINE_ID` | معرّف جهاز مصطنع |
-| `NUQTA_INSTALLED_AT` | تاريخ تثبيت مصطنع |
+| `NUQTA_DB` | Use a database at another path |
+| `NUQTA_MOCK=1` | Use the mock router even if a real one is saved |
+| `NUQTA_NO_SEED=1` | Start without demo data, to see first-run setup |
+| `NUQTA_PRINT_PDF_DIR` | Turn all printing into PDF files in this folder |
+| `NUQTA_BACKUP_DIR` | Use another backups folder |
+| `NUQTA_IMPORT_FILE` | Import a file without the file dialog |
+| `NUQTA_MACHINE_ID` | Use a made-up machine ID |
+| `NUQTA_INSTALLED_AT` | Use a made-up install date |
 
-### هيكل المشروع
+</details>
 
-</div>
+<details>
+<summary><b>Project structure</b></summary>
 
 ```text
-HANDOFF.md            ملف التسليم: مصدر السلوك والقرارات
-reference/            النموذج التفاعلي
-screens/ tokens/ ...  صور الشاشات والألوان والمكونات من التصميم
+HANDOFF.md            design handoff: the source for behaviour and decisions
+reference/            the interactive prototype
+screens/ tokens/ ...  screens, colours, and components from the design
+docs/readme/          the animated README images and the script that makes them
 app/
-  src/shared/         الحساب والدفتر والأكواد: كود صافي ومختبر
-  src/main/           قاعدة البيانات، الراوتر، الطباعة، النسخ، الترخيص
-  src/renderer/       الواجهة وصفحة الطباعة
-  scripts/            أداة إصدار السيريالات، بصفحة وبسطر أوامر
-  ACCEPTANCE.md       نتيجة اختبارات القبول
+  src/shared/         money, ledger, and codes: pure and tested
+  src/main/           database, router, printing, backups, licensing, sign-in
+  src/renderer/       the interface and the print page
+  scripts/            the license issuing tool, as a web page and a command line
+  ACCEPTANCE.md       acceptance test results
 ```
 
-<div dir="rtl">
+</details>
 
-### المستخدمون والصلاحيات
+## 👥 Users and roles
 
-كل مستخدم بيدخل برمزه، والدفتر بيسجل مين عمل كل حركة. البرنامج بيقفل لحاله بعد مدة بدون حركة، والمدة بتنضبط من الإعدادات.
+Each user signs in with their own PIN, and the ledger records who did what. The app locks itself after a period with no activity, and the owner sets how long.
 
-| | صاحب الشبكة | الفني |
+| | Owner | Technician |
 |---|---|---|
-| توليد الكروت وطباعتها وتسليمها | ✅ | ✅ |
-| الشبكة وفحص الكرت | ✅ | ✅ |
-| أرقام المال والحسابات والتسوية | ✅ | ❌ |
-| التقارير والإعدادات والنسخ والترخيص | ✅ | ❌ |
-| دفعة لموزع فوق سقف الدين | ✅ | ❌ لازم صاحب الشبكة يقرر |
+| Generate, print, and deliver cards | ✅ | ✅ |
+| Network and card check | ✅ | ✅ |
+| Money figures, accounts, and settlements | ✅ | ❌ |
+| Reports, settings, backups, and licensing | ✅ | ❌ |
+| New batch for a distributor over their credit limit | ✅ | ❌ The owner decides |
 
-### الأمان
+## 🔒 Security
 
-- الواجهة معزولة عن النظام، وكل طلب منها بينفحص حسب دور المستخدم بالعملية الرئيسية.
-- الرموز مخزنة كـhash بـscrypt، وبعد 5 محاولات غلط المستخدم بيستنى، حتى لو البرنامج انسكر وانفتح.
-- كلمة مرور الراوتر مشفرة بتشفير Windows، والاتصال بالراوتر مشفر ومربوط ببصمة شهادته.
-- البرنامج بيعمل نسخة احتياطية قبل ما أي تحديث يعدّل قاعدة البيانات.
-- ما بتشتغل نسختين من البرنامج مع بعض.
+- The UI is isolated from the system, and the main process checks every request against the user's role.
+- PINs are stored as scrypt hashes. After 5 wrong tries the user has to wait, even if the app is closed and reopened.
+- The router password is encrypted with Windows' own protection, and the router connection is encrypted and pinned to its certificate.
+- The app backs up the database before an update changes it.
+- Only one copy of the app can run at a time.
 
 > [!WARNING]
-> قاعدة البيانات ونسخها مش مشفرة: الرمز بيحمي الشاشة، مش الملف. والنسخ التلقائية على نفس الجهاز، فلازم تنسخ وحدة لبرا الجهاز.
+> The database and its backups aren't encrypted: the PIN protects the screen, not the file. Automatic backups stay on the same machine, so keep a copy somewhere else too.
 
-### الترخيص
+## 🔑 Licensing
 
-البرنامج بيتفعل بكود الجهاز ومفتاح موقّع، وبدون نت. كل سيريال مربوط بجهاز واحد. أداة الإصدار لصاحب البرنامج بس، وما بتنشحن مع البرنامج:
-
-</div>
+The app activates with a device code and a signed key, offline. Each serial works on one device. The issuing tool is for the software owner only and doesn't ship with the app:
 
 ```bash
 cd app
 npm run license:admin
 ```
 
-<div dir="rtl">
+It opens a local page where you enter the customer's name, device code, and duration. It then issues the serial and adds it to a customer list. From that list you can copy an old serial, renew one, or export to Excel. The page only runs on your own machine and needs the link the tool prints.
 
-بتفتح صفحة محلية بالمتصفح: بتكتب اسم الزبون وكود جهازه والمدة، وبتطلع السيريال وبتسجله بقائمة الزباين. من القائمة بتنسخ سيريال قديم، أو بتجدد، أو بتصدّر لـExcel. الصفحة شغالة على جهازك بس، وبدها الرابط اللي بتطبعه الأداة.
-
-مفتاح الإصدار وسجل الزباين (`licenses.jsonl`) بالمجلد `~/.nuqta-vendor`، برا المشروع. وسطر الأوامر لسا موجود لمين بدو إياه:
-
-</div>
+The signing key and the customer list (`licenses.jsonl`) live in `~/.nuqta-vendor`, outside the project. There's a command line too:
 
 ```bash
 node scripts/license.mjs issue --key <license-private.pem> --device NQ-XXXX-XXXX --until 2027-12-31
 ```
 
-<div dir="rtl">
-
 > [!IMPORTANT]
-> المفتاح الخاص اللي بيصدر التراخيص **ما بيكون بالمستودع أبدا**، و`*.pem` مستثنى بـ`.gitignore`. انسخ المجلد احتياط بمكان آمن: بدون المفتاح ما بتقدر تصدر سيريالات للبرنامج المنشور.
+> The private signing key is **never in this repository**, and `*.pem` is in `.gitignore`. Back that folder up somewhere safe: without the key you can't issue serials for the published app.
 
 > [!NOTE]
-> ما في سيرفر، فسيريال انصدر ما بينوقف. الأفضل تصدر لمدة محددة وتجدد.
+> There's no server, so an issued serial can't be revoked. Issue serials for a fixed period and renew them.
 
-### نسيان رمز المدير
+### Forgotten owner PIN
 
-صاحب الشبكة بيضغط «نسيت الرمز؟» بشاشة الدخول، وبيبعتلك كود الجهاز ورمز الطلب. بتصدرله مفتاح استرجاع من أداة الإصدار، تحت «زبون نسي رمز المدير». المفتاح لهالطلب بس، بيشتغل مرة وحدة، وصالح 3 أيام. **تأكد إنه صاحب الشبكة فعلا قبل ما تبعته.**
+The owner presses "Forgot PIN?" (نسيت الرمز؟) on the sign-in screen and sends you the device code and request code. You issue a recovery key from the tool, under "Customer forgot the owner PIN" (زبون نسي رمز المدير). The key only works for that request, works once, and expires after 3 days. **Confirm it's really the network owner before you send it.**
 
-### لسا قبل الإطلاق
+## 🧭 Before launch
 
-- ملف تثبيت ونظام تحديثات: لسا ما في طريقة يثبّت فيها الزبون البرنامج أو يستلم تحديث.
-- حماية النسخة المبنية: توقيع رقمي، وفحص إن ملفات البرنامج ما انعدلت، وإغلاق منفذ التشخيص.
-- تجربة على راوتر MikroTik حقيقي: الاتصال، وتحديد أول استخدام من `uptime`، وإضافة ألف كرت دفعة وحدة.
-- تجربة على طابعة A4 وطابعة حرارية 80mm.
-- فحص بإنسان: NVDA بصوت عربي، وشاشة لمس.
-- قرارات مفتوحة: طريقة الدفع، والنسخ السحابي، والعملة، وتشفير قاعدة البيانات. القائمة كاملة بآخر [ACCEPTANCE.md](app/ACCEPTANCE.md).
+- Installer and update system: customers have no way to install or update the app yet.
+- Hardening the packaged build: code signing, a check that app files haven't been changed, and closing the debugging port.
+- Testing on a real MikroTik router: connecting, detecting first use from `uptime`, and adding 1,000 cards in one batch.
+- Testing on real A4 and thermal 80mm printers.
+- Testing by a person with NVDA in Arabic and on a touch screen.
+- Open decisions: payment method, cloud backup, currency, and database encryption. The full list is at the end of [app/ACCEPTANCE.md](app/ACCEPTANCE.md).
 
-## 👤 المطوّر
+## 👤 Developer
 
 [mahmoudteirdev](https://github.com/mahmoudteirdev)
-
-</div>
-
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:13201D,100:0A5C56&height=110&section=footer" alt="" width="100%" />
-</p>

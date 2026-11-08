@@ -2,7 +2,7 @@
 // أول إرسال بيأكد جزء بس (88% افتراضيا)، والراوتر ممكن ينقطع، والكروت بتنستخدم.
 
 import {
-  COMMENT_PREFIX, RouterError,
+  COMMENT_PREFIX, formatUptime, RouterError,
   type ActiveSession, type HotspotUser, type NewHotspotUser, type RouterClient, type RouterInfo
 } from './types'
 
@@ -96,6 +96,16 @@ export class MockRouter implements RouterClient {
       if (u) { u.comment = comment; n++ }
     }
     return n
+  }
+
+  async extendUserUptime(name: string, extraSeconds: number): Promise<{ oldLimit: string | null; newLimit: string }> {
+    await this.#ready()
+    const u = this.#users.get(name)
+    if (!u) throw new RouterError('trap', `user ${name} not found on router`)
+    const curSec = u.limitUptimeSeconds ?? 3600
+    const newSec = curSec + extraSeconds
+    u.limitUptimeSeconds = newSec
+    return { oldLimit: formatUptime(curSec), newLimit: formatUptime(newSec) }
   }
 
   close(): void {}

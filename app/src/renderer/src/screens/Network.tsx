@@ -8,6 +8,7 @@ import { EMPTY } from '@/lib/screens'
 import { useStore } from '@/lib/store'
 import { useApi } from '@/lib/useApi'
 import { Dialog } from '@/shell/Dialog'
+import { ExtendDialog } from '@/shell/ExtendDialog'
 import { StateView } from '@/shell/StateView'
 import { useToast } from '@/shell/Toast'
 
@@ -62,6 +63,7 @@ export function Network() {
   const [kick, setKick] = useState<Session | null>(null)
   const [kickBusy, setKickBusy] = useState(false)
   const [kickErr, setKickErr] = useState('')
+  const [extending, setExtending] = useState<string | null>(null)
 
   useEffect(() => {
     const id = setInterval(() => setN((x) => x + 1), REFRESH_MS)
@@ -141,7 +143,8 @@ export function Network() {
                   <span role="cell">{s.routerName}</span>
                   <span role="cell" className="mono">{s.address}</span>
                   <span role="cell">{s.isUnlimited ? 'مفتوح (اشتراك)' : leftText(s.secondsLeft, null)}</span>
-                  <span role="cell" style={{ display: 'contents' }}>
+                  <span role="cell" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button type="button" className="btn btn-s sm" onClick={() => setExtending(s.code)}>+ وقت</button>
                     <button type="button" className="btn btn-d sm kick-col" aria-label={`افصل الكرت ${s.code}`} onClick={() => { setKickErr(''); setKick(s) }}>افصل</button>
                   </span>
                 </div>
@@ -152,6 +155,17 @@ export function Network() {
       </section>
 
       {connectDlg}
+
+      {extending && (
+        <ExtendDialog
+          code={extending}
+          onCancel={() => setExtending(null)}
+          onDone={() => {
+            setExtending(null)
+            setN((x) => x + 1)
+          }}
+        />
+      )}
       {kick && (
         <Dialog title={t('dlg.kick.title', { code: kick.code })} body={t('dlg.kick.body')} okLabel={t('dlg.kick.ok')} danger
           busy={kickBusy} busyLabel="جاري الفصل" error={kickErr} onCancel={() => setKick(null)}

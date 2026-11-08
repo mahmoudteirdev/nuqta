@@ -141,6 +141,14 @@ export class RouterService {
     return { done, waiting: this.store.pendingJobs().length }
   }
 
+  async extendUserUptime(name: string, extraSeconds: number): Promise<RouterResult<{ oldLimit: string | null; newLimit: string }>> {
+    try {
+      return { ok: true, value: await this.router.extendUserUptime(name, extraSeconds) }
+    } catch (e) {
+      return down(e)
+    }
+  }
+
   /** كل مستخدمين البرنامج والجلسات المفتوحة، لشاشة الشبكة. */
   async snapshot(): Promise<RouterResult<{ users: HotspotUser[]; sessions: ActiveSession[] }>> {
     try {

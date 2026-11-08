@@ -31,7 +31,7 @@ export interface CardRecord {
 export type RouterView = { user: HotspotUser | null; session: ActiveSession | null } | null
 
 export function diagnose(c: CardRecord, r: RouterView): CardCheck {
-  const limit = c.limitUptime ? parseUptime(c.limitUptime) || null : null
+  const limit = r?.user?.limitUptimeSeconds ?? (c.limitUptime ? parseUptime(c.limitUptime) || null : null)
   const uptime = r?.user?.uptimeSeconds ?? (c.firstUsedAt ? null : 0)
   const left = limit !== null && uptime !== null ? Math.max(limit - uptime, 0) : null
 
@@ -95,7 +95,7 @@ export function cardRecord(db: Db, code: string): CardRecord | null {
     : null
 }
 
-export function cardActions(ctx: { db: () => Db; service: () => RouterService }): Pick<Backend, 'checkCard' | 'kickSession'> {
+export function cardActions(ctx: { db: () => Db; service: () => RouterService }): Pick<Backend, 'checkCard' | 'kickSession' | 'extendCard'> {
   return {
     checkCard: async (raw) => {
       const found = cardRecord(ctx.db(), normCode(raw))
@@ -107,6 +107,16 @@ export function cardActions(ctx: { db: () => Db; service: () => RouterService })
       await svc.syncUsage()
       const look = await svc.lookup(code)
       return diagnose(cardRecord(ctx.db(), code)!, look.ok ? look.value : null)
+    },
+
+    extendCard: async (code, minutes) => {
+      if (!code || minutes <= 0) return { ok: false, error: { code: 'validation' } }
+      const norm = normCode(code)
+      const found = cardRecord(ctx.db(), norm)
+      if (!found) return { ok: false, error: { code: 'not_found' } }
+      const r = await ctx.service().extendUserUptime(found.code, minutes * 60)
+      if (!r.ok) return { ok: false, error: { code: 'code' in r.error ? String(r.error.code) : 'router' } as ActionError }
+      return { ok: true, value: { newLimit: r.value.newLimit } }
     },
 
     kickSession: async (id) => {

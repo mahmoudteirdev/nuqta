@@ -25,18 +25,18 @@ export async function networkData(ctx: {
     const lookup = ctx.db.raw.prepare(
       'SELECT k.name cat, k.limit_uptime lim FROM cards c JOIN batches b ON b.id = c.batch_id JOIN categories k ON k.id = b.category_id WHERE c.code = ?'
     )
-    sessions = snap.value.sessions.map((s) => {
-      const row = lookup.get(s.user) as { cat: string; lim: string | null } | undefined
-      const isNuqta = !!row
-      const limit = row?.lim ? parseUptime(row.lim) : 0
-      const used = uptime.get(s.user) ?? s.uptimeSeconds
-      const catName = row?.cat ?? (s.comment?.trim() ? s.comment.trim() : 'مشترك (راوتر)')
-      return {
-        id: s.id, code: s.user, categoryName: catName, routerName: active?.name ?? '', address: s.address, mac: s.mac,
-        secondsLeft: limit ? Math.max(limit - used, 0) : null,
-        isUnlimited: !isNuqta && !limit
-      }
-    })
+    sessions = snap.value.sessions
+      .map((s) => {
+        const row = lookup.get(s.user) as { cat: string; lim: string | null } | undefined
+        if (!row) return null
+        const limit = row.lim ? parseUptime(row.lim) : 0
+        const used = uptime.get(s.user) ?? s.uptimeSeconds
+        return {
+          id: s.id, code: s.user, categoryName: row.cat, routerName: active?.name ?? '', address: s.address, mac: s.mac,
+          secondsLeft: limit ? Math.max(limit - used, 0) : null
+        }
+      })
+      .filter((s): s is NonNullable<typeof s> => s !== null)
   }
 
   return {

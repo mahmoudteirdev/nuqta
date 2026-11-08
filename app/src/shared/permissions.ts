@@ -43,6 +43,7 @@ export const PERMISSIONS: Record<keyof Backend, Permission> = {
   templateSettings: 'any',
   checkCard: 'any',
   kickSession: 'any',
+  extendCard: 'any',
   network: 'any',
 
   // الحسابات والمال.

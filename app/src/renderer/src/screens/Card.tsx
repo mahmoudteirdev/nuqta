@@ -7,6 +7,7 @@ import { leftText } from '@/lib/format'
 import { t } from '@/lib/i18n'
 import { routerUp, useStore } from '@/lib/store'
 import { Dialog } from '@/shell/Dialog'
+import { ExtendDialog } from '@/shell/ExtendDialog'
 import { useToast } from '@/shell/Toast'
 
 const dayMonth = new Intl.DateTimeFormat('ar-u-nu-latn', { day: 'numeric', month: 'long' })
@@ -70,6 +71,7 @@ export function Card() {
   const [kick, setKick] = useState(false)
   const [kickBusy, setKickBusy] = useState(false)
   const [kickErr, setKickErr] = useState('')
+  const [extending, setExtending] = useState(false)
 
   const run = async (raw: string) => {
     const code = normCode(raw)
@@ -120,12 +122,17 @@ export function Card() {
             <div className="card top" role="status">
               <strong className="verdict">{text.title}</strong>
               <p className="verdict-next">{text.next}</p>
-              {card.verdict === 'in_use' && card.session && routerUp(state) && (
-                <button type="button" className="btn btn-d" style={{ marginTop: 12 }} onClick={() => { setKickErr(''); setKick(true) }}>افصل الجلسة</button>
-              )}
-              {card.verdict === 'not_on_router_yet' && (
-                <button type="button" className="btn btn-p" style={{ marginTop: 12 }} onClick={() => dispatch({ type: 'go', screen: 'batch', batchId: card.batchId })}>افتح الدفعة</button>
-              )}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: 12 }}>
+                {card.verdict === 'in_use' && card.session && routerUp(state) && (
+                  <button type="button" className="btn btn-d" onClick={() => { setKickErr(''); setKick(true) }}>افصل الجلسة</button>
+                )}
+                {card.routerChecked && routerUp(state) && (
+                  <button type="button" className="btn btn-s" onClick={() => setExtending(true)}>+ زيادة وقت</button>
+                )}
+                {card.verdict === 'not_on_router_yet' && (
+                  <button type="button" className="btn btn-p" onClick={() => dispatch({ type: 'go', screen: 'batch', batchId: card.batchId })}>افتح الدفعة</button>
+                )}
+              </div>
             </div>
             <div className="card facts">
               <div><span className="sub">الفئة</span><strong>{card.categoryName}</strong></div>
@@ -144,6 +151,17 @@ export function Card() {
         </div>
       )}
 
+
+      {extending && card && (
+        <ExtendDialog
+          code={card.code}
+          onCancel={() => setExtending(false)}
+          onDone={() => {
+            setExtending(false)
+            void run(card.code)
+          }}
+        />
+      )}
       {kick && card?.session && (
         <Dialog title={t('dlg.kick.title', { code: card.code })} body={t('dlg.kick.body')} okLabel={t('dlg.kick.ok')} danger
           busy={kickBusy} busyLabel="جاري الفصل" error={kickErr} onCancel={() => setKick(false)}

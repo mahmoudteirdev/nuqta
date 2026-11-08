@@ -9,6 +9,7 @@ export interface NewHotspotUser {
   limitUptime: string | null
   /** بنعلّم كروتنا بـ«nuqta:B-1001» عشان ما نلمس مستخدمين انعملوا بإيد. */
   comment: string
+  limitUptimeSeconds?: number | null
 }
 
 export interface HotspotUser {
@@ -77,6 +78,7 @@ export interface RouterClient {
   /** بيعلّم مستخدمين موجودين (كروت مستوردة) بتعليق البرنامج. اللي مش موجود بيتجاوز. بيرجع عدد اللي انعلّموا. */
   tagUsers(names: readonly string[], comment: string): Promise<number>
   addProfile(p: { name: string; rateLimit?: string; sharedUsers?: number }): Promise<void>
+  extendUserUptime(name: string, extraSeconds: number): Promise<{ oldLimit: string | null; newLimit: string }>
   close(): void
 }
 
@@ -91,4 +93,18 @@ export function parseUptime(s: string | undefined): number {
   let total = 0
   for (const [, n, u] of s.matchAll(/(\d+)(ms|[wdhms])/g)) if (u !== 'ms') total += Number(n) * units[u!]!
   return total
+}
+
+export function formatUptime(seconds: number): string {
+  if (seconds <= 0) return '0s'
+  const d = Math.floor(seconds / 86400)
+  const h = Math.floor((seconds % 86400) / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const sec = seconds % 60
+  const parts: string[] = []
+  if (d > 0) parts.push(`${d}d`)
+  if (h > 0) parts.push(`${h}h`)
+  if (m > 0) parts.push(`${m}m`)
+  if (sec > 0) parts.push(`${sec}s`)
+  return parts.join('') || '0s'
 }

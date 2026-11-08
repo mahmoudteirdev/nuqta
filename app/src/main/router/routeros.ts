@@ -4,7 +4,7 @@
 
 import { ApiConnection, type ConnectionOptions } from './connection'
 import {
-  COMMENT_PREFIX, parseUptime, RouterError,
+  COMMENT_PREFIX, formatUptime, parseUptime, RouterError,
   type ActiveSession, type HotspotUser, type NewHotspotUser, type RouterClient, type RouterInfo
 } from './types'
 
@@ -76,10 +76,10 @@ export class RouterOsClient implements RouterClient {
 
   users(): Promise<HotspotUser[]> {
     return this.#run(async (c) => {
-      const r = await c.command(['/ip/hotspot/user/print', '=.proplist=name,uptime,disabled,comment'])
+      const r = await c.command(['/ip/hotspot/user/print', '=.proplist=name,uptime,disabled,comment,limit-uptime'])
       return r.rows
         .filter((u) => (u['comment'] ?? '').startsWith(COMMENT_PREFIX))
-        .map((u) => ({ name: u['name'] ?? '', uptimeSeconds: parseUptime(u['uptime']), disabled: u['disabled'] === 'true', comment: u['comment'] ?? '' }))
+        .map((u) => ({ name: u['name'] ?? '', uptimeSeconds: parseUptime(u['uptime']), disabled: u['disabled'] === 'true', comment: u['comment'] ?? '', ...(u['limit-uptime'] ? { limitUptimeSeconds: parseUptime(u['limit-uptime']) } : {}) }))
     })
   }
 
@@ -127,6 +127,20 @@ export class RouterOsClient implements RouterClient {
         }
       }
       return n
+    })
+  }
+
+  extendUserUptime(name: string, extraSeconds: number): Promise<{ oldLimit: string | null; newLimit: string }> {
+    return this.#run(async (c) => {
+      const res = await c.command(['/ip/hotspot/user/print', `?name=${name}`])
+      const user = res.rows[0]
+      if (!user) throw new RouterError('trap', `user ${name} not found on router`)
+      const curStr = user['limit-uptime']
+      const curSec = curStr ? parseUptime(curStr) : 0
+      const newSec = curSec + extraSeconds
+      const newStr = formatUptime(newSec)
+      await c.command(['/ip/hotspot/user/set', `=numbers=${name}`, `=limit-uptime=${newStr}`])
+      return { oldLimit: curStr ?? null, newLimit: newStr }
     })
   }
 

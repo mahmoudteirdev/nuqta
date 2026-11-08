@@ -94,4 +94,9 @@ describe('checkCard through the database and router', () => {
     expect(await api.checkCard(codes[1]!)).toMatchObject({ verdict: 'unused', routerChecked: false })
     expect(await api.kickSession('*1')).toEqual({ ok: false, error: { code: 'unreachable' } })
   })
+  it('extends card uptime on router', async () => {
+    const r = await api.extendCard(codes[0]!, 60)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.value.newLimit).toBe('2h')
+  })
 })

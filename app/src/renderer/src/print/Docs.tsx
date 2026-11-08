@@ -22,7 +22,7 @@ export function CardsDoc({ job }: { job: CardsJob }) {
       {chunk(job.codes, PER_PAGE[job.template]).map((page, i) => (
         <section key={i} className="page">
           {page.map((code) => (
-            <article key={code} className="pc">
+            <article key={code} className="pc" style={job.bgImage ? { backgroundImage: `url(${job.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : undefined}>
               <div className="pc-top"><span>{job.networkName}</span><span>{job.categoryName}</span></div>
               <div className="pc-code" dir="ltr">{code}</div>
               <div className="pc-foot">

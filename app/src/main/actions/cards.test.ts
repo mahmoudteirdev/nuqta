@@ -105,9 +105,9 @@ describe('categories and prices', () => {
 
 describe('print templates', () => {
   it('defaults, saves, and the saved template is what printing records', async () => {
-    expect(api.templateSettings()).toEqual({ template: 'a4-12', networkName: 'شبكة النور', showPrice: true, phone: '' })
+    expect(api.templateSettings()).toEqual({ template: 'a4-12', networkName: 'شبكة النور', showPrice: true, phone: '', bgImage: null })
     ok(api.saveTemplateSettings({ template: 'thermal', networkName: ' نت الحارة ', showPrice: false, phone: '' }))
-    expect(api.templateSettings()).toEqual({ template: 'thermal', networkName: 'نت الحارة', showPrice: false, phone: '' })
+    expect(api.templateSettings()).toEqual({ template: 'thermal', networkName: 'نت الحارة', showPrice: false, phone: '', bgImage: null })
     expect(api.saveTemplateSettings({ template: 'thermal', networkName: '  ', showPrice: true, phone: '' })).toEqual({ ok: false, error: { code: 'network_name' } })
 
     ok(await api.reprintBatch(1))

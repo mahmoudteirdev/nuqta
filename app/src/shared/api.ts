@@ -232,6 +232,7 @@ export interface TemplateSettings {
   showPrice: boolean
   /** رقم الدعم على الكرت، من بيانات الشبكة. للقراءة بس هون. */
   phone: string
+  bgImage?: string | null
 }
 
 export interface CategoryRow {

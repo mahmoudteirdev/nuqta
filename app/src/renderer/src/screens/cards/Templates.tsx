@@ -45,6 +45,52 @@ export function Templates() {
           </div>
           {err && <span id="tnE" className="emsg" role="alert">{err}</span>}
         </div>
+
+        <div className="fld">
+          <label className="lbl">صورة خلفية للكرت (شعار أو تصميم خاص)</label>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <label className="btn btn-s sm" style={{ cursor: 'pointer', margin: 0 }}>
+              <span>{s.bgImage ? 'تغيير صورة الخلفية' : 'اختر صورة من جهازك...'}</span>
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const reader = new FileReader()
+                  reader.onload = () => {
+                    const img = new Image()
+                    img.onload = () => {
+                      const canvas = document.createElement('canvas')
+                      const maxW = 800
+                      const scale = Math.min(1, maxW / img.width)
+                      canvas.width = img.width * scale
+                      canvas.height = img.height * scale
+                      const ctx = canvas.getContext('2d')
+                      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
+                      const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+                      setS((p) => p && { ...p, bgImage: dataUrl })
+                    }
+                    img.src = reader.result as string
+                  }
+                  reader.readAsDataURL(file)
+                }}
+              />
+            </label>
+            {s.bgImage && (
+              <button
+                type="button"
+                className="btn btn-d sm"
+                onClick={() => setS((p) => p && { ...p, bgImage: null })}
+              >
+                إزالة الصورة
+              </button>
+            )}
+          </div>
+          <span className="sub small">تظهر الصورة في خلفية كل كرت مطبوع مع الحفاظ على وضوح الكود.</span>
+        </div>
+
         <label className="check">
           <input type="checkbox" checked={s.showPrice} onChange={(e) => { const v = e.target.checked; setS((p) => p && { ...p, showPrice: v }) }} />
           اطبع السعر على الكرت
@@ -68,7 +114,7 @@ export function Templates() {
         <h2 className="h2">معاينة</h2>
         <div className={`tpl-sample tpl-${s.template}`}>
           <Voucher large hint network={s.networkName} category={sample?.name ?? '3 ساعات'} code="A7HK-58RX"
-            foot={s.showPrice && sample ? formatMoney(sample.saleAg) : ''} phone={s.phone} />
+            foot={s.showPrice && sample ? formatMoney(sample.saleAg) : ''} phone={s.phone} bgImage={s.bgImage} />
         </div>
         <span className="sub small">{TEMPLATE_INFO[s.template].page}. الأكواد ما بتستخدم 0 و O و 1 و I و L.</span>
       </section>

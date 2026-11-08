@@ -17,7 +17,8 @@ export function readTemplate(store: Store): TemplateSettings {
     template: t && TEMPLATES.includes(t) ? t : 'a4-12',
     networkName: store.getSetting('network_name') ?? '',
     showPrice: store.getSetting('print_show_price') !== '0',
-    phone: store.getSetting('support_phone') ?? ''
+    phone: store.getSetting('support_phone') ?? '',
+    bgImage: store.getSetting('print_bg_image') || null
   }
 }
 
@@ -102,6 +103,7 @@ export function cardsActions(ctx: { db: () => Db; store: () => Store; service: (
       store.setSetting('print_template', t.template)
       store.setSetting('network_name', t.networkName.trim())
       store.setSetting('print_show_price', t.showPrice ? '1' : '0')
+      store.setSetting('print_bg_image', t.bgImage ?? '')
       return { ok: true, value: undefined }
     }
   }

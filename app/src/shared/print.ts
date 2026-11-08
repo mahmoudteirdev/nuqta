@@ -14,6 +14,7 @@ export interface CardsJob {
   saleAg: Agorot
   batchNo: number
   codes: string[]
+  bgImage?: string | null
 }
 
 export interface StatementJob {

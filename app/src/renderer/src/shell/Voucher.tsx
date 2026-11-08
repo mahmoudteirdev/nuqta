@@ -1,9 +1,29 @@
 import type { PrintTemplate } from '@shared/api'
 
 /** الكرت المطبوع كما بيطلع بالمعاينة. waiting = بالانتظار أو لسا ما تولّد. */
-export function Voucher(p: { network: string; category: string; code: string; foot: string; waiting?: boolean; hint?: boolean; large?: boolean; phone?: string }) {
+export function Voucher(p: {
+  network: string
+  category: string
+  code: string
+  foot: string
+  waiting?: boolean
+  hint?: boolean
+  large?: boolean
+  phone?: string
+  bgImage?: string | null
+}) {
+  const bgStyle = p.bgImage
+    ? {
+        backgroundImage: `url(${p.bgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        position: 'relative' as const
+      }
+    : undefined
+
   return (
-    <div className={(p.waiting ? 'vc p' : 'vc') + (p.large ? ' vc-lg' : '')}>
+    <div className={(p.waiting ? 'vc p' : 'vc') + (p.large ? ' vc-lg' : '')} style={bgStyle}>
       <div className="vc-top"><span>{p.network}</span><span>{p.category}</span></div>
       <div className="code" dir="ltr">{p.code}</div>
       {p.hint ? (

@@ -138,7 +138,8 @@ export async function printCards(
   const tpl = readTemplate(store)
   const out = await print({
     kind: 'cards', template: tpl.template, networkName: tpl.networkName, phone: tpl.phone, showPrice: tpl.showPrice,
-    categoryName: v.categoryName, saleAg: v.saleAg, batchNo: v.no, codes
+    categoryName: v.categoryName, saleAg: v.saleAg, batchNo: v.no, codes,
+    bgImage: tpl.bgImage
   })
   if (!out.ok) return { ok: false, error: { code: out.reason === 'cancelled' ? 'print_cancelled' : 'print_failed' } }
   const r = store.printBatch(batchId, tpl.template, store.actor, scope, codes)

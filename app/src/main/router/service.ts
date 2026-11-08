@@ -30,6 +30,8 @@ export interface SyncOutcome {
 }
 
 export class RouterService {
+  #syncSeq = 0
+
   constructor(
     private readonly store: Store,
     private readonly router: RouterClient,

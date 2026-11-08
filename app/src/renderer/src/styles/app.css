@@ -220,3 +220,4 @@ html,body,#root{height:100%}
 .reset-codes{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;background:var(--ground);border-radius:4px;padding:12px}
 .reset-codes code{font-size:16px;text-align:end}
 .reset-codes .btn{grid-column:1 / -1;justify-self:start}
+.update-bn{justify-content:space-between;flex-wrap:wrap;border-radius:0;padding:10px 32px}

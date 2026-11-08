@@ -1,0 +1,83 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish release to GitHub'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Windows Installer
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run test suite
+        run: npm test
+
+      - name: Setup vendor release signing key
+        if: env.NUQTA_PRIVATE_KEY != ''
+        env:
+          NUQTA_PRIVATE_KEY: ${{ secrets.NUQTA_RELEASE_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          mkdir -p ~/.nuqta-vendor
+          echo "$NUQTA_PRIVATE_KEY" > ~/.nuqta-vendor/license-private.pem
+
+      - name: Build Windows installer (NSIS)
+        run: npm run dist
+
+      - name: Sign release (latest.yml)
+        if: env.NUQTA_PRIVATE_KEY != ''
+        env:
+          NUQTA_PRIVATE_KEY: ${{ secrets.NUQTA_RELEASE_PRIVATE_KEY }}
+        run: node scripts/release.mjs --skip-build
+
+      - name: Upload build artifact to Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nuqta-Installer
+          path: |
+            app/dist/*.exe
+            app/dist/*.blockmap
+            app/dist/latest.yml
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/dist/*.exe
+            app/dist/*.blockmap
+            app/dist/latest.yml
+          generate_release_notes: true
+          draft: false
+          prerelease: false

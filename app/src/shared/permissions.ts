@@ -74,6 +74,8 @@ export const PERMISSIONS: Record<keyof Backend, Permission> = {
   saveRules: 'owner',
   license: 'owner',
   activateLicense: 'owner',
+  checkForUpdate: 'owner',
+  installUpdate: 'owner',
   importPreview: 'owner',
   importCommit: 'owner',
   backupNow: 'owner',

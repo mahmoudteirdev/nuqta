@@ -12,18 +12,20 @@ import { StateView } from '@/shell/StateView'
 import { BackupTab } from '@/shell/Backups'
 import { ImportTab } from '@/shell/ImportTab'
 import { LicenseTab } from '@/shell/LicenseTab'
+import { UpdatesTab } from '@/shell/UpdatesTab'
 import { UsersTab } from '@/shell/UsersTab'
 import { Tabs } from '@/shell/Tabs'
 import { useToast } from '@/shell/Toast'
 
-type Tab = 'net' | 'users' | 'rules' | 'backup' | 'import' | 'license'
+type Tab = 'net' | 'users' | 'rules' | 'backup' | 'import' | 'license' | 'updates'
 const TABS: { key: Tab; name: string }[] = [
   { key: 'net', name: 'بيانات الشبكة' },
   { key: 'users', name: 'المستخدمون' },
   { key: 'rules', name: 'قواعد مؤقتة' },
   { key: 'backup', name: 'النسخ والاستعادة' },
   { key: 'import', name: 'الاستيراد' },
-  { key: 'license', name: 'الترخيص' }
+  { key: 'license', name: 'الترخيص' },
+  { key: 'updates', name: 'التحديثات' }
 ]
 
 const ROLE: Record<UserRole, { name: string; note: string }> = {
@@ -168,6 +170,7 @@ export function Settings() {
         {tab === 'backup' && <BackupTab />}
         {tab === 'import' && <ImportTab />}
         {tab === 'license' && <LicenseTab />}
+        {tab === 'updates' && <UpdatesTab />}
       </Tabs>
     </div>
   )

@@ -5,6 +5,13 @@ import { allowDevEnv, devEnv } from './dev-env'
 
 if (!app.isPackaged) allowDevEnv()
 
+// النسخة المبنية ما بتفتح منفذ تشخيص: اللي بيوصله بيقدر يتحكم بالنوافذ.
+const DEBUG_SWITCHES = ['remote-debugging-port', 'remote-debugging-pipe', 'inspect', 'inspect-brk']
+if (app.isPackaged && DEBUG_SWITCHES.some((s) => app.commandLine.hasSwitch(s))) app.exit(1)
+
+// اسم البرنامج بشريط المهام والإشعارات، لازم يطابق appId بالبناء.
+app.setAppUserModelId('com.mahmoudteirdev.nuqta')
+
 // البرنامج لازم يشتغل بدون نت: ما في أي تحميل من مصدر خارجي.
 const CSP = [
   "default-src 'self'",

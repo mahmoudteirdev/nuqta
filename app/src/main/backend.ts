@@ -3,7 +3,7 @@
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, type IpcMainInvokeEvent } from 'electron'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { AppStatus, Backend, DbStatus } from '@shared/api'
+import type { AppStatus, Backend, DbStatus, UpdateView } from '@shared/api'
 import { openDatabase, type Db } from './db/db'
 import { accountActions } from './actions/account'
 import { batchActions } from './actions/batch'
@@ -18,6 +18,7 @@ import { licenseActions, pinResetActions } from './actions/license'
 import { deviceCode } from './license'
 import { LICENSE_PUBLIC_KEY } from './license-public-key'
 import { devEnv } from './dev-env'
+import { UpdateService, type UpdaterLike } from './updates'
 import { installedAt, machineId } from './machine'
 import { Auth, type AuthError } from './auth'
 import { allowed } from '@shared/permissions'
@@ -171,6 +172,20 @@ export function startBackend(): AppStatus {
     return live
   }
 
+  // التحديث بالنسخة المثبتة بس.
+  let updates: UpdateService | null = null
+  let updateTimer: ReturnType<typeof setInterval> | null = null
+  const offView: UpdateView = { current: app.getVersion(), state: 'off', version: null, percent: 0, reason: null, checkedAt: null }
+  const updateView = (): UpdateView => updates?.view() ?? offView
+  if (app.isPackaged) {
+    void import('electron-updater').then(({ autoUpdater }) => {
+      updates = new UpdateService(autoUpdater as unknown as UpdaterLike, app.getVersion(), LICENSE_PUBLIC_KEY)
+      // فحص بعد ما البرنامج يهدا، وبعدها كل 6 ساعات. بدون نت ما بيصير شي.
+      setTimeout(() => void updates?.check(), 30_000)
+      updateTimer = setInterval(() => void updates?.check(), 6 * 3_600_000)
+    }).catch((e) => console.error('[update] not available', e))
+  }
+
   const status = (): AppStatus => ({
     db: dbStatus,
     router: { ...router, mock: !!live?.mock, configured: !!live?.configured },
@@ -179,7 +194,8 @@ export function startBackend(): AppStatus {
     setup: live ? setupState(live.store) : { needed: false, step: 1 },
     lastBackupAt: listBackups(backupDir)[0]?.at ?? null,
     license: lic.info(),
-    session: auth.info(lockAfter())
+    session: auth.info(lockAfter()),
+    update: updateView()
   })
 
   const backend: Backend = {
@@ -208,6 +224,19 @@ export function startBackend(): AppStatus {
     }),
     license: lic.license,
     activateLicense: lic.activateLicense,
+    checkForUpdate: async () => (updates ? updates.check() : offView),
+    installUpdate: () => {
+      if (updateView().state !== 'ready' || !updates) return { ok: false, error: { code: 'update_not_ready' } }
+      // نسخة من الوضع الحالي قبل التحديث. فشلها ما بيوقف التحديث.
+      try {
+        if (live) makeBackup(live.db, backupDir, 'before-update')
+      } catch (e) {
+        console.error('[backup] backup before update failed', e)
+      }
+      if (updateTimer) clearInterval(updateTimer)
+      updates.install()
+      return { ok: true, value: undefined }
+    },
     ...backupActions({
       dir: backupDir,
       dbPath: path,

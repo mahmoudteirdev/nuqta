@@ -41,7 +41,7 @@ does:
 works:     fully offline; the router is on the local network
 language:  Arabic, right to left
 platform:  Windows desktop (Electron)
-status:    first version built; 7 of 10 acceptance items automated and passing; no installer yet
+status:    first version built; 7 of 10 acceptance items automated and passing; Windows installer ready, not code signed
 ```
 
 ## 👀 See it
@@ -122,7 +122,7 @@ Acceptance results, from section 12 of [HANDOFF.md](HANDOFF.md). Evidence is in 
 
 ## 🚀 Run it
 
-There's no installer yet, so run it from source:
+To work on it from source:
 
 ```bash
 git clone https://github.com/mahmoudteirdev/nuqta.git
@@ -131,6 +131,7 @@ npm install
 npm run dev        # development mode, with demo data and a mock router
 npm test           # all tests
 npm run build      # build the app
+npm run dist       # build the Windows installer into app/dist
 ```
 
 The demo data has two users: the owner (PIN `1234`) and a technician, Sami (PIN `5678`). They exist in development mode only. A real install asks the owner to create a PIN after first-run setup.
@@ -190,6 +191,7 @@ Each user signs in with their own PIN, and the ledger records who did what. The 
 - The router password is encrypted with Windows' own protection, and the router connection is encrypted and pinned to its certificate.
 - The app backs up the database before an update changes it.
 - Only one copy of the app can run at a time.
+- The installed app refuses debugging switches, won't run as plain Node, and stops if its files have been changed.
 
 > [!WARNING]
 > The database and its backups aren't encrypted: the PIN protects the screen, not the file. Automatic backups stay on the same machine, so keep a copy somewhere else too.
@@ -223,8 +225,8 @@ The owner presses "Forgot PIN?" (نسيت الرمز؟) on the sign-in screen an
 
 ## 🧭 Before launch
 
-- Installer and update system: customers have no way to install or update the app yet.
-- Hardening the packaged build: code signing, a check that app files haven't been changed, and closing the debugging port.
+- Automatic updates: for now, customers update by running a newer installer, which keeps their data.
+- Code signing: without a certificate, Windows warns about an unknown publisher during install.
 - Testing on a real MikroTik router: connecting, detecting first use from `uptime`, and adding 1,000 cards in one batch.
 - Testing on real A4 and thermal 80mm printers.
 - Testing by a person with NVDA in Arabic and on a touch screen.

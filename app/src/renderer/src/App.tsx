@@ -4,6 +4,7 @@ import { useStore } from '@/lib/store'
 import { SCREENS } from '@/screens'
 import { Setup } from '@/screens/Setup'
 import { Login } from '@/screens/Login'
+import { UpdateBanner } from '@/shell/UpdatesTab'
 import { OWNER_SCREENS } from '@shared/permissions'
 import { RestoreList } from '@/shell/Backups'
 import { DevBar } from '@/shell/DevBar'
@@ -152,6 +153,7 @@ export function App() {
         <Sidebar />
         <main className="main">
           <StatusBar />
+          <UpdateBanner />
           <div className="mainpad" key={view}>
             {db && !db.ok ? <DbError reason={db.reason} />
               : state.stateMode === 'normal' ? <Screen />

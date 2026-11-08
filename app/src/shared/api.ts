@@ -11,6 +11,16 @@ export type DbStatus =
   /** قاعدة البيانات ما فتحت. ما انمسح شي: الواجهة بتعرض الخطأ وخيار الاسترجاع. */
   | { ok: false; path: string; reason: 'corrupt' | 'too_new' | 'unreadable'; detail: string }
 
+/** التحديث التلقائي. off: بوضع التطوير. */
+export interface UpdateView {
+  current: string
+  state: 'off' | 'idle' | 'checking' | 'downloading' | 'ready' | 'failed'
+  version: string | null
+  percent: number
+  reason: 'network' | 'signature' | null
+  checkedAt: string | null
+}
+
 export interface AppStatus {
   db: DbStatus
   /** configured: في راوتر حقيقي مربوط. mock: البرنامج على الراوتر الوهمي (وضع التطوير). */
@@ -24,6 +34,7 @@ export interface AppStatus {
   lastBackupAt: string | null
   license: LicenseInfo
   session: SessionInfo
+  update: UpdateView
 }
 
 /** مين فاتح البرنامج هلأ. */
@@ -429,6 +440,8 @@ export interface Backend {
   importCommit(token: string, choice: ImportChoice, opKey: string): ActionResult<{ imported: number; skipped: number; batches: number[] }>
   license(): LicenseInfo
   activateLicense(key: string): ActionResult<LicenseInfo>
+  checkForUpdate(): Promise<UpdateView>
+  installUpdate(): ActionResult
   /** أول رمز لصاحب الشبكة، لما ما في ولا رمز. بيدخل فيه مباشرة. */
   createOwnerPin(pin: string): ActionResult
   login(userId: number, pin: string): ActionResult

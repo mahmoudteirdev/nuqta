@@ -51,6 +51,11 @@ export function normalizeRequest(text) {
   return /^[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{8}$/.test(s) ? s : null
 }
 
+/** توقيع نسخة جديدة. لازم يطابق signedUpdateText بـsrc/main/updates.ts. */
+export function signUpdate(privatePem, version, sha512) {
+  return sign(null, Buffer.from(`NQU1|${version}|${sha512}`), createPrivateKey(privatePem)).toString('base64')
+}
+
 export function generateKeys() {
   const { privateKey, publicKey } = generateKeyPairSync('ed25519')
   return {

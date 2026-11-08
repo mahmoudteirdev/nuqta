@@ -6,7 +6,7 @@ export type Lang = 'ar' | 'en'
 export type MessageKey = keyof typeof messagesAr
 
 let currentLang: Lang = (() => {
-  if (typeof localStorage !== 'undefined') {
+  if (typeof localStorage !== 'undefined' && localStorage.getItem('nuqta_lang_user_set') === 'true') {
     const saved = localStorage.getItem('nuqta_lang')
     if (saved === 'ar' || saved === 'en') return saved
   }
@@ -17,10 +17,11 @@ export function getLang(): Lang {
   return currentLang
 }
 
-export function setLang(lang: Lang): void {
+export function setLang(lang: Lang, persist = true): void {
   currentLang = lang
-  if (typeof localStorage !== 'undefined') {
+  if (persist && typeof localStorage !== 'undefined') {
     localStorage.setItem('nuqta_lang', lang)
+    localStorage.setItem('nuqta_lang_user_set', 'true')
   }
   if (typeof document !== 'undefined') {
     document.documentElement.lang = lang

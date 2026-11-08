@@ -225,6 +225,7 @@ export function startBackend(): AppStatus {
   function getInstallerLang(): 'ar' | 'en' | null {
     try {
       const candidates = [
+        join(dirname(app.getPath('exe')), 'installer-lang.json'),
         join(process.resourcesPath, '..', 'installer-lang.json'),
         join(app.getAppPath(), 'installer-lang.json'),
         join(process.cwd(), 'installer-lang.json')

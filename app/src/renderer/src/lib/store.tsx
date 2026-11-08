@@ -35,8 +35,12 @@ export type Action =
   | { type: 'forceNetDown'; down: boolean }
   | { type: 'changed' }
 
-// تطبيق اتجاه ولغة الصفحة عند التشغيل الأولي
-setLang(getLang())
+// ضبط اتجاه ولغة الصفحة الأولي دون تثبيت الخيار
+if (typeof document !== 'undefined') {
+  const l = getLang()
+  document.documentElement.lang = l
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr'
+}
 
 export const initialState: AppState = {
   lang: getLang(),
@@ -73,8 +77,9 @@ function reducer(s: AppState, a: Action): AppState {
     case 'status': {
       const routerChanged = s.status?.router.up !== a.status.router.up
       let nextLang = s.lang
-      if (typeof localStorage !== 'undefined' && !localStorage.getItem('nuqta_lang') && a.status.installerLang) {
-        setLang(a.status.installerLang)
+      const userSet = typeof localStorage !== 'undefined' && localStorage.getItem('nuqta_lang_user_set') === 'true'
+      if (!userSet && a.status.installerLang) {
+        setLang(a.status.installerLang, false)
         nextLang = a.status.installerLang
       }
       return { ...s, status: a.status, lang: nextLang, revision: routerChanged ? s.revision + 1 : s.revision }

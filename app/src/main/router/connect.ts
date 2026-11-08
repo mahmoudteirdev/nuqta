@@ -43,30 +43,71 @@ export async function connectRouter(
   input: { host: string; port?: number; user: string; password: string },
   deps: { makeClient: MakeClient; secrets: SecretBox }
 ): Promise<ActionResult<{ client: RouterClient; info: RouterInfo; routerId: number }>> {
-  const host = input.host.trim()
+  let host = input.host.trim()
   const user = input.user.trim()
   if (!host) return { ok: false, error: { code: 'router_ip' } }
-  if (!user || !input.password) return { ok: false, error: { code: 'router_creds' } }
+  if (!user || input.password === undefined) return { ok: false, error: { code: 'router_creds' } }
   if (!deps.secrets.available()) return { ok: false, error: { code: 'secret_unavailable' } }
-  const port = input.port ?? 8729
 
-  const client = deps.makeClient({ host, port, user, password: input.password, tls: true, fingerprint: null })
-  let info: RouterInfo
-  try {
-    info = await client.info()
-  } catch (e) {
-    client.close()
-    if (e instanceof RouterError) return { ok: false, error: { code: e.code === 'auth' ? 'router_auth' : e.isDown ? 'router_unreachable' : `router_${e.code}` } }
-    throw e
+  let port = input.port
+  if (host.includes(':')) {
+    const [h, p] = host.split(':')
+    host = h.trim()
+    const parsedPort = Number(p)
+    if (!Number.isNaN(parsedPort) && parsedPort > 0) port = parsedPort
+  }
+
+  const portsToTry: { port: number; tls: boolean }[] =
+    port !== undefined
+      ? [{ port, tls: port !== 8728 }]
+      : [
+          { port: 8729, tls: true },
+          { port: 8728, tls: false }
+        ]
+
+  let client: RouterClient | null = null
+  let info: RouterInfo | null = null
+  let lastError: unknown = null
+  let successfulPort = port ?? 8729
+
+  for (const target of portsToTry) {
+    const c = deps.makeClient({
+      host,
+      port: target.port,
+      user,
+      password: input.password,
+      tls: target.tls,
+      fingerprint: null
+    })
+    try {
+      info = await c.info()
+      client = c
+      successfulPort = target.port
+      break
+    } catch (e) {
+      c.close()
+      lastError = e
+      if (e instanceof RouterError && e.code === 'auth') break
+    }
+  }
+
+  if (!client || !info) {
+    if (lastError instanceof RouterError) {
+      return {
+        ok: false,
+        error: { code: lastError.code === 'auth' ? 'router_auth' : lastError.isDown ? 'router_unreachable' : `router_${lastError.code}` }
+      }
+    }
+    throw lastError
   }
 
   const name = info.identity.trim() || host
   const existing = store.routers()[0]
-  const routerId = existing ? existing.id : store.addRouter({ name, host, port })
-  if (existing) store.updateRouter(existing.id, { name, host, port })
+  const routerId = existing ? existing.id : store.addRouter({ name, host, port: successfulPort })
+  if (existing) store.updateRouter(existing.id, { name, host, port: successfulPort })
   store.setSetting(K.id, String(routerId))
   store.setSetting(K.host, host)
-  store.setSetting(K.port, String(port))
+  store.setSetting(K.port, String(successfulPort))
   store.setSetting(K.user, user)
   store.setSetting(K.secret, deps.secrets.encrypt(input.password))
   if (info.fingerprint) store.setSetting(K.fp, info.fingerprint)
@@ -75,7 +116,14 @@ export async function connectRouter(
 
 /** الكلاينت من الإعدادات المحفوظة، مع البصمة المثبتة. */
 export function clientFromConfig(c: RouterConfig, deps: { makeClient: MakeClient; secrets: SecretBox }): RouterClient {
-  return deps.makeClient({ host: c.host, port: c.port, user: c.user, password: deps.secrets.decrypt(c.sealedPassword), tls: true, fingerprint: c.fingerprint })
+  return deps.makeClient({
+    host: c.host,
+    port: c.port,
+    user: c.user,
+    password: deps.secrets.decrypt(c.sealedPassword),
+    tls: c.port !== 8728,
+    fingerprint: c.fingerprint
+  })
 }
 
 /** ما في راوتر مربوط: كل طلب بيرجع «مش راد»، والبرنامج بيشتغل عادي على الحسابات. */

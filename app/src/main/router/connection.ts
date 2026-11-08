@@ -1,5 +1,6 @@
 // اتصال واحد بالراوتر. api-ssl على 8729 بشكل افتراضي. الأوامر بتمشي بوسوم (.tag) فممكن أكثر من أمر بنفس الوقت.
 
+import { createHash } from 'node:crypto'
 import { connect as netConnect, type Socket } from 'node:net'
 import { connect as tlsConnect, type TLSSocket } from 'node:tls'
 import { encodeSentence, parseAttributes, SentenceReader, type Reply } from './protocol'
@@ -47,9 +48,15 @@ export class ApiConnection {
     const port = o.port ?? (useTls ? 8729 : 8728)
     const timeoutMs = o.timeoutMs ?? 8000
     const socket = await new Promise<Socket | TLSSocket>((resolve, reject) => {
-      // الراوتر عادة شهادته موقعة ذاتيا، فالأمان من تثبيت البصمة تحت مش من سلسلة الثقة.
+      // الراوتر عادة شهادته موقعة ذاتيا أو بإعدادات قديمة، فالأمان من تثبيت البصمة تحت مش من سلسلة الثقة.
       const s = useTls
-        ? tlsConnect({ host: o.host, port, rejectUnauthorized: false }, () => resolve(s))
+        ? tlsConnect({
+            host: o.host,
+            port,
+            rejectUnauthorized: false,
+            minVersion: 'TLSv1',
+            ciphers: 'ALL:@SECLEVEL=0'
+          }, () => resolve(s))
         : netConnect({ host: o.host, port }, () => resolve(s))
       const timer = setTimeout(() => {
         s.destroy()
@@ -65,8 +72,9 @@ export class ApiConnection {
 
     let fingerprint: string | null = null
     if (useTls) {
-      fingerprint = (socket as TLSSocket).getPeerCertificate().fingerprint256 ?? null
-      if (o.fingerprint && fingerprint !== o.fingerprint) {
+      const cert = (socket as TLSSocket).getPeerCertificate?.()
+      fingerprint = cert?.fingerprint256 || cert?.fingerprint || null
+      if (o.fingerprint && fingerprint && fingerprint !== o.fingerprint) {
         socket.destroy()
         throw new RouterError('tls_mismatch', 'router certificate changed')
       }
@@ -74,8 +82,18 @@ export class ApiConnection {
 
     const c = new ApiConnection(socket, fingerprint, timeoutMs)
     try {
-      // تسجيل الدخول لنسخ RouterOS 6.43 وأحدث.
-      await c.command(['/login', `=name=${o.user}`, `=password=${o.password}`])
+      // تسجيل الدخول: نجرب 6.43+ أولاً (بكلمة المرور مباشرة).
+      // إذا الراوتر أقدم (pre-6.43) ورد بتحدي =ret=...، بنرد بحساب MD5 للتحدي.
+      const loginRes = await c.command(['/login', `=name=${o.user}`, `=password=${o.password}`])
+      const challenge = loginRes.done['ret']
+      if (challenge) {
+        const md5 = createHash('md5')
+        md5.update(Buffer.from([0]))
+        md5.update(Buffer.from(o.password, 'utf8'))
+        md5.update(Buffer.from(challenge, 'hex'))
+        const response = '00' + md5.digest('hex')
+        await c.command(['/login', `=name=${o.user}`, `=response=${response}`])
+      }
     } catch (e) {
       c.close()
       if (e instanceof RouterError && e.code === 'trap') throw new RouterError('auth', e.message)

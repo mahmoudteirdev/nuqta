@@ -13,7 +13,7 @@ export function Sidebar() {
     <nav className="sidenav" aria-label={isEn ? 'Main Navigation' : 'القائمة الرئيسية'}>
       <div className="brand">
         <Logo />
-        <strong>{state.status?.networkName ?? (isEn ? 'Nuqta' : 'نقطة')}</strong>
+        <strong>{(state.status?.networkName && state.status.networkName !== 'نقطة') ? state.status.networkName : (isEn ? 'Nuqta' : 'نقطة')}</strong>
       </div>
       <div className="navlist">
         {navItems.filter((n) => state.status?.session.user?.role === 'owner' || !OWNER_SCREENS.has(n.id)).map((n) => {

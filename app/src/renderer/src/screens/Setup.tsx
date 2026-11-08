@@ -7,10 +7,13 @@ import { t } from '@/lib/i18n'
 import { useStore } from '@/lib/store'
 import { useToast } from '@/shell/Toast'
 
-const STEPS = ['ربط الراوتر', 'الفئات والأسعار', 'الموزعين والأرصدة', 'كرت تجربة']
+const STEP_KEYS = ['setup.step1', 'setup.step2', 'setup.step3', 'setup.step4']
 
 const plain = (ag: number) => (ag ? (ag % 100 ? (ag / 100).toFixed(2) : String(ag / 100)) : '')
-const categoriesText = (n: number) => (n === 1 ? 'فئة وحدة' : n === 2 ? 'فئتين' : n >= 3 && n <= 10 ? `${n} فئات` : `${n} فئة`)
+const categoriesText = (n: number, isEn: boolean) => {
+  if (isEn) return n === 1 ? '1 hotspot profile' : `${n} hotspot profiles`
+  return n === 1 ? 'فئة وحدة' : n === 2 ? 'فئتين' : n >= 3 && n <= 10 ? `${n} فئات` : `${n} فئة`
+}
 
 function StepCard({ id, title, sub, children }: { id: string; title: string; sub: string; children: React.ReactNode }) {
   return (
@@ -22,16 +25,19 @@ function StepCard({ id, title, sub, children }: { id: string; title: string; sub
 }
 
 function ConnectStep({ next }: { next: () => void }) {
+  const { state } = useStore()
+  const isEn = state.lang === 'en'
   const [host, setHost] = useState('')
   const [user, setUser] = useState('')
   const [pass, setPass] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
   return (
-    <StepCard id="s1" title="وصّل الراوتر" sub="لازم يكون جهازك على نفس شبكة الراوتر. فعّل خدمة api-ssl من IP > Services، واستخدم حساب بصلاحيات محدودة مش حساب المدير.">
-      <div className="fld"><label className="lbl" htmlFor="ip">عنوان الراوتر</label><div className="box" dir="ltr"><input id="ip" value={host} placeholder="192.168.88.1" onChange={(e) => { setHost(e.target.value); setMsg(null) }} /></div></div>
-      <div className="fld"><label className="lbl" htmlFor="un">اسم المستخدم</label><div className="box" dir="ltr"><input id="un" value={user} autoComplete="off" onChange={(e) => { setUser(e.target.value); setMsg(null) }} /></div></div>
-      <div className="fld"><label className="lbl" htmlFor="pw">كلمة المرور</label><div className="box" dir="ltr"><input id="pw" type="password" value={pass} autoComplete="off" onChange={(e) => { setPass(e.target.value); setMsg(null) }} /></div></div>
+    <StepCard id="s1" title={t('setup.connect.title')} sub={t('setup.connect.sub')}>
+      <div className="fld"><label className="lbl" htmlFor="ip">{t('setup.connect.ip')}</label><div className="box" dir="ltr"><input id="ip" value={host} placeholder="192.168.88.1" onChange={(e) => { setHost(e.target.value); setMsg(null) }} /></div></div>
+      <div className="fld"><label className="lbl" htmlFor="un">{t('setup.connect.user')}</label><div className="box" dir="ltr"><input id="un" value={user} autoComplete="off" onChange={(e) => { setUser(e.target.value); setMsg(null) }} /></div></div>
+      <div className="fld"><label className="lbl" htmlFor="pw">{t('setup.connect.pass')}</label><div className="box" dir="ltr"><input id="pw" type="password" value={pass} autoComplete="off" onChange={(e) => { setPass(e.target.value); setMsg(null) }} /></div></div>
       {msg && <div role={msg.ok ? 'status' : 'alert'} className={msg.ok ? 'bn ok' : 'bn er'}><span>{msg.text}</span></div>}
       <div className="setup-actions">
         <button type="button" className="btn btn-s" disabled={busy} onClick={async () => {
@@ -43,12 +49,12 @@ function ConnectStep({ next }: { next: () => void }) {
           if (!r.ok) return setMsg({ ok: false, text: connectError(r.error.code) })
           setPass('')
           const n = r.value.profiles.filter((p) => p.toLowerCase() !== 'default').length
-          setMsg({ ok: true, text: `تم الاتصال بالراوتر. لقينا ${categoriesText(n)} هوتسبوت.` })
+          setMsg({ ok: true, text: t('setup.connect.ok', { n: categoriesText(n, isEn) }) })
         }}>
           {busy && <span className="spin" aria-hidden="true" />}
-          {busy ? 'جاري الفحص' : 'اختبر الاتصال'}
+          {busy ? t('setup.connect.testing') : t('setup.connect.test')}
         </button>
-        {msg?.ok && <button type="button" className="btn btn-p" onClick={next}>التالي: الفئات والأسعار</button>}
+        {msg?.ok && <button type="button" className="btn btn-p" onClick={next}>{t('setup.connect.next')}</button>}
       </div>
     </StepCard>
   )
@@ -71,27 +77,27 @@ function CategoriesStep({ back, next }: { back: () => void; next: () => void }) 
   const set = (i: number, k: keyof Row, v: string) => { setRows((p) => p && p.map((r, j) => (j === i ? { ...r, [k]: v } : r))); setErr('') }
 
   return (
-    <StepCard id="s2" title="الفئات والأسعار" sub="لقينا هالفئات على الراوتر. راجع السعر قبل ما تكمل، واترك سعر الجملة فاضي للفئة اللي ما بتبيعها.">
-      {down && <div role="alert" className="bn er"><span>{t('err.routerDown')}</span> <button type="button" className="lnk" onClick={() => void load()}>جرّب مرة ثانية</button></div>}
+    <StepCard id="s2" title={t('setup.cats.title')} sub={t('setup.cats.sub')}>
+      {down && <div role="alert" className="bn er"><span>{t('err.routerDown')}</span> <button type="button" className="lnk" onClick={() => void load()}>{t('common.retry')}</button></div>}
       {!rows && !down && <span className="sk" style={{ width: '60%' }} />}
       {rows && (
-        <div role="table" aria-label="الفئات والأسعار" className="setup-cats">
+        <div role="table" aria-label={t('setup.cats.title')} className="setup-cats">
           <div role="row" className="setup-cat head" aria-hidden="false">
-            <span role="columnheader">الفئة</span><span role="columnheader">الوقت</span><span role="columnheader">سعر الجملة</span><span role="columnheader">سعر البيع</span>
+            <span role="columnheader">{t('setup.cats.colCat')}</span><span role="columnheader">{t('setup.cats.colTime')}</span><span role="columnheader">{t('setup.cats.colWhole')}</span><span role="columnheader">{t('setup.cats.colSale')}</span>
           </div>
           {rows.map((r, i) => (
             <div key={r.profile} role="row" className="setup-cat">
-              <span role="cell" style={{ display: 'contents' }}><div className="box"><input aria-label={`اسم فئة ${r.profile}`} value={r.name} onChange={(e) => set(i, 'name', e.target.value)} /></div></span>
-              <span role="cell" style={{ display: 'contents' }}><div className="box" dir="ltr"><input aria-label={`وقت ${r.name}`} value={r.limitUptime} placeholder="3h" onChange={(e) => set(i, 'limitUptime', e.target.value)} /></div></span>
-              <span role="cell" style={{ display: 'contents' }}><div className="box" dir="ltr"><span aria-hidden="true">₪</span><input aria-label={`سعر جملة ${r.name}`} inputMode="decimal" value={r.whole} onChange={(e) => set(i, 'whole', e.target.value)} /></div></span>
-              <span role="cell" style={{ display: 'contents' }}><div className="box" dir="ltr"><span aria-hidden="true">₪</span><input aria-label={`سعر بيع ${r.name}`} inputMode="decimal" value={r.sale} onChange={(e) => set(i, 'sale', e.target.value)} /></div></span>
+              <span role="cell" style={{ display: 'contents' }}><div className="box"><input aria-label={r.profile} value={r.name} onChange={(e) => set(i, 'name', e.target.value)} /></div></span>
+              <span role="cell" style={{ display: 'contents' }}><div className="box" dir="ltr"><input aria-label={r.name} value={r.limitUptime} placeholder="3h" onChange={(e) => set(i, 'limitUptime', e.target.value)} /></div></span>
+              <span role="cell" style={{ display: 'contents' }}><div className="box" dir="ltr"><span aria-hidden="true">₪</span><input aria-label={r.name} inputMode="decimal" value={r.whole} onChange={(e) => set(i, 'whole', e.target.value)} /></div></span>
+              <span role="cell" style={{ display: 'contents' }}><div className="box" dir="ltr"><span aria-hidden="true">₪</span><input aria-label={r.name} inputMode="decimal" value={r.sale} onChange={(e) => set(i, 'sale', e.target.value)} /></div></span>
             </div>
           ))}
         </div>
       )}
       {err && <span className="emsg" role="alert">{err}</span>}
       <div className="setup-actions">
-        <button type="button" className="btn btn-g" onClick={back}>رجوع</button>
+        <button type="button" className="btn btn-g" onClick={back}>{t('common.back')}</button>
         <button type="button" className="btn btn-p" disabled={!rows || busy} onClick={async () => {
           if (!rows) return
           const drafts: SetupCategoryDraft[] = []
@@ -102,19 +108,21 @@ function CategoriesStep({ back, next }: { back: () => void; next: () => void }) 
             if (!(w > 0) || !(s > 0)) return setErr(`${t('err.amountDialog')} (${r.name})`)
             drafts.push({ name: r.name, profile: r.profile, limitUptime: r.limitUptime.trim(), wholeAg: w, saleAg: s })
           }
-          if (!drafts.length) return setErr('اكتب سعر الجملة لفئة وحدة على الأقل.')
+          if (!drafts.length) return setErr(t('setup.cats.errAtLeastOne'))
           setBusy(true)
           const res = await api.saveSetupCategories(drafts)
           setBusy(false)
-          if (!res.ok) return setErr(res.error.code === 'setup_uptime' ? `الوقت مش مفهوم لـ${res.error.codes?.[0]}. اكتبه زي 1h أو 3h أو 1d.` : errorText(res.error))
+          if (!res.ok) return setErr(res.error.code === 'setup_uptime' ? t('setup.cats.errUptime', { name: res.error.codes?.[0] ?? '' }) : errorText(res.error))
           next()
-        }}>التالي: الموزعين</button>
+        }}>{t('setup.cats.next')}</button>
       </div>
     </StepCard>
   )
 }
 
 function DistributorsStep({ back, next }: { back: () => void; next: () => void }) {
+  const { state } = useStore()
+  const isEn = state.lang === 'en'
   const op = useOpKey()
   const [name, setName] = useState('')
   const [opening, setOpening] = useState('')
@@ -134,25 +142,25 @@ function DistributorsStep({ back, next }: { back: () => void; next: () => void }
     if (!r.ok) return setErr(errorText(r.error))
     op.renew()
     setAdded((p) => [...p, name.trim()])
-    setMsg(`انضاف ${name.trim()}.`)
+    setMsg(t('setup.dist.added', { name: name.trim() }))
     setName('')
     setOpening('')
     document.getElementById('nn')?.focus()
   }
 
   return (
-    <StepCard id="s3" title="الموزعين والأرصدة" sub="أضف موزع، واكتب الدين القديم عليه إذا موجود. بتقدر تكمل وتضيفهم بعدين.">
-      <div className="fld"><label className="lbl" htmlFor="nn">اسم الموزع</label><div className={err ? 'box err' : 'box'}><input id="nn" value={name} aria-invalid={!!err} aria-describedby={err ? 'nnE' : undefined} onChange={(e) => { setName(e.target.value); setErr(''); setMsg('') }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void add() } }} /></div></div>
-      <div className="fld"><label className="lbl" htmlFor="no">الرصيد الافتتاحي</label><div className="box" dir="ltr"><span aria-hidden="true">₪</span><input id="no" inputMode="decimal" value={opening} placeholder="0" onChange={(e) => { setOpening(e.target.value); setErr('') }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void add() } }} /></div></div>
+    <StepCard id="s3" title={t('setup.dist.title')} sub={t('setup.dist.sub')}>
+      <div className="fld"><label className="lbl" htmlFor="nn">{t('setup.dist.name')}</label><div className={err ? 'box err' : 'box'}><input id="nn" value={name} aria-invalid={!!err} aria-describedby={err ? 'nnE' : undefined} onChange={(e) => { setName(e.target.value); setErr(''); setMsg('') }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void add() } }} /></div></div>
+      <div className="fld"><label className="lbl" htmlFor="no">{t('setup.dist.opening')}</label><div className="box" dir="ltr"><span aria-hidden="true">₪</span><input id="no" inputMode="decimal" value={opening} placeholder="0" onChange={(e) => { setOpening(e.target.value); setErr('') }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void add() } }} /></div></div>
       {msg && <div role="status" className="bn ok">{msg}</div>}
       {err && <span id="nnE" className="emsg" role="alert">{err}</span>}
-      {added.length > 0 && <div className="sub small">الموزعين: {added.join('، ')}</div>}
+      {added.length > 0 && <div className="sub small">{t('setup.dist.list', { names: added.join(isEn ? ', ' : '، ') })}</div>}
       <div className="setup-actions">
         <div className="row-btns">
-          <button type="button" className="btn btn-g" onClick={back}>رجوع</button>
-          <button type="button" className="btn btn-s" disabled={busy} onClick={() => void add()}>أضف الموزع</button>
+          <button type="button" className="btn btn-g" onClick={back}>{t('common.back')}</button>
+          <button type="button" className="btn btn-s" disabled={busy} onClick={() => void add()}>{t('setup.dist.add')}</button>
         </div>
-        <button type="button" className="btn btn-p" onClick={next}>التالي: كرت تجربة</button>
+        <button type="button" className="btn btn-p" onClick={next}>{t('setup.dist.next')}</button>
       </div>
     </StepCard>
   )
@@ -173,36 +181,37 @@ function TestStep({ back, done }: { back: () => void; done: () => void }) {
     setCard(r.value)
   }
   return (
-    <StepCard id="s4" title="جرّب كرت قبل الطباعة" sub="هيك بتتأكد إن الربط شغال قبل أول دفعة حقيقية.">
+    <StepCard id="s4" title={t('setup.test.title')} sub={t('setup.test.sub')}>
       {(!card || !card.confirmed) && (
         <div className="setup-actions">
-          <button type="button" className="btn btn-g" onClick={back}>رجوع</button>
+          <button type="button" className="btn btn-g" onClick={back}>{t('common.back')}</button>
           <button type="button" className="btn btn-p" disabled={busy} onClick={() => void gen()}>
             {busy && <span className="spin" aria-hidden="true" />}
-            {busy ? 'جاري الإرسال' : card ? 'أعد الإرسال' : 'ولّد كرت تجربة'}
+            {busy ? t('setup.test.sending') : card ? t('setup.test.resend') : t('setup.test.gen')}
           </button>
         </div>
       )}
       {err && <span className="emsg" role="alert">{err}</span>}
-      {card && !card.confirmed && <div role="alert" className="bn er"><span>الراوتر ما أكد الكرت <span dir="ltr" className="mono-in">{card.code}</span>. تأكد إنه راد وجرّب مرة ثانية.</span></div>}
+      {card && !card.confirmed && <div role="alert" className="bn er"><span>{t('setup.test.unconfirmed', { code: card.code })}</span></div>}
       {card?.confirmed && (
         <>
           <div className="vc test-card"><div className="code" dir="ltr">{card.code}</div></div>
-          <strong>جرّبته على موبايلك. اشتغل؟</strong>
+          <strong>{t('setup.test.prompt')}</strong>
           <div className="row-btns">
-            <button type="button" className="btn btn-p" onClick={done}>اشتغل، خلصنا</button>
-            <button type="button" className="btn btn-s" onClick={() => setDiag(true)}>ما اشتغل</button>
+            <button type="button" className="btn btn-p" onClick={done}>{t('setup.test.worked')}</button>
+            <button type="button" className="btn btn-s" onClick={() => setDiag(true)}>{t('setup.test.notWorked')}</button>
           </div>
-          {diag && <div role="status" className="bn wa">تأكد إن الهوتسبوت شغال على الراوتر، وإن الفئة فيها وقت وسرعة، وجرّب مرة ثانية.</div>}
+          {diag && <div role="status" className="bn wa">{t('setup.test.hint')}</div>}
         </>
       )}
     </StepCard>
   )
 }
 
-/** أول تشغيل، بدون القائمة الجانبية (HANDOFF القسم 2). */
+/** أول تشغيل، بدون القائمة الجانبية. */
 export function Setup({ initial }: { initial: SetupStep }) {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
+  const isEn = state.lang === 'en'
   const say = useToast()
   const [step, setStep] = useState<SetupStep>(initial)
   const first = useRef(true)
@@ -222,15 +231,27 @@ export function Setup({ initial }: { initial: SetupStep }) {
   return (
     <main className="scr setup">
       <div className="setup-wrap">
-        <strong className="setup-hello">أهلا بك في نُقطة</strong>
-        <ol aria-label="الخطوات" className="setup-steps">
-          {STEPS.map((name, i) => {
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 16 }}>
+          <strong className="setup-hello">{t('setup.welcome')}</strong>
+          <button
+            type="button"
+            className="btn btn-g sm"
+            style={{ fontWeight: 600, border: '1px solid var(--line)', background: '#fff' }}
+            onClick={() => dispatch({ type: 'setLang', lang: isEn ? 'ar' : 'en' })}
+            title={isEn ? 'التحويل إلى العربية' : 'Switch to English'}
+          >
+            {isEn ? 'عربي' : 'English'}
+          </button>
+        </div>
+        <ol aria-label={t('setup.stepsLabel')} className="setup-steps">
+          {STEP_KEYS.map((key, i) => {
             const n = (i + 1) as SetupStep
             const cls = n === step ? 'dot on' : n < step ? 'dot done' : 'dot'
+            const name = t(key)
             return (
-              <li key={name} aria-current={n === step ? 'step' : undefined}>
+              <li key={key} aria-current={n === step ? 'step' : undefined}>
                 <span className={cls} aria-hidden="true">{n < step ? '✓' : n}</span>{name}
-                {n < step && <span className="sr"> (خلصت)</span>}
+                {n < step && <span className="sr">{t('setup.stepDone')}</span>}
               </li>
             )
           })}
@@ -241,7 +262,7 @@ export function Setup({ initial }: { initial: SetupStep }) {
         {step === 4 && (
           <TestStep back={() => go(3)} done={async () => {
             await api.finishSetup()
-            say('نُقطة جاهزة. ولّد أول دفعة.')
+            say(t('setup.test.ready'))
             dispatch({ type: 'go', screen: 'home' })
             dispatch({ type: 'status', status: await api.status() })
           }} />

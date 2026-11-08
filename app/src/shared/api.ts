@@ -36,6 +36,7 @@ export interface AppStatus {
   session: SessionInfo
   update: UpdateView
   installerLang?: 'ar' | 'en' | null
+  installerLangMtime?: number | null
 }
 
 /** مين فاتح البرنامج هلأ. */

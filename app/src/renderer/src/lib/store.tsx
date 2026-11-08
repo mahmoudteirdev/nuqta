@@ -77,10 +77,17 @@ function reducer(s: AppState, a: Action): AppState {
     case 'status': {
       const routerChanged = s.status?.router.up !== a.status.router.up
       let nextLang = s.lang
-      const userSet = typeof localStorage !== 'undefined' && localStorage.getItem('nuqta_lang_user_set') === 'true'
-      if (!userSet && a.status.installerLang) {
-        setLang(a.status.installerLang, false)
-        nextLang = a.status.installerLang
+      const instLang = a.status.installerLang
+      if (instLang) {
+        const instKey = `${instLang}:${a.status.installerLangMtime ?? 0}`
+        const lastAppliedKey = typeof localStorage !== 'undefined' ? localStorage.getItem('nuqta_installer_applied_key') : null
+        if (lastAppliedKey !== instKey) {
+          setLang(instLang, true)
+          nextLang = instLang
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('nuqta_installer_applied_key', instKey)
+          }
+        }
       }
       return { ...s, status: a.status, lang: nextLang, revision: routerChanged ? s.revision + 1 : s.revision }
     }

@@ -18,14 +18,14 @@ import { Tabs } from '@/shell/Tabs'
 import { useToast } from '@/shell/Toast'
 
 type Tab = 'net' | 'users' | 'rules' | 'backup' | 'import' | 'license' | 'updates'
-const TABS: { key: Tab; name: string }[] = [
-  { key: 'net', name: 'بيانات الشبكة' },
-  { key: 'users', name: 'المستخدمون' },
-  { key: 'rules', name: 'قواعد مؤقتة' },
-  { key: 'backup', name: 'النسخ والاستعادة' },
-  { key: 'import', name: 'الاستيراد' },
-  { key: 'license', name: 'الترخيص' },
-  { key: 'updates', name: 'التحديثات' }
+const TAB_DEFS: { key: Tab; nameKey: string }[] = [
+  { key: 'net', nameKey: 'settings.tabNet' },
+  { key: 'users', nameKey: 'settings.tabUsers' },
+  { key: 'rules', nameKey: 'settings.tabRules' },
+  { key: 'backup', nameKey: 'settings.tabBackup' },
+  { key: 'import', nameKey: 'settings.tabImport' },
+  { key: 'license', nameKey: 'settings.tabLicense' },
+  { key: 'updates', nameKey: 'settings.tabUpdates' }
 ]
 
 const ROLE: Record<UserRole, { name: string; note: string }> = {
@@ -35,6 +35,7 @@ const ROLE: Record<UserRole, { name: string; note: string }> = {
 
 function NetTab() {
   const { state, dispatch } = useStore()
+  const isEn = state.lang === 'en'
   const say = useToast()
   const saved = useApi(() => api.networkSettings())
   const [s, setS] = useState<NetworkSettings | null>(null)
@@ -44,7 +45,7 @@ function NetTab() {
   if (!s) return <div className="card"><span className="sk" style={{ width: '50%' }} /></div>
 
   return (
-    <section className="card scr settings-form" aria-label="بيانات الشبكة">
+    <section className="card scr settings-form" aria-label={isEn ? 'Network details' : 'بيانات الشبكة'}>
       <div className="fld">
         <label className="lbl" htmlFor="langSel">{t('settings.language')}</label>
         <div className="box">
@@ -68,44 +69,58 @@ function NetTab() {
           <input id="sp" inputMode="tel" value={s.phone} placeholder="059" aria-invalid={err?.field === 'phone'} aria-describedby={err?.field === 'phone' ? 'spE' : 'spH'}
             onChange={(e) => { const v = e.target.value; setS((p) => p && { ...p, phone: v }); setErr(null) }} />
         </div>
-        {err?.field === 'phone' ? <span id="spE" className="emsg" role="alert">{err.msg}</span> : <span id="spH" className="sub small">اختياري. إذا فاضي ما بيطلع على الكرت.</span>}
+        {err?.field === 'phone' ? <span id="spE" className="emsg" role="alert">{err.msg}</span> : <span id="spH" className="sub small">{state.lang === 'en' ? 'Optional. If left blank, omitted from cards.' : 'اختياري. إذا فاضي ما بيطلع على الكرت.'}</span>}
       </div>
       <div className="fld">
-        <label className="lbl" htmlFor="sc">العملة</label>
-        <div className="box"><select id="sc" disabled aria-describedby="scH"><option>شيكل ₪</option></select></div>
-        <span id="scH" className="sub small">الحساب بالشيكل بس لهلأ.</span>
+        <label className="lbl" htmlFor="sc">{state.lang === 'en' ? 'Currency' : 'العملة'}</label>
+        <div className="box"><select id="sc" disabled aria-describedby="scH"><option>{t('common.shekel')}</option></select></div>
+        <span id="scH" className="sub small">{state.lang === 'en' ? 'Transactions are in Shekels only for now.' : 'الحساب بالشيكل بس لهلأ.'}</span>
       </div>
       <button type="button" className="btn btn-p" style={{ alignSelf: 'flex-start' }} disabled={busy} onClick={async () => {
-        if (!s.networkName.trim()) return setErr({ field: 'name', msg: 'اكتب اسم الشبكة.' })
+        if (!s.networkName.trim()) return setErr({ field: 'name', msg: state.lang === 'en' ? 'Enter network name.' : 'اكتب اسم الشبكة.' })
         setBusy(true)
         const r = await api.saveNetworkSettings(s)
         setBusy(false)
-        if (!r.ok) return setErr(r.error.code === 'phone_invalid' ? { field: 'phone', msg: 'الرقم فيه أحرف. اكتب أرقام بس.' } : { field: 'name', msg: errorText(r.error) })
+        if (!r.ok) return setErr(r.error.code === 'phone_invalid' ? { field: 'phone', msg: state.lang === 'en' ? 'Phone contains letters. Use numbers only.' : 'الرقم فيه أحرف. اكتب أرقام بس.' } : { field: 'name', msg: errorText(r.error) })
         say(t('settings.saved'))
         dispatch({ type: 'status', status: await api.status() })
       }}>
         {busy && <span className="spin" aria-hidden="true" />}
-        {busy ? 'جاري الحفظ' : t('settings.save')}
+        {busy ? t('common.loading') : t('settings.save')}
       </button>
     </section>
   )
 }
 
-const RULE_FIELDS: { key: keyof Rules; label: string; hint: string; money?: boolean }[] = [
-  { key: 'collectAfterDays', label: 'مهمة التحصيل بعد', hint: 'يوم من آخر تسوية، إذا لسا عليه.' },
-  { key: 'stockLowCards', label: 'تنبيه المخزون تحت', hint: 'كرت من فئة مع الموزع.' },
-  { key: 'staleAfterDays', label: 'الكرت راكد بعد', hint: 'يوم من التسليم بدون استخدام.' },
-  { key: 'defaultCreditLimitAg', label: 'سقف الدين للموزع الجديد', hint: 'بيتغير لكل موزع من حسابه.', money: true },
-  { key: 'maxBatchCount', label: 'أكبر دفعة', hint: 'كرت. فوق الألف لسا ما انجرب على راوتر حقيقي.' }
-]
+function getRuleFields(isEn: boolean): { key: keyof Rules; label: string; hint: string; money?: boolean }[] {
+  if (isEn) {
+    return [
+      { key: 'collectAfterDays', label: 'Collection task after', hint: 'days from last settlement, if balance remains.' },
+      { key: 'stockLowCards', label: 'Low stock warning below', hint: 'cards of a category held by distributor.' },
+      { key: 'staleAfterDays', label: 'Card considered stale after', hint: 'days from delivery without use.' },
+      { key: 'defaultCreditLimitAg', label: 'Default credit limit for new distributor', hint: 'Customizable per distributor in their account.', money: true },
+      { key: 'maxBatchCount', label: 'Maximum batch size', hint: 'cards. Batches over 1,000 should be tested on real hardware.' }
+    ]
+  }
+  return [
+    { key: 'collectAfterDays', label: 'مهمة التحصيل بعد', hint: 'يوم من آخر تسوية، إذا لسا عليه.' },
+    { key: 'stockLowCards', label: 'تنبيه المخزون تحت', hint: 'كرت من فئة مع الموزع.' },
+    { key: 'staleAfterDays', label: 'الكرت راكد بعد', hint: 'يوم من التسليم بدون استخدام.' },
+    { key: 'defaultCreditLimitAg', label: 'سقف الدين للموزع الجديد', hint: 'بيتغير لكل موزع من حسابه.', money: true },
+    { key: 'maxBatchCount', label: 'أكبر دفعة', hint: 'كرت. فوق الألف لسا ما انجرب على راوتر حقيقي.' }
+  ]
+}
 
 function RulesTab() {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
+  const isEn = state.lang === 'en'
   const say = useToast()
   const saved = useApi(() => api.rules())
   const [v, setV] = useState<Record<keyof Rules, string> | null>(null)
   const [err, setErr] = useState<{ key: keyof Rules; msg: string } | null>(null)
   const [busy, setBusy] = useState(false)
+  const ruleFields = getRuleFields(isEn)
+
   useEffect(() => {
     if (saved.state !== 'ready' || v) return
     const r = saved.data
@@ -117,9 +132,13 @@ function RulesTab() {
   if (!v) return <div className="card"><span className="sk" style={{ width: '50%' }} /></div>
 
   return (
-    <section className="card scr settings-form" aria-label="قواعد مؤقتة">
-      <p className="sub" style={{ margin: 0 }}>هاي القيم مؤقتة لحد ما نجربها مع المستخدمين. التغيير بيأثر من هلأ، وما بيغير حسابات قديمة.</p>
-      {RULE_FIELDS.map((f) => {
+    <section className="card scr settings-form" aria-label={isEn ? 'Provisional Rules' : 'قواعد مؤقتة'}>
+      <p className="sub" style={{ margin: 0 }}>
+        {isEn
+          ? 'These values are rules to tune network behavior. Changes take effect immediately and do not alter past transactions.'
+          : 'هاي القيم مؤقتة لحد ما نجربها مع المستخدمين. التغيير بيأثر من هلأ، وما بيغير حسابات قديمة.'}
+      </p>
+      {ruleFields.map((f) => {
         const bad = err?.key === f.key
         return (
           <div key={f.key} className="fld">
@@ -138,7 +157,7 @@ function RulesTab() {
       })}
       <button type="button" className="btn btn-p" style={{ alignSelf: 'flex-start' }} disabled={busy} onClick={async () => {
         const r = {} as Rules
-        for (const f of RULE_FIELDS) {
+        for (const f of ruleFields) {
           const n = f.money ? parseAgorot(v[f.key]) : Number(v[f.key].trim())
           if (!Number.isSafeInteger(n)) return setErr({ key: f.key, msg: t('err.count') })
           r[f.key] = n
@@ -149,15 +168,20 @@ function RulesTab() {
         if (!res.ok) {
           const key = res.error.code.replace(/^rule_/, '') as keyof Rules
           const range = res.error.range
-          const money = RULE_FIELDS.find((f) => f.key === key)?.money
+          const money = ruleFields.find((f) => f.key === key)?.money
           const show = (n: number) => (money ? formatMoney(n) : n.toLocaleString('en-US'))
-          return setErr({ key, msg: range ? `لازم يكون بين ${show(range[0])} و${show(range[1])}.` : 'القيمة برا الحدود المسموحة.' })
+          return setErr({
+            key,
+            msg: range
+              ? (isEn ? `Must be between ${show(range[0])} and ${show(range[1])}.` : `لازم يكون بين ${show(range[0])} و${show(range[1])}.`)
+              : (isEn ? 'Value is out of allowed bounds.' : 'القيمة برا الحدود المسموحة.')
+          })
         }
-        say('انحفظت القواعد.')
+        say(isEn ? 'Rules saved.' : 'انحفظت القواعد.')
         dispatch({ type: 'changed' })
       }}>
         {busy && <span className="spin" aria-hidden="true" />}
-        {busy ? 'جاري الحفظ' : 'احفظ'}
+        {busy ? (isEn ? 'Saving...' : 'جاري الحفظ') : t('common.save')}
       </button>
     </section>
   )
@@ -165,14 +189,15 @@ function RulesTab() {
 
 export function Settings() {
   const { state } = useStore()
-  const [tab, setTab] = useState<Tab>((TABS.find((x) => x.key === state.settingsTab)?.key) ?? 'net')
+  const isEn = state.lang === 'en'
+  const [tab, setTab] = useState<Tab>((TAB_DEFS.find((x) => x.key === state.settingsTab)?.key) ?? 'net')
   const ping = useApi(() => api.networkSettings())
   if (ping.state === 'loading') return <StateView screen="settings" mode="loading" />
   if (ping.state === 'error') return <StateView screen="settings" mode="error" onRetry={ping.retry} />
   return (
     <div className="scr stack" style={{ gap: 20 }}>
-      <h1 className="h1">الإعدادات</h1>
-      <Tabs label="أقسام الإعدادات" tabs={TABS} current={tab} onChange={setTab}>
+      <h1 className="h1">{t('settings.title')}</h1>
+      <Tabs label={isEn ? 'Settings Sections' : 'أقسام الإعدادات'} tabs={TAB_DEFS.map((d) => ({ key: d.key, name: t(d.nameKey) }))} current={tab} onChange={setTab}>
         {tab === 'net' && <NetTab />}
         {tab === 'users' && <UsersTab />}
         {tab === 'rules' && <RulesTab />}

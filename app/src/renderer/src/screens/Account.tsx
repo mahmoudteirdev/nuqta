@@ -18,13 +18,15 @@ import { useToast } from '@/shell/Toast'
 type DialogKind = 'add' | 'limit' | 'return' | 'dispute' | 'correct' | null
 
 function AddDialog({ onDone, onCancel }: { onDone: (id: string, name: string) => void; onCancel: () => void }) {
+  const { state } = useStore()
+  const isEn = state.lang === 'en'
   const op = useOpKey()
   const [name, setName] = useState('')
   const [opening, setOpening] = useState('')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   return (
-    <Dialog title="أضف موزع" okLabel="أضف" busy={busy} error={err} onCancel={onCancel}
+    <Dialog title={t('account.addDist')} okLabel={isEn ? 'Add' : 'أضف'} busy={busy} error={err} onCancel={onCancel}
       onOk={async () => {
         if (!name.trim()) return setErr(t('err.distName'))
         const openingAg = opening.trim() ? parseAgorot(opening) : 0
@@ -36,19 +38,21 @@ function AddDialog({ onDone, onCancel }: { onDone: (id: string, name: string) =>
         op.renew()
         onDone(r.value.id, name.trim())
       }}>
-      <div className="fld"><label className="lbl" htmlFor="dn">اسم الموزع</label><div className={err && !name.trim() ? 'box err' : 'box'}><input id="dn" value={name} onChange={(e) => { setName(e.target.value); setErr('') }} aria-invalid={!!err && !name.trim()} /></div></div>
-      <div className="fld"><label className="lbl" htmlFor="do">الدين القديم عليه، إن وجد</label><div className="box" dir="ltr"><span aria-hidden="true">₪</span><input id="do" inputMode="decimal" placeholder="0" value={opening} onChange={(e) => { setOpening(e.target.value); setErr('') }} /></div></div>
+      <div className="fld"><label className="lbl" htmlFor="dn">{t('account.distName')}</label><div className={err && !name.trim() ? 'box err' : 'box'}><input id="dn" value={name} onChange={(e) => { setName(e.target.value); setErr('') }} aria-invalid={!!err && !name.trim()} /></div></div>
+      <div className="fld"><label className="lbl" htmlFor="do">{t('account.oldDebt')}</label><div className="box" dir="ltr"><span aria-hidden="true">₪</span><input id="do" inputMode="decimal" placeholder="0" value={opening} onChange={(e) => { setOpening(e.target.value); setErr('') }} /></div></div>
     </Dialog>
   )
 }
 
 function LimitDialog({ cur, onDone, onCancel }: { cur: AccountDetail; onDone: (ag: number) => void; onCancel: () => void }) {
+  const { state } = useStore()
+  const isEn = state.lang === 'en'
   const [v, setV] = useState('')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   return (
-    <Dialog title={`سقف الدين على ${cur.name}`} okLabel="احفظ" busy={busy} error={err} onCancel={onCancel}
-      body={`السقف الحالي ${formatMoney(cur.creditLimitAg)}. لما يتجاوزه، بيظهر تحذير قبل تسليم كروت جديدة.`}
+    <Dialog title={isEn ? `Credit limit for ${cur.name}` : `سقف الدين على ${cur.name}`} okLabel={t('common.save')} busy={busy} error={err} onCancel={onCancel}
+      body={isEn ? `Current limit is ${formatMoney(cur.creditLimitAg)}. A warning will be shown before delivering new cards if exceeded.` : `السقف الحالي ${formatMoney(cur.creditLimitAg)}. لما يتجاوزه، بيظهر تحذير قبل تسليم كروت جديدة.`}
       onOk={async () => {
         const ag = parseAgorot(v)
         if (!(ag > 0)) return setErr(t('err.amountDialog'))
@@ -58,7 +62,7 @@ function LimitDialog({ cur, onDone, onCancel }: { cur: AccountDetail; onDone: (a
         if (!r.ok) return setErr(errorText(r.error))
         onDone(ag)
       }}>
-      <div className="fld"><label className="lbl" htmlFor="lim">السقف الجديد بالشيكل</label><div className={err ? 'box err' : 'box'} dir="ltr"><span aria-hidden="true">₪</span><input id="lim" inputMode="decimal" value={v} onChange={(e) => { setV(e.target.value); setErr('') }} aria-invalid={!!err} /></div></div>
+      <div className="fld"><label className="lbl" htmlFor="lim">{isEn ? 'New limit in Shekels' : 'السقف الجديد بالشيكل'}</label><div className={err ? 'box err' : 'box'} dir="ltr"><span aria-hidden="true">₪</span><input id="lim" inputMode="decimal" value={v} onChange={(e) => { setV(e.target.value); setErr('') }} aria-invalid={!!err} /></div></div>
     </Dialog>
   )
 }
@@ -150,6 +154,8 @@ function CorrectDialog({ cur, onDone, onCancel }: { cur: AccountDetail; onDone: 
 // ───────────────────────── التسوية
 
 function SettleForm({ cur, onSaved }: { cur: AccountDetail; onSaved: (entryId: string) => void }) {
+  const { state } = useStore()
+  const isEn = state.lang === 'en'
   const say = useToast()
   const op = useOpKey()
   const [amount, setAmount] = useState('')
@@ -179,7 +185,7 @@ function SettleForm({ cur, onSaved }: { cur: AccountDetail; onSaved: (entryId: s
   return (
     <div className="card settle">
       <div className="fld" style={{ flex: '1 1 240px' }}>
-        <label className="lbl" htmlFor="amt">استلمت منه</label>
+        <label className="lbl" htmlFor="amt">{isEn ? 'Received from distributor' : 'استلمت منه'}</label>
         <div className={err ? 'box err' : 'box'} dir="ltr">
           <span aria-hidden="true">₪</span>
           <input id="amt" inputMode="decimal" value={amount} placeholder="0" aria-invalid={!!err} aria-describedby={err ? 'amtE' : undefined}
@@ -190,7 +196,7 @@ function SettleForm({ cur, onSaved }: { cur: AccountDetail; onSaved: (entryId: s
       </div>
       <button ref={button} type="button" className="btn btn-p" style={{ marginTop: 26 }} disabled={busy} onClick={() => void run(false)}>
         {busy && !confirm && <span className="spin" aria-hidden="true" />}
-        {busy && !confirm ? 'جاري الحفظ' : 'سجّل التسوية'}
+        {busy && !confirm ? (isEn ? 'Saving...' : 'جاري الحفظ') : (isEn ? 'Record Settlement' : 'سجّل التسوية')}
       </button>
       {confirm && (
         <Dialog title={t('dlg.overpay.title')} okLabel={t('dlg.overpay.ok')} cancelLabel={t('dlg.overpay.cancel')} busy={busy}
@@ -204,22 +210,24 @@ function SettleForm({ cur, onSaved }: { cur: AccountDetail; onSaved: (entryId: s
 // ───────────────────────── الكشف
 
 function UsageProof({ entryId }: { entryId: string }) {
+  const { state } = useStore()
+  const isEn = state.lang === 'en'
   const r = useApi(() => api.usageCards(entryId), [entryId])
   return (
     <div role="row" className="scr proof">
       <div role="cell" style={{ display: 'contents' }}>
         {r.state === 'loading' && <span className="sk" style={{ width: '50%' }} />}
-        {r.state === 'error' && <span className="emsg">ما قدرنا نجيب الكروت.</span>}
+        {r.state === 'error' && <span className="emsg">{isEn ? 'Could not load cards.' : 'ما قدرنا نجيب الكروت.'}</span>}
         {r.state === 'ready' && (
           <>
             {r.data.cards.map((c: UsedCard) => (
               <div key={c.code}>
                 <span dir="ltr" className="mono-in">{c.code}</span> · {time.format(new Date(c.usedAt))}
-                {c.mac && <> · جهاز ينتهي بـ<span dir="ltr">{c.mac.slice(-5)}</span></>}
+                {c.mac && <> · {isEn ? 'device ending in ' : 'جهاز ينتهي بـ'}<span dir="ltr">{c.mac.slice(-5)}</span></>}
               </div>
             ))}
-            {!r.data.cards.length && <span className="sub">ما في تفاصيل كروت لهالحركة.</span>}
-            {r.data.total > r.data.cards.length && <div className="sub">و{(r.data.total - r.data.cards.length).toLocaleString('en-US')} كرت ثاني بنفس الحركة</div>}
+            {!r.data.cards.length && <span className="sub">{isEn ? 'No card details for this entry.' : 'ما في تفاصيل كروت لهالحركة.'}</span>}
+            {r.data.total > r.data.cards.length && <div className="sub">{isEn ? `and ${(r.data.total - r.data.cards.length).toLocaleString('en-US')} more cards in this entry` : `و${(r.data.total - r.data.cards.length).toLocaleString('en-US')} كرت ثاني بنفس الحركة`}</div>}
           </>
         )}
       </div>
@@ -228,15 +236,17 @@ function UsageProof({ entryId }: { entryId: string }) {
 }
 
 function Statement({ cur, newId, onCorrect }: { cur: AccountDetail; newId: string | null; onCorrect: () => void }) {
+  const { state } = useStore()
+  const isEn = state.lang === 'en'
   const say = useToast()
   const [open, setOpen] = useState<string | null>(null)
   const [printing, setPrinting] = useState(false)
   return (
     <div className="panel">
       <div className="panel-head">
-        <h2 className="h2">كشف الحساب</h2>
+        <h2 className="h2">{isEn ? 'Account Statement' : 'كشف الحساب'}</h2>
         <div className="row-btns">
-          <button type="button" className="btn btn-s sm" onClick={() => (cur.correctable ? onCorrect() : say(t('toast.correctNone')))}>صحّح آخر تسوية</button>
+          <button type="button" className="btn btn-s sm" onClick={() => (cur.correctable ? onCorrect() : say(t('toast.correctNone')))}>{isEn ? 'Reverse last settlement' : 'صحّح آخر تسوية'}</button>
           <button type="button" className="btn btn-s sm" disabled={printing} onClick={async () => {
             setPrinting(true)
             const r = await api.printStatement(cur.id)
@@ -244,16 +254,16 @@ function Statement({ cur, newId, onCorrect }: { cur: AccountDetail; newId: strin
             if (!r.ok && r.error.code !== 'print_cancelled') say(errorText(r.error))
           }}>
             {printing && <span className="spin" aria-hidden="true" />}
-            {printing ? 'جاري الطباعة' : 'اطبع الكشف'}
+            {printing ? (isEn ? 'Printing...' : 'جاري الطباعة') : (isEn ? 'Print Statement' : 'اطبع الكشف')}
           </button>
         </div>
       </div>
-      <div role="group" aria-label="كشف الحساب، قابل للتمرير" tabIndex={0} style={{ overflowX: 'auto' }}>
-        <div role="table" aria-label="كشف الحساب" style={{ minWidth: 680 }}>
+      <div role="group" aria-label={isEn ? 'Account Statement, scrollable' : 'كشف الحساب، قابل للتمرير'} tabIndex={0} style={{ overflowX: 'auto' }}>
+        <div role="table" aria-label={isEn ? 'Account Statement' : 'كشف الحساب'} style={{ minWidth: 680 }}>
           <div role="row" className="ev head">
-            <span role="columnheader">التاريخ</span><span role="columnheader">الحركة</span>
-            <span role="columnheader" className="n">كروت</span><span role="columnheader" className="n">عليه</span>
-            <span role="columnheader" className="n">دفع</span><span role="columnheader" className="n">الرصيد</span>
+            <span role="columnheader">{isEn ? 'Date' : 'التاريخ'}</span><span role="columnheader">{isEn ? 'Action' : 'الحركة'}</span>
+            <span role="columnheader" className="n">{isEn ? 'Cards' : 'كروت'}</span><span role="columnheader" className="n">{isEn ? 'Charge' : 'عليه'}</span>
+            <span role="columnheader" className="n">{isEn ? 'Paid' : 'دفع'}</span><span role="columnheader" className="n">{isEn ? 'Balance' : 'الرصيد'}</span>
           </div>
           {cur.entries.filter((e) => !(e.type === 'opening' && e.chargeAg === 0)).map((e) => {
             const usage = e.type === 'usage'
@@ -261,14 +271,14 @@ function Statement({ cur, newId, onCorrect }: { cur: AccountDetail; newId: strin
             return (
               <div key={e.id} style={{ display: 'contents' }}>
                 <div role="row" className={e.id === newId ? 'ev new' : 'ev'}>
-                  <span role="cell">{dateText(e.at)}</span>
+                  <span role="cell">{dateText(e.at, state.lang)}</span>
                   <span role="cell">
-                    {actionText(e)}
-                    {e.corrected && <span className="sub"> (انصححت)</span>}
+                    {actionText(e, state.lang)}
+                    {e.corrected && <span className="sub">{isEn ? ' (reversed)' : ' (انصححت)'}</span>}
                     <span className="by sub small">{e.byName}</span>
                     {usage && (
                       <><br /><button type="button" className="btn btn-g sm lnk-btn" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : e.id)}>
-                        {isOpen ? 'إخفاء الكروت' : 'شوف الكروت'}
+                        {isOpen ? (isEn ? 'Hide cards' : 'إخفاء الكروت') : (isEn ? 'View cards' : 'شوف الكروت')}
                       </button></>
                     )}
                   </span>
@@ -325,24 +335,30 @@ export function Account() {
     }} />
   )
 
+  const isEn = state.lang === 'en'
+
   if (!cur) {
     return (
       <div className="card scr state-empty">
-        <h1>لسا ما أضفت موزعين</h1>
-        <p>أضف أول موزع عشان تتابع كروته وحسابه.</p>
-        <button type="button" className="btn btn-p" onClick={() => setDlg('add')}>أضف موزع</button>
+        <h1>{isEn ? 'No distributors yet' : 'لسا ما أضفت موزعين'}</h1>
+        <p>{isEn ? 'Add your first distributor to track their cards and balance.' : 'أضف أول موزع عشان تتابع كروته وحسابه.'}</p>
+        <button type="button" className="btn btn-p" onClick={() => setDlg('add')}>{isEn ? 'Add Distributor' : 'أضف موزع'}</button>
         {add}
       </div>
     )
   }
 
-  const sub = cur.area ? cur.area + '، ' : ''
-  const settled = cur.daysSinceSettlement === null ? 'ما في تسوية لسا' : cur.daysSinceSettlement === 0 ? 'تسوية اليوم' : `آخر تسوية قبل ${daysText(cur.daysSinceSettlement)}`
+  const sub = cur.area ? cur.area + (isEn ? ', ' : '، ') : ''
+  const settled = cur.daysSinceSettlement === null
+    ? (isEn ? 'No settlements yet' : 'ما في تسوية لسا')
+    : cur.daysSinceSettlement === 0
+      ? (isEn ? 'Settled today' : 'تسوية اليوم')
+      : (isEn ? `Last settled ${daysText(cur.daysSinceSettlement, 'en')} ago` : `آخر تسوية قبل ${daysText(cur.daysSinceSettlement, 'ar')}`)
 
   return (
     <div className="scr acc">
-      <section aria-label="قائمة الموزعين" className="panel acc-list">
-        <div className="panel-head"><strong>الموزعين</strong><button type="button" className="btn btn-s sm" onClick={() => setDlg('add')}>أضف موزع</button></div>
+      <section aria-label={isEn ? 'Distributor list' : 'قائمة الموزعين'} className="panel acc-list">
+        <div className="panel-head"><strong>{isEn ? 'Distributors' : 'الموزعين'}</strong><button type="button" className="btn btn-s sm" onClick={() => setDlg('add')}>{isEn ? 'Add' : 'أضف موزع'}</button></div>
         {distributors.map((d) => (
           <button key={d.id} type="button" className={d.id === cur.id ? 'tr on' : 'tr'} aria-pressed={d.id === cur.id}
             onClick={() => { setNewId(null); dispatch({ type: 'go', screen: 'account', distributorId: d.id }) }}>
@@ -357,29 +373,29 @@ export function Account() {
             <h1 id="acc" className="h1">{cur.name}</h1>
             <div className="sub acc-sub">
               <span>{sub}{settled}</span>
-              <button type="button" className="btn btn-g sm limit-btn" onClick={() => setDlg('limit')}>سقف الدين <span className="m">{formatMoney(cur.creditLimitAg)}</span></button>
+              <button type="button" className="btn btn-g sm limit-btn" onClick={() => setDlg('limit')}>{isEn ? 'Credit Limit' : 'سقف الدين'} <span className="m">{formatMoney(cur.creditLimitAg)}</span></button>
             </div>
           </div>
           <div className="row-btns">
-            <button type="button" className="btn btn-s" onClick={() => setDlg('return')} disabled={cur.held === 0}>إرجاع كروت</button>
+            <button type="button" className="btn btn-s" onClick={() => setDlg('return')} disabled={cur.held === 0}>{isEn ? 'Return Cards' : 'إرجاع كروت'}</button>
             <button type="button" className="btn btn-s" onClick={async () => {
               if (!cur.openDispute) return setDlg('dispute')
               const r = await api.closeDispute(cur.id, op.key())
               if (!r.ok) return say(errorText(r.error))
               op.renew()
-              say('انسكر الخلاف، وضل مسجل بالكشف.')
+              say(isEn ? 'Dispute resolved and logged.' : 'انسكر الخلاف، وضل مسجل بالكشف.')
               changed(r.value.entryId)
-            }}>{cur.openDispute ? 'سكّر الخلاف' : 'افتح خلاف'}</button>
+            }}>{cur.openDispute ? (isEn ? 'Resolve Dispute' : 'سكّر الخلاف') : (isEn ? 'Open Dispute' : 'افتح خلاف')}</button>
           </div>
         </header>
 
-        {cur.openDispute && <div role="status" className="bn wa"><span>في خلاف مفتوح مع هذا الموزع. الرصيد ما تغير، والخلاف مسجل بالكشف.</span></div>}
+        {cur.openDispute && <div role="status" className="bn wa"><span>{isEn ? 'An open dispute is active with this distributor. Balance is unchanged and logged on statement.' : 'في خلاف مفتوح مع هذا الموزع. الرصيد ما تغير، والخلاف مسجل بالكشف.'}</span></div>}
 
         <div className="stats-sm">
-          <SmallStat label="كروت عنده">{cur.held.toLocaleString('en-US')}</SmallStat>
-          <SmallStat label="قيمة المستخدم"><span className="m">{formatMoney(cur.usedValueAg)}</span></SmallStat>
-          <SmallStat label="محصّل"><span className="m">{formatMoney(cur.paidAg)}</span></SmallStat>
-          <SmallStat label={cur.owedAg < 0 ? 'رصيد له' : 'مستحق عليه'} top><span className="m">{formatMoney(cur.owedAg)}</span></SmallStat>
+          <SmallStat label={isEn ? 'Held cards' : 'كروت عنده'}>{cur.held.toLocaleString('en-US')}</SmallStat>
+          <SmallStat label={isEn ? 'Used value' : 'قيمة المستخدم'}><span className="m">{formatMoney(cur.usedValueAg)}</span></SmallStat>
+          <SmallStat label={isEn ? 'Collected' : 'محصّل'}><span className="m">{formatMoney(cur.paidAg)}</span></SmallStat>
+          <SmallStat label={cur.owedAg < 0 ? (isEn ? 'Credit balance' : 'رصيد له') : (isEn ? 'Balance owed' : 'مستحق عليه')} top><span className="m">{formatMoney(cur.owedAg)}</span></SmallStat>
         </div>
 
         <SettleForm key={cur.id} cur={cur} onSaved={(id) => changed(id)} />

@@ -24,7 +24,7 @@ const CSP = [
 
 let mainWindow: BrowserWindow | null = null
 
-function createWindow(): void {
+function createWindow(defaultTitle = 'نقطة'): void {
   const win = new BrowserWindow({
     width: 1280,
     height: 860,
@@ -32,7 +32,7 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     backgroundColor: '#F4F5F0',
-    title: 'نقطة',
+    title: defaultTitle,
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -86,9 +86,10 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     const status = startBackend()
     if (!app.isPackaged) console.log('[backend]', JSON.stringify(status))
-    createWindow()
+    const initialTitle = status.installerLang === 'en' ? 'Nuqta' : 'نقطة'
+    createWindow(initialTitle)
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+      if (BrowserWindow.getAllWindows().length === 0) createWindow(initialTitle)
     })
   })
 }

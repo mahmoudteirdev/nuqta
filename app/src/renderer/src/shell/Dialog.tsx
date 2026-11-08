@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { getLang } from '@/lib/i18n'
 
 /**
  * حوار (HANDOFF القسم 11): بيحبس التركيز، Esc بيسكره إلا لو مشغول، والتركيز بيرجع لمصدره.
@@ -85,14 +86,14 @@ export function Dialog(p: {
           {p.error && <span id={errId} className="emsg" role="alert">{p.error}</span>}
           <div className="dlg-actions">
             {p.cancelLabel !== '' && (
-              <button type="button" className="btn btn-g" disabled={p.busy} onClick={p.onCancel}>{p.cancelLabel ?? 'ألغِ'}</button>
+              <button type="button" className="btn btn-g" disabled={p.busy} onClick={p.onCancel}>{p.cancelLabel ?? (getLang() === 'en' ? 'Cancel' : 'ألغِ')}</button>
             )}
             {p.secondary && (
               <button type="button" className="btn btn-s" disabled={p.busy} onClick={p.secondary.onClick}>{p.secondary.label}</button>
             )}
             <button type="submit" className={p.danger ? 'btn btn-d' : 'btn btn-p'} disabled={p.busy}>
               {p.busy && <span className="spin" aria-hidden="true" />}
-              {p.busy ? (p.busyLabel ?? 'جاري الحفظ') : p.okLabel}
+              {p.busy ? (p.busyLabel ?? (getLang() === 'en' ? 'Saving...' : 'جاري الحفظ')) : p.okLabel}
             </button>
           </div>
         </form>

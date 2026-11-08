@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { BatchLogRow } from '@shared/api'
 import { api } from '@/lib/api'
 import { errorText } from '@/lib/actions'
+import { cardsText } from '@/lib/format'
 import { t } from '@/lib/i18n'
 import { useStore } from '@/lib/store'
 import { useApi } from '@/lib/useApi'
@@ -12,7 +13,8 @@ const COLS = { gridTemplateColumns: '.8fr 1fr 1.6fr 1fr .9fr auto' }
 
 /** سجل الدفعات وإعادة الطباعة بنفس الأكواد. */
 export function BatchLog({ openBatch }: { openBatch: (id: number) => void }) {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
+  const isEn = state.lang === 'en'
   const say = useToast()
   const log = useApi(() => api.batchLog())
   const [target, setTarget] = useState<BatchLogRow | null>(null)
@@ -20,35 +22,35 @@ export function BatchLog({ openBatch }: { openBatch: (id: number) => void }) {
   const [err, setErr] = useState('')
 
   if (log.state === 'loading') return <div className="panel"><div className="pad"><span className="sk" style={{ width: '60%' }} /></div></div>
-  if (log.state === 'error') return <div className="card"><span className="emsg">ما قدرنا نجيب الدفعات.</span> <button type="button" className="lnk" onClick={log.retry}>أعد المحاولة</button></div>
+  if (log.state === 'error') return <div className="card"><span className="emsg">{isEn ? 'Unable to load batches.' : 'ما قدرنا نجيب الدفعات.'}</span> <button type="button" className="lnk" onClick={log.retry}>{t('common.retry')}</button></div>
 
   return (
-    <section className="panel scr" aria-label="الدفعات، قابل للتمرير" tabIndex={0} style={{ overflowX: 'auto' }}>
-      <div role="table" aria-label="الدفعات" style={{ minWidth: 760 }}>
+    <section className="panel scr" aria-label={isEn ? 'Batches, scrollable' : 'الدفعات، قابل للتمرير'} tabIndex={0} style={{ overflowX: 'auto' }}>
+      <div role="table" aria-label={isEn ? 'Batches' : 'الدفعات'} style={{ minWidth: 760 }}>
         <div role="row" className="rowx thead" style={COLS}>
-          <span role="columnheader">الدفعة</span><span role="columnheader">الفئة</span><span role="columnheader">الموزع</span>
-          <span role="columnheader">مستخدم</span><span role="columnheader">انطبعت</span>
-          <span role="columnheader" className="act-col"><span className="sr">إجراء</span></span>
+          <span role="columnheader">{isEn ? 'Batch' : 'الدفعة'}</span><span role="columnheader">{isEn ? 'Category' : 'الفئة'}</span><span role="columnheader">{isEn ? 'Distributor' : 'الموزع'}</span>
+          <span role="columnheader">{isEn ? 'Used' : 'مستخدم'}</span><span role="columnheader">{isEn ? 'Printed' : 'انطبعت'}</span>
+          <span role="columnheader" className="act-col"><span className="sr">{t('common.actions')}</span></span>
         </div>
         {log.data.map((b) => (
           <div key={b.id} role="row" className="rowx" style={COLS}>
             <span role="cell" dir="ltr" className="mono-in batch-no">B-{b.no}</span>
             <span role="cell">{b.categoryName}</span>
-            <span role="cell">{b.distributorName ?? 'بيع مباشر'}</span>
-            <span role="cell">{b.used.toLocaleString('en-US')} من {b.count.toLocaleString('en-US')}{b.pending > 0 && <span className="warn-text"> ({b.pending} بالانتظار)</span>}</span>
-            <span role="cell">{b.printedTimes} مرة</span>
+            <span role="cell">{b.distributorName ?? (isEn ? 'Direct Sale' : 'بيع مباشر')}</span>
+            <span role="cell">{b.used.toLocaleString('en-US')}{isEn ? ' of ' : ' من '}{b.count.toLocaleString('en-US')}{b.pending > 0 && <span className="warn-text"> ({b.pending} {isEn ? 'pending' : 'بالانتظار'})</span>}</span>
+            <span role="cell">{b.printedTimes}{isEn ? (b.printedTimes === 1 ? ' time' : ' times') : ' مرة'}</span>
             <span role="cell" style={{ display: 'contents' }}>
               {b.stage === 'sent' && b.pending > 0
-                ? <button type="button" className="btn btn-s sm act-col" onClick={() => openBatch(b.id)}>كمّلها</button>
-                : <button type="button" className="btn btn-s sm act-col" disabled={!b.printable} onClick={() => { setErr(''); setTarget(b) }}>اطبع ثاني</button>}
+                ? <button type="button" className="btn btn-s sm act-col" onClick={() => openBatch(b.id)}>{isEn ? 'Resume' : 'كمّلها'}</button>
+                : <button type="button" className="btn btn-s sm act-col" disabled={!b.printable} onClick={() => { setErr(''); setTarget(b) }}>{t('batch.reprint')}</button>}
             </span>
           </div>
         ))}
-        {!log.data.length && <div className="empty-row">لسا ما ولّدت أي دفعة.</div>}
+        {!log.data.length && <div className="empty-row">{isEn ? 'No batches generated yet.' : 'لسا ما ولّدت أي دفعة.'}</div>}
       </div>
 
       {target && (
-        <Dialog title={t('dlg.reprint.title', { no: `B-${target.no}` })} okLabel="اطبع" busy={busy} busyLabel="جاري الطباعة" error={err}
+        <Dialog title={t('dlg.reprint.title', { no: `B-${target.no}` })} okLabel={isEn ? 'Print' : 'اطبع'} busy={busy} busyLabel={isEn ? 'Printing...' : 'جاري الطباعة'} error={err}
           body={t('dlg.reprint.body')} onCancel={() => setTarget(null)}
           onOk={async () => {
             setBusy(true)
@@ -57,7 +59,7 @@ export function BatchLog({ openBatch }: { openBatch: (id: number) => void }) {
             setBusy(false)
             if (!res.ok) return setErr(errorText(res.error))
             setTarget(null)
-            say(`انسجلت إعادة طباعة B-${target.no}.`)
+            say(isEn ? `Reprint recorded for B-${target.no}.` : `انسجلت إعادة طباعة B-${target.no}.`)
             dispatch({ type: 'changed' })
           }} />
       )}

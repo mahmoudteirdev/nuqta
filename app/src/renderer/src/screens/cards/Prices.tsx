@@ -16,7 +16,7 @@ const plain = (ag: number) => (ag % 100 ? (ag / 100).toFixed(2) : String(ag / 10
 /** صف فئة. السعر بينحفظ لما تطلع من الحقل أو تضغط Enter، وبيأثر على الدفعات الجاية بس. */
 function PriceRow({ c }: { c: CategoryRow }) {
   const say = useToast()
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
   const [whole, setWhole] = useState(plain(c.wholeAg))
   const [sale, setSale] = useState(plain(c.saleAg))
   const [err, setErr] = useState('')
@@ -36,7 +36,7 @@ function PriceRow({ c }: { c: CategoryRow }) {
     const r = await api.setCategoryPrices(c.id, w, s)
     if (!r.ok) return setErr(errorText(r.error))
     setErr('')
-    say(`انحفظ سعر ${c.name}. الدفعات القديمة ما بتتغير.`)
+    say(state.lang === 'en' ? `Saved prices for ${c.name}. Existing batches remain unchanged.` : `انحفظ سعر ${c.name}. الدفعات القديمة ما بتتغير.`)
     dispatch({ type: 'changed' })
   }
   const keys = (e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') { e.preventDefault(); void save() } }
@@ -255,23 +255,24 @@ function AddCategory({ onDone, onCancel }: { onDone: (name: string) => void; onC
 }
 
 export function Prices() {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
+  const isEn = state.lang === 'en'
   const say = useToast()
   const cats = useApi(() => api.categories())
   const [adding, setAdding] = useState(false)
 
   return (
-    <section className="panel scr" aria-label="الفئات والأسعار">
+    <section className="panel scr" aria-label={isEn ? 'Categories & Prices' : 'الفئات والأسعار'}>
       <div className="panel-head">
-        <span className="sub">كل فئة مربوطة بملف Hotspot على الراوتر. سعر الجملة هو اللي بيتحسب على الموزع.</span>
-        <button type="button" className="btn btn-s sm" onClick={() => setAdding(true)}>أضف فئة</button>
+        <span className="sub">{isEn ? 'Each category maps to a Hotspot profile on the router. Wholesale price is charged to distributor.' : 'كل فئة مربوطة بملف Hotspot على الراوتر. سعر الجملة هو اللي بيتحسب على الموزع.'}</span>
+        <button type="button" className="btn btn-s sm" onClick={() => setAdding(true)}>{t('batch.addCategory')}</button>
       </div>
-      <div style={{ overflowX: 'auto' }} tabIndex={0} role="group" aria-label="الفئات والأسعار، قابل للتمرير">
-        <div role="table" aria-label="الفئات والأسعار" style={{ minWidth: 680 }}>
+      <div style={{ overflowX: 'auto' }} tabIndex={0} role="group" aria-label={isEn ? 'Categories and Prices, scrollable' : 'الفئات والأسعار، قابل للتمرير'}>
+        <div role="table" aria-label={isEn ? 'Categories and Prices' : 'الفئات والأسعار'} style={{ minWidth: 680 }}>
           <div role="row" className="rowx thead" style={COLS}>
-            <span role="columnheader">الفئة</span><span role="columnheader">سعر الجملة</span>
-            <span role="columnheader">سعر البيع</span><span role="columnheader">ربح الموزع</span>
-            <span role="columnheader" style={{ textAlign: 'end' }}>إجراءات</span>
+            <span role="columnheader">{isEn ? 'Category' : 'الفئة'}</span><span role="columnheader">{isEn ? 'Wholesale Price' : 'سعر الجملة'}</span>
+            <span role="columnheader">{isEn ? 'Retail Price' : 'سعر البيع'}</span><span role="columnheader">{isEn ? 'Margin' : 'ربح الموزع'}</span>
+            <span role="columnheader" style={{ textAlign: 'end' }}>{t('common.actions')}</span>
           </div>
           {cats.state === 'ready' && cats.data.map((c) => <PriceRow key={c.id} c={c} />)}
         </div>
@@ -279,7 +280,7 @@ export function Prices() {
       {adding && (
         <AddCategory onCancel={() => setAdding(false)} onDone={(name) => {
           setAdding(false)
-          say(`انضافت فئة ${name}. حدد سعر البيع.`)
+          say(isEn ? `Added category ${name}. Set retail price.` : `انضافت فئة ${name}. حدد سعر البيع.`)
           dispatch({ type: 'changed' })
         }} />
       )}

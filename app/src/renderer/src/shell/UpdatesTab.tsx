@@ -5,6 +5,8 @@ import { useStore } from '@/lib/store'
 import { useToast } from './Toast'
 
 function useInstall() {
+  const { state } = useStore()
+  const isEn = state.lang === 'en'
   const say = useToast()
   const [busy, setBusy] = useState(false)
   const install = async () => {
@@ -12,27 +14,43 @@ function useInstall() {
     const r = await api.installUpdate()
     if (!r.ok) {
       setBusy(false)
-      say('ما قدرنا نثبّت التحديث. جرّب مرة ثانية.')
+      say(isEn ? 'Unable to install update. Please try again.' : 'ما قدرنا نثبّت التحديث. جرّب مرة ثانية.')
     }
   }
   return { busy, install }
 }
 
-/** شريط هادي لصاحب الشبكة لما نسخة تكون جاهزة. ما بيقطع الشغل. */
+/** شريط هادي لصاحب الشبكة لما نسخة تكون جاهزة. */
 export function UpdateBanner() {
   const { state } = useStore()
+  const isEn = state.lang === 'en'
   const { busy, install } = useInstall()
   const u = state.status?.update
   if (u?.state !== 'ready' || state.status?.session.user?.role !== 'owner') return null
   return (
     <div className="bn ok update-bn" role="status">
-      <span><strong>في نسخة جديدة جاهزة</strong> <bdi dir="ltr">{u.version}</bdi>. بياناتك بتضل زي ما هي.</span>
-      <button type="button" className="btn btn-s sm" disabled={busy} onClick={() => void install()}>{busy ? 'جاري التثبيت' : 'ثبّت وأعد التشغيل'}</button>
+      <span><strong>{isEn ? 'New version ready ' : 'في نسخة جديدة جاهزة '}</strong> <bdi dir="ltr">{u.version}</bdi>. {isEn ? 'Your data remains safe.' : 'بياناتك بتضل زي ما هي.'}</span>
+      <button type="button" className="btn btn-s sm" disabled={busy} onClick={() => void install()}>
+        {busy ? (isEn ? 'Installing...' : 'جاري التثبيت') : (isEn ? 'Install & Restart' : 'ثبّت وأعد التشغيل')}
+      </button>
     </div>
   )
 }
 
-function line(u: UpdateView): { cls: string; text: string } {
+function line(u: UpdateView, isEn: boolean): { cls: string; text: string } {
+  if (isEn) {
+    switch (u.state) {
+      case 'off': return { cls: 'bn wa', text: 'Updates are active in installed production mode only.' }
+      case 'checking': return { cls: 'bn', text: 'Checking for updates...' }
+      case 'downloading': return { cls: 'bn', text: `Downloading version ${u.version ?? ''}: ${u.percent}%. You can keep working.` }
+      case 'ready': return { cls: 'bn ok', text: `Version ${u.version ?? ''} is ready. Your data remains safe.` }
+      case 'failed':
+        return u.reason === 'signature'
+          ? { cls: 'bn er', text: 'Update rejected due to invalid digital signature; nothing was installed. Contact support.' }
+          : { cls: 'bn wa', text: 'Unable to check for updates. Check internet and try again. App continues normally.' }
+      default: return { cls: 'bn ok', text: u.checkedAt ? 'You have the latest version.' : 'App checks for updates automatically when connected.' }
+    }
+  }
   switch (u.state) {
     case 'off': return { cls: 'bn wa', text: 'التحديثات بتشتغل بالنسخة المثبتة بس.' }
     case 'checking': return { cls: 'bn', text: 'جاري الفحص.' }
@@ -48,25 +66,26 @@ function line(u: UpdateView): { cls: string; text: string } {
 
 export function UpdatesTab() {
   const { state, dispatch } = useStore()
+  const isEn = state.lang === 'en'
   const { busy, install } = useInstall()
   const u = state.status?.update
   if (!u) return null
-  const b = line(u)
+  const b = line(u, isEn)
   const working = u.state === 'checking' || u.state === 'downloading'
   return (
-    <section className="card scr settings-form" aria-label="التحديثات">
-      <div><span className="lbl">النسخة الحالية</span> <bdi dir="ltr" className="mono-in">{u.current}</bdi></div>
+    <section className="card scr settings-form" aria-label={isEn ? 'Updates' : 'التحديثات'}>
+      <div><span className="lbl">{isEn ? 'Current Version' : 'النسخة الحالية'}</span> <bdi dir="ltr" className="mono-in">{u.current}</bdi></div>
       <div className={b.cls} role="status"><span>{b.text}</span></div>
-      {u.state === 'downloading' && <div className="bar" role="progressbar" aria-label="تنزيل التحديث" aria-valuenow={u.percent} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${u.percent}%` }} /></div>}
+      {u.state === 'downloading' && <div className="bar" role="progressbar" aria-label={isEn ? 'Downloading update' : 'تنزيل التحديث'} aria-valuenow={u.percent} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${u.percent}%` }} /></div>}
       {u.state === 'ready'
-        ? <button type="button" className="btn btn-p" style={{ alignSelf: 'flex-start' }} disabled={busy} onClick={() => void install()}>{busy ? 'جاري التثبيت' : 'ثبّت وأعد التشغيل'}</button>
+        ? <button type="button" className="btn btn-p" style={{ alignSelf: 'flex-start' }} disabled={busy} onClick={() => void install()}>{busy ? (isEn ? 'Installing...' : 'جاري التثبيت') : (isEn ? 'Install & Restart' : 'ثبّت وأعد التشغيل')}</button>
         : u.state !== 'off' && (
           <button type="button" className="btn btn-s" style={{ alignSelf: 'flex-start' }} disabled={working} onClick={async () => {
             await api.checkForUpdate()
             dispatch({ type: 'status', status: await api.status() })
-          }}>افحص الآن</button>
+          }}>{isEn ? 'Check Now' : 'افحص الآن'}</button>
         )}
-      <p className="sub small" style={{ margin: 0 }}>البرنامج بينزل التحديث بالخلفية وما بيثبته إلا لما تضغط. وبياخد نسخة احتياطية قبل التثبيت.</p>
+      <p className="sub small" style={{ margin: 0 }}>{isEn ? 'Updates are downloaded quietly in the background and only installed with your confirmation. A backup is taken automatically.' : 'البرنامج بينزل التحديث بالخلفية وما بيثبته إلا لما تضغط. وبياخد نسخة احتياطية قبل التثبيت.'}</p>
     </section>
   )
 }

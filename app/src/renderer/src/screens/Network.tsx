@@ -197,7 +197,7 @@ export function Network() {
         <div className="panel-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 className="h2">{t('network.poolsTitle')}</h2>
-            <span className="sub small">إدارة نطاقات الآي بي ومتابعة الاستهلاك ومطابقة السيرفرات (Wi-Fi / LAN)</span>
+            <span className="sub small">{isEn ? 'Manage IP address pools, consumption, and server matching (Wi-Fi / LAN)' : 'إدارة نطاقات الآي بي ومتابعة الاستهلاك ومطابقة السيرفرات (Wi-Fi / LAN)'}</span>
           </div>
           <button type="button" className="btn btn-s sm" onClick={() => setPoolModal('new')}>{t('network.addPool')}</button>
         </div>
@@ -249,7 +249,7 @@ export function Network() {
                       {t('network.editPool')}
                     </button>
                     <button type="button" className="btn btn-d sm" style={{ fontSize: '12px', padding: '2px 10px' }} onClick={() => setDeletingPool(p)}>
-                      حذف
+                      {t('common.delete')}
                     </button>
                   </div>
                 </div>
@@ -257,7 +257,7 @@ export function Network() {
             })}
           </div>
         ) : (
-          <div className="empty-row bordered">لا توجد Pools معرفة على الراوتر.</div>
+          <div className="empty-row bordered">{isEn ? 'No pools defined on the router.' : 'لا توجد Pools معرفة على الراوتر.'}</div>
         )}
       </section>
 

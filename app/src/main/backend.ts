@@ -2,7 +2,7 @@
 
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, type IpcMainInvokeEvent } from 'electron'
 import { writeFile } from 'node:fs/promises'
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { AppStatus, Backend, DbStatus, UpdateView } from '@shared/api'
 import { openDatabase, type Db } from './db/db'
@@ -222,7 +222,7 @@ export function startBackend(): AppStatus {
     }).catch((e) => console.error('[update] not available', e))
   }
 
-  function getInstallerLang(): 'ar' | 'en' | null {
+  function getInstallerInfo(): { lang: 'ar' | 'en'; mtime: number } | null {
     try {
       const candidates = [
         join(dirname(app.getPath('exe')), 'installer-lang.json'),
@@ -233,25 +233,30 @@ export function startBackend(): AppStatus {
       for (const p of candidates) {
         if (existsSync(p)) {
           const json = JSON.parse(readFileSync(p, 'utf8'))
-          if (json.lang === 'ar' || json.lang === 'en') return json.lang
+          const mtime = statSync(p).mtimeMs
+          if (json.lang === 'ar' || json.lang === 'en') return { lang: json.lang, mtime }
         }
       }
     } catch {}
     return null
   }
 
-  const status = (): AppStatus => ({
-    db: dbStatus,
-    router: { ...router, mock: !!live?.mock, configured: !!live?.configured },
-    networkName: live?.store.getSetting('network_name') ?? 'نقطة',
-    dev,
-    setup: live ? setupState(live.store) : { needed: false, step: 1 },
-    lastBackupAt: listBackups(backupDir)[0]?.at ?? null,
-    license: lic.info(),
-    session: auth.info(lockAfter()),
-    update: updateView(),
-    installerLang: getInstallerLang()
-  })
+  const status = (): AppStatus => {
+    const info = getInstallerInfo()
+    return {
+      db: dbStatus,
+      router: { ...router, mock: !!live?.mock, configured: !!live?.configured },
+      networkName: live?.store.getSetting('network_name') ?? 'نقطة',
+      dev,
+      setup: live ? setupState(live.store) : { needed: false, step: 1 },
+      lastBackupAt: listBackups(backupDir)[0]?.at ?? null,
+      license: lic.info(),
+      session: auth.info(lockAfter()),
+      update: updateView(),
+      installerLang: info?.lang ?? null,
+      installerLangMtime: info?.mtime ?? null
+    }
+  }
 
   const backend: Backend = {
     status,

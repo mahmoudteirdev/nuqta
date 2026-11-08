@@ -11,17 +11,17 @@ import { Dialog } from '@/shell/Dialog'
 import { StateView } from '@/shell/StateView'
 import { Tabs } from '@/shell/Tabs'
 import { useToast } from '@/shell/Toast'
-import { TEMPLATE_INFO, Voucher } from '@/shell/Voucher'
+import { getTemplateInfo, Voucher } from '@/shell/Voucher'
 import { BatchLog } from './cards/BatchLog'
 import { Prices } from './cards/Prices'
 import { Templates } from './cards/Templates'
 
 type Tab = 'gen' | 'batches' | 'prices' | 'templates'
-const TABS: { key: Tab; name: string }[] = [
-  { key: 'gen', name: 'توليد دفعة' },
-  { key: 'batches', name: 'الدفعات' },
-  { key: 'prices', name: 'الفئات والأسعار' },
-  { key: 'templates', name: 'قوالب الطباعة' }
+const TAB_DEFS: { key: Tab; nameKey: string }[] = [
+  { key: 'gen', nameKey: 'batch.tabGen' },
+  { key: 'batches', nameKey: 'batch.tabBatches' },
+  { key: 'prices', nameKey: 'batch.tabPrices' },
+  { key: 'templates', nameKey: 'batch.tabTemplates' }
 ]
 
 const DIRECT = 'direct'
@@ -78,8 +78,9 @@ function Generate({ form }: { form: BatchForm }) {
   const overLimit = d && d.owedAg > d.creditLimitAg
   const stage = sending ? 'sending' : batch ? (batch.stage === 'done' ? 'done' : 'sent') : 'form'
   const locked = stage !== 'form'
-  const network = state.status?.networkName ?? ''
-  const distName = d?.name ?? 'البيع المباشر'
+  const isEn = state.lang === 'en'
+  const network = (state.status?.networkName && state.status.networkName !== 'نقطة') ? state.status.networkName : (isEn ? 'Nuqta' : 'نقطة')
+  const distName = d?.name ?? (isEn ? 'Direct Sale' : 'البيع المباشر')
   const expired = state.status?.license.state === 'expired'
 
   const refresh = async (v: BatchView) => {
@@ -174,25 +175,25 @@ function Generate({ form }: { form: BatchForm }) {
     <div className="scr gen">
       <section aria-label="إعدادات الدفعة" className="card gen-form">
         <div className="fld">
-          <label className="lbl" htmlFor="br">الراوتر</label>
+          <label className="lbl" htmlFor="br">{t('batch.router')}</label>
           <div className="box"><select id="br" value={routerId} disabled={locked} onChange={(e) => setRouterId(Number(e.target.value))}>
             {form.routers.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select></div>
         </div>
         <div className="fld">
-          <span className="lbl" id="cl">الفئة</span>
+          <span className="lbl" id="cl">{t('batch.category')}</span>
           <div role="group" aria-labelledby="cl" className="chips">
             {form.categories.map((c) => (
               <button key={c.id} type="button" className={c.id === categoryId ? 'chip on' : 'chip'} aria-pressed={c.id === categoryId}
                 disabled={locked} onClick={() => setCategoryId(c.id)}>
                 <strong>{c.name}</strong>
-                <span>جملة <span className="m">{formatMoney(c.wholeAg)}</span>، بيع <span className="m">{formatMoney(c.saleAg)}</span></span>
+                <span>{isEn ? `Wholesale ${formatMoney(c.wholeAg)}, Retail ${formatMoney(c.saleAg)}` : `جملة ${formatMoney(c.wholeAg)}، بيع ${formatMoney(c.saleAg)}`}</span>
               </button>
             ))}
           </div>
         </div>
         <div className="fld">
-          <label className="lbl" htmlFor="bn">العدد</label>
+          <label className="lbl" htmlFor="bn">{t('batch.count')}</label>
           <div className={countErr ? 'box err' : 'box'}>
             <input id="bn" inputMode="numeric" value={count} disabled={locked} aria-invalid={!!countErr} aria-describedby={countErr ? 'bnE' : undefined}
               onChange={(e) => { setCount(e.target.value); setCountErr('') }}
@@ -201,7 +202,7 @@ function Generate({ form }: { form: BatchForm }) {
           {countErr && <span id="bnE" className="emsg" role="alert">{countErr}</span>}
         </div>
         <div className="fld">
-          <label className="lbl" htmlFor="bcs">نمط الكود</label>
+          <label className="lbl" htmlFor="bcs">{t('batch.codeStyle')}</label>
           <div className="box">
             <select
               id="bcs"
@@ -212,10 +213,10 @@ function Generate({ form }: { form: BatchForm }) {
                 localStorage.setItem('nuqta_code_style', e.target.value)
               }}
             >
-              <option value="alphanumeric_8">أرقام وحروف (XXXX-XXXX)</option>
-              <option value="numeric_6">أرقام فقط (6 أرقام - 849201)</option>
-              <option value="numeric_8">أرقام فقط (8 أرقام - 74928165)</option>
-              <option value="alpha_8">حروف فقط (8 أحرف - ABCD-EFGH)</option>
+              <option value="alphanumeric_8">{isEn ? 'Letters & Numbers (XXXX-XXXX)' : 'أرقام وحروف (XXXX-XXXX)'}</option>
+              <option value="numeric_6">{isEn ? 'Numbers only (6 digits - 849201)' : 'أرقام فقط (6 أرقام - 849201)'}</option>
+              <option value="numeric_8">{isEn ? 'Numbers only (8 digits - 74928165)' : 'أرقام فقط (8 أرقام - 74928165)'}</option>
+              <option value="alpha_8">{isEn ? 'Letters only (8 chars - ABCD-EFGH)' : 'حروف فقط (8 أحرف - ABCD-EFGH)'}</option>
             </select>
           </div>
         </div>
@@ -238,15 +239,15 @@ function Generate({ form }: { form: BatchForm }) {
           </div>
         )}
         <div className="fld">
-          <label className="lbl" htmlFor="bd">الموزع</label>
+          <label className="lbl" htmlFor="bd">{t('batch.distributor')}</label>
           <div className="box"><select id="bd" value={dist} disabled={locked} onChange={(e) => setDist(e.target.value)}>
             {form.distributors.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-            <option value={DIRECT}>بيع مباشر</option>
+            <option value={DIRECT}>{isEn ? 'Direct Sale' : 'بيع مباشر'}</option>
           </select></div>
           {!locked && overLimit && d && <span className="warn-text">عليه {formatMoney(d.owedAg)}، فوق السقف {formatMoney(d.creditLimitAg)}.</span>}
         </div>
         <div className="gen-total">
-          <span>قيمة الدفعة بالجملة</span>
+          <span>{isEn ? 'Total batch at wholesale' : 'قيمة الدفعة بالجملة'}</span>
           <strong className="m">{formatMoney((cat?.wholeAg ?? 0) * (batch?.count ?? n))}</strong>
         </div>
         {stage === 'form' && expired && (
@@ -255,14 +256,14 @@ function Generate({ form }: { form: BatchForm }) {
             <button type="button" className="btn btn-s sm" onClick={() => dispatch({ type: 'go', screen: 'settings', settingsTab: 'license' })}>فعّل البرنامج</button>
           </div>
         )}
-        {stage === 'form' && <button type="button" className="btn btn-p" disabled={expired} onClick={send}>ولّد وأرسل للراوتر</button>}
-        {(stage === 'sent' || stage === 'done') && <button type="button" className="btn btn-s" onClick={newBatch}>دفعة جديدة</button>}
+        {stage === 'form' && <button type="button" className="btn btn-p" disabled={expired} onClick={send}>{isEn ? 'Generate & Send to Router' : 'ولّد وأرسل للراوتر'}</button>}
+        {(stage === 'sent' || stage === 'done') && <button type="button" className="btn btn-s" onClick={newBatch}>{isEn ? 'New Batch' : 'دفعة جديدة'}</button>}
       </section>
 
       <section aria-label="التأكيد والطباعة" className="gen-side">
         {stage === 'sending' && (
           <div className="card scr" role="status">
-            <strong>جاري الإرسال للراوتر</strong>
+            <strong>{isEn ? 'Sending to router...' : 'جاري الإرسال للراوتر'}</strong>
             <div className="bar indeterminate" style={{ marginTop: 10 }}><span /></div>
           </div>
         )}
@@ -273,37 +274,37 @@ function Generate({ form }: { form: BatchForm }) {
               <strong className="gen-status-title">
                 {batch.pending > 0
                   ? t('batch.partial.title', { router: batch.routerName, ok: confirmed, total: batch.count })
-                  : `${batch.routerName} أكد كل الكروت`}
+                  : `${batch.routerName} ${isEn ? 'confirmed all cards' : 'أكد كل الكروت'}`}
               </strong>
-              {note || (batch.pending > 0 ? t('batch.partial.body', { n: batch.pending }) : 'الدفعة جاهزة للطباعة.')}
+              {note || (batch.pending > 0 ? t('batch.partial.body', { n: batch.pending }) : (isEn ? 'Batch is ready for printing.' : 'الدفعة جاهزة للطباعة.'))}
             </div>
             {batch.pending > 0 && (
               <button type="button" className="btn btn-s" disabled={resendBusy} onClick={() => void resend()}>
                 {resendBusy && <span className="spin" aria-hidden="true" />}
-                {resendBusy ? 'جاري الإرسال' : `أعد إرسال ${cardsText(batch.pending)}`}
+                {resendBusy ? (isEn ? 'Sending...' : 'جاري الإرسال') : `${isEn ? 'Resend' : 'أعد إرسال'} ${cardsText(batch.pending, state.lang)}`}
               </button>
             )}
           </div>
         )}
 
         {done && (
-          <div role="status" className="bn ok scr"><span><strong>انسجلت دفعة B-{batch?.no}.</strong> {doneBody}</span></div>
+          <div role="status" className="bn ok scr"><span><strong>{isEn ? `Batch B-${batch?.no} recorded.` : `انسجلت دفعة B-${batch?.no}.`}</strong> {doneBody}</span></div>
         )}
 
         <div className="card gen-preview">
           <div className="head" style={{ alignItems: 'center' }}>
             <div>
-              <h2 className="h2">معاينة الطباعة</h2>
-              <span className="sub small">{TEMPLATE_INFO[form.template].page}</span>
+              <h2 className="h2">{isEn ? 'Print Preview' : 'معاينة الطباعة'}</h2>
+              <span className="sub small">{getTemplateInfo(state.lang)[form.template].page}</span>
             </div>
             {batch && stage === 'sent' && (
               batch.toPrint > 0 || batch.toDeliver === 0 ? (
                 <button ref={printBtn} type="button" className="btn btn-p" disabled={batch.toPrint === 0 || printBusy} onClick={() => void print('new')}>
                   {printBusy && <span className="spin" aria-hidden="true" />}
-                  {printBusy ? 'جاري الطباعة' : `اطبع ${cardsText(batch.toPrint)}`}
+                  {printBusy ? (isEn ? 'Printing...' : 'جاري الطباعة') : `${isEn ? 'Print' : 'اطبع'} ${cardsText(batch.toPrint, state.lang)}`}
                 </button>
               ) : (
-                <button ref={printBtn} type="button" className="btn btn-p" onClick={() => setDlg('check')}>{`سلّم ${cardsText(batch.toDeliver)}`}</button>
+                <button ref={printBtn} type="button" className="btn btn-p" onClick={() => setDlg('check')}>{`${isEn ? 'Deliver' : 'سلّم'} ${cardsText(batch.toDeliver, state.lang)}`}</button>
               )
             )}
           </div>
@@ -311,7 +312,7 @@ function Generate({ form }: { form: BatchForm }) {
             {batch
               ? batch.preview.map((v) => (
                   <Voucher key={v.code} network={network} category={batch.categoryName} code={v.code}
-                    foot={v.ready ? formatMoney(batch.saleAg) : 'بالانتظار'} waiting={!v.ready} />
+                    foot={v.ready ? formatMoney(batch.saleAg) : (isEn ? 'Waiting' : 'بالانتظار')} waiting={!v.ready} />
                 ))
               : Array.from({ length: 6 }, (_, i) => (
                   <Voucher key={i} network={network} category={cat?.name ?? ''} code="XXXX-XXXX" foot={formatMoney(cat?.saleAg ?? 0)} waiting />
@@ -336,7 +337,7 @@ function Generate({ form }: { form: BatchForm }) {
 }
 
 export function Batch() {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
   const [tab, setTab] = useState<Tab>('gen')
   const form = useApi(() => api.batchForm())
   if (form.state === 'loading') return <StateView screen="batch" mode="loading" />
@@ -344,8 +345,8 @@ export function Batch() {
   if (!form.data.categories.length) return <StateView screen="batch" mode="empty" />
   return (
     <div className="scr stack" style={{ gap: 24 }}>
-      <h1 className="h1">الكروت</h1>
-      <Tabs label="أقسام الكروت" tabs={TABS} current={tab} onChange={setTab}>
+      <h1 className="h1">{t('batch.title')}</h1>
+      <Tabs label={state.lang === 'en' ? 'Card Sections' : 'أقسام الكروت'} tabs={TAB_DEFS.map((d) => ({ key: d.key, name: t(d.nameKey) }))} current={tab} onChange={setTab}>
         {tab === 'gen' && <Generate form={form.data} />}
         {tab === 'batches' && <BatchLog openBatch={(id) => { dispatch({ type: 'go', screen: 'batch', batchId: id }); setTab('gen') }} />}
         {tab === 'prices' && <Prices />}

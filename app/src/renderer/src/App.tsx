@@ -46,15 +46,17 @@ function useLiveStatus(): void {
 
 /** قاعدة بيانات تالفة: خيار الاسترجاع هون، وبدون مسح (HANDOFF القسم 7). */
 function DbError({ reason }: { reason: string }) {
+  const { state } = useStore()
+  const isEn = state.lang === 'en'
   return (
     <div className="stack">
       <div className="card scr state-err" role="alert">
-        <h1>{reason === 'too_new' ? 'قاعدة البيانات من نسخة أحدث من البرنامج' : 'ما قدرنا نفتح قاعدة البيانات'}</h1>
-        <p>{reason === 'too_new' ? 'بياناتك ما انمسحت. حدّث البرنامج.' : 'بياناتك ما انمسحت. استرجع آخر نسخة سليمة، والملف الحالي بيضل محفوظ على جنب.'}</p>
+        <h1>{reason === 'too_new' ? (isEn ? 'Database is from a newer version of Nuqta' : 'قاعدة البيانات من نسخة أحدث من البرنامج') : (isEn ? 'Could not open database' : 'ما قدرنا نفتح قاعدة البيانات')}</h1>
+        <p>{reason === 'too_new' ? (isEn ? 'Your data is safe. Please update Nuqta.' : 'بياناتك ما انمسحت. حدّث البرنامج.') : (isEn ? 'Your data is safe. Restore the latest backup; the current file will be preserved.' : 'بياناتك ما انمسحت. استرجع آخر نسخة سليمة، والملف الحالي بيضل محفوظ على جنب.')}</p>
       </div>
       {reason !== 'too_new' && (
-        <section className="card" aria-label="استرجاع نسخة">
-          <h2 className="h2">استرجع نسخة</h2>
+        <section className="card" aria-label={isEn ? 'Restore backup' : 'استرجاع نسخة'}>
+          <h2 className="h2">{isEn ? 'Restore Backup' : 'استرجع نسخة'}</h2>
           <RestoreList compact />
         </section>
       )}
@@ -111,7 +113,7 @@ export function App() {
     const mo = new MutationObserver(sync)
     mo.observe(main, { childList: true, subtree: true, characterData: true })
     return () => mo.disconnect()
-  }, [view])
+  }, [view, state.lang])
 
   const Screen = SCREENS[state.screen]
   const db = state.status?.db

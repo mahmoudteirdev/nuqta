@@ -29,10 +29,12 @@ function lastSeen(iso: string | null, isEn: boolean): string {
 
 function PoolDialog({
   pool,
+  isEn,
   onDone,
   onCancel
 }: {
   pool?: NetworkPool | null
+  isEn: boolean
   onDone: () => void
   onCancel: () => void
 }) {
@@ -45,14 +47,14 @@ function PoolDialog({
   return (
     <Dialog
       title={isEdit ? t('network.editPool') : t('network.addPool')}
-      okLabel={isEdit ? 'حفظ' : 'إضافة'}
+      okLabel={isEdit ? t('common.save') : (isEn ? 'Add' : 'إضافة')}
       busy={busy}
       error={err}
       onCancel={onCancel}
-      body={isEdit ? `تعديل نطاق العناوين للـ Pool (${pool.name}).` : 'إضافة IP Pool جديد على الراوتر.'}
+      body={isEdit ? (isEn ? `Edit IP address range for pool "${pool.name}".` : `تعديل نطاق العناوين للـ Pool (${pool.name}).`) : (isEn ? 'Add a new IP Pool to the router.' : 'إضافة IP Pool جديد على الراوتر.')}
       onOk={async () => {
-        if (!name.trim()) return setErr('اكتب اسم الـ Pool')
-        if (!ranges.trim()) return setErr('اكتب نطاق العناوين (مثال: 192.168.88.10-192.168.88.254)')
+        if (!name.trim()) return setErr(isEn ? 'Enter pool name' : 'اكتب اسم الـ Pool')
+        if (!ranges.trim()) return setErr(isEn ? 'Enter address range (e.g. 192.168.88.10-192.168.88.254)' : 'اكتب نطاق العناوين (مثال: 192.168.88.10-192.168.88.254)')
         setBusy(true)
         const r = await api.savePool({ id: pool?.id, name: name.trim(), ranges: ranges.trim() })
         setBusy(false)
@@ -131,6 +133,20 @@ export function Network() {
   const [deletingPool, setDeletingPool] = useState<NetworkPool | null>(null)
   const [delPoolBusy, setDelPoolBusy] = useState(false)
   const [selectedPool, setSelectedPool] = useState<string | null>(null)
+  const [poolView, setPoolView] = useState<'table' | 'cards'>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('nuqta_pool_view')
+      if (saved === 'cards' || saved === 'table') return saved
+    }
+    return 'table'
+  })
+
+  const changePoolView = (mode: 'table' | 'cards') => {
+    setPoolView(mode)
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('nuqta_pool_view', mode)
+    }
+  }
 
   useEffect(() => {
     const id = setInterval(() => setN((x) => x + 1), REFRESH_MS)
@@ -194,68 +210,205 @@ export function Network() {
 
       {/* نطاقات الآي بي (IP Pools) */}
       <section aria-label={t('network.poolsTitle')} className="panel">
-        <div className="panel-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="panel-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <h2 className="h2">{t('network.poolsTitle')}</h2>
             <span className="sub small">{isEn ? 'Manage IP address pools, consumption, and server matching (Wi-Fi / LAN)' : 'إدارة نطاقات الآي بي ومتابعة الاستهلاك ومطابقة السيرفرات (Wi-Fi / LAN)'}</span>
           </div>
-          <button type="button" className="btn btn-s sm" onClick={() => setPoolModal('new')}>{t('network.addPool')}</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {d.pools && d.pools.length > 0 && (
+              <div style={{ display: 'flex', gap: '2px', background: 'var(--fill)', padding: '2px', borderRadius: '4px' }}>
+                <button
+                  type="button"
+                  className={`btn sm ${poolView === 'table' ? 'btn-s' : 'btn-g'}`}
+                  style={{ minHeight: '30px', padding: '0 10px', fontSize: '13px', background: poolView === 'table' ? '#fff' : 'transparent', border: poolView === 'table' ? '1px solid var(--line)' : 'none' }}
+                  onClick={() => changePoolView('table')}
+                  title={t('network.viewTable')}
+                >
+                  {t('network.viewTable')}
+                </button>
+                <button
+                  type="button"
+                  className={`btn sm ${poolView === 'cards' ? 'btn-s' : 'btn-g'}`}
+                  style={{ minHeight: '30px', padding: '0 10px', fontSize: '13px', background: poolView === 'cards' ? '#fff' : 'transparent', border: poolView === 'cards' ? '1px solid var(--line)' : 'none' }}
+                  onClick={() => changePoolView('cards')}
+                  title={t('network.viewCards')}
+                >
+                  {t('network.viewCards')}
+                </button>
+              </div>
+            )}
+            <button type="button" className="btn btn-s sm" onClick={() => setPoolModal('new')}>{t('network.addPool')}</button>
+          </div>
         </div>
 
         {d.pools && d.pools.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px', marginTop: '12px' }}>
-            {d.pools.map((p) => {
-              const pct = p.totalIps > 0 ? Math.min(100, Math.round((p.activeCount / p.totalIps) * 100)) : 0
+          (() => {
+            const sortedPools = [...d.pools].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+            if (poolView === 'table') {
               return (
-                <div key={p.name} className="card" style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', border: '1px solid var(--border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <strong style={{ fontSize: '15px' }}>{p.name}</strong>
-                      {p.serverName && (
-                        <div style={{ marginTop: '2px' }}>
-                          <span className="bn ok sm" style={{ fontSize: '11px', padding: '2px 6px' }}>{p.serverName}</span>
+                <div style={{ overflowX: 'auto' }} tabIndex={0} role="group" aria-label={t('network.poolsTitle')}>
+                  <div role="table" aria-label={t('network.poolsTitle')} style={{ minWidth: 840 }}>
+                    <div role="row" className="pool-row thead">
+                      <span role="columnheader">{t('network.poolName')}</span>
+                      <span role="columnheader">{t('network.poolServer')}</span>
+                      <span role="columnheader">{t('network.colRange')}</span>
+                      <span role="columnheader">{t('network.colCapacity')}</span>
+                      <span role="columnheader">{t('network.colConsumption')}</span>
+                      <span role="columnheader"><span className="sr">{t('network.colActions')}</span></span>
+                    </div>
+                    {sortedPools.map((p) => {
+                      const pct = p.totalIps > 0 ? Math.min(100, Math.round((p.activeCount / p.totalIps) * 100)) : 0
+                      const barColor = pct > 90 ? 'var(--err)' : pct > 75 ? 'var(--warn)' : 'var(--pri)'
+                      const freeCount = Math.max(0, p.totalIps - p.activeCount)
+                      const isFiltered = selectedPool === p.name
+                      return (
+                        <div key={p.name} role="row" className="pool-row" style={{ background: isFiltered ? 'var(--pri-t)' : undefined }}>
+                          <div role="cell" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: barColor, flex: 'none' }} />
+                            <strong>{p.name}</strong>
+                          </div>
+                          <div role="cell">
+                            {p.serverName ? (
+                              <span className="bn ok sm" style={{ fontSize: '11px', padding: '2px 8px' }}>{p.serverName}</span>
+                            ) : (
+                              <span className="sub">—</span>
+                            )}
+                          </div>
+                          <div role="cell">
+                            <code className="mono" dir="ltr" style={{ fontSize: '12px', background: 'var(--fill)', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--line)' }}>
+                              {p.ranges}
+                            </code>
+                          </div>
+                          <div role="cell" style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                            <span className="mono bold">{p.activeCount} / {p.totalIps}</span>
+                            <span className="sub small" style={{ fontSize: '12px' }}>({t('network.freeIps', { n: freeCount })})</span>
+                          </div>
+                          <div role="cell" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ flex: 1, height: '7px', background: 'var(--fill)', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ width: `${pct}%`, height: '100%', background: barColor, transition: 'width 0.3s' }} />
+                            </div>
+                            <span className="mono bold" style={{ fontSize: '12px', minWidth: '36px', color: pct > 85 ? 'var(--err)' : 'var(--ink)' }}>
+                              {pct}%
+                            </span>
+                          </div>
+                          <div role="cell" style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end' }}>
+                            {p.activeCount > 0 && (
+                              <button
+                                type="button"
+                                className={`btn sm ${isFiltered ? 'btn-p' : 'btn-s'}`}
+                                style={{ fontSize: '12px', minHeight: '32px', padding: '0 8px' }}
+                                onClick={() => setSelectedPool(isFiltered ? null : p.name)}
+                                title={isFiltered ? t('network.filterPoolActive') : t('network.filterPool')}
+                              >
+                                {isFiltered ? t('network.filterPoolActive') : t('network.filterPool')}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="btn btn-g sm"
+                              style={{ fontSize: '12px', minHeight: '32px', padding: '0 8px', border: '1px solid var(--line)', background: '#fff' }}
+                              onClick={() => setPoolModal(p)}
+                            >
+                              {t('network.editPool')}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-d sm"
+                              style={{ fontSize: '12px', minHeight: '32px', padding: '0 8px' }}
+                              onClick={() => setDeletingPool(p)}
+                            >
+                              {t('common.delete')}
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    <span className="mono bold" style={{ fontSize: '13px', color: pct > 85 ? 'var(--er)' : 'var(--fg)' }}>
-                      {p.activeCount} / {p.totalIps}
-                    </span>
-                  </div>
-
-                  <div className="mono small sub" dir="ltr" style={{ fontSize: '12px', background: 'var(--bg-sub)', padding: '4px 8px', borderRadius: '4px' }}>
-                    {p.ranges}
-                  </div>
-
-                  {/* شريط الاستهلاك */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          height: '100%',
-                          width: `${pct}%`,
-                          background: pct > 90 ? 'var(--er)' : pct > 75 ? 'var(--wa)' : 'var(--p)',
-                          transition: 'width 0.3s'
-                        }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--fg-sub)' }}>
-                      <span>{t('network.poolUsage', { used: p.activeCount, total: p.totalIps })}</span>
-                      <span>{pct}%</span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
-                    <button type="button" className="btn btn-g sm" style={{ fontSize: '12px', padding: '2px 10px' }} onClick={() => setPoolModal(p)}>
-                      {t('network.editPool')}
-                    </button>
-                    <button type="button" className="btn btn-d sm" style={{ fontSize: '12px', padding: '2px 10px' }} onClick={() => setDeletingPool(p)}>
-                      {t('common.delete')}
-                    </button>
+                      )
+                    })}
                   </div>
                 </div>
               )
-            })}
-          </div>
+            }
+
+            return (
+              <div className="pool-grid">
+                {sortedPools.map((p) => {
+                  const pct = p.totalIps > 0 ? Math.min(100, Math.round((p.activeCount / p.totalIps) * 100)) : 0
+                  const barColor = pct > 90 ? 'var(--err)' : pct > 75 ? 'var(--warn)' : 'var(--pri)'
+                  const freeCount = Math.max(0, p.totalIps - p.activeCount)
+                  const isFiltered = selectedPool === p.name
+                  return (
+                    <div key={p.name} className="pool-card" style={{ borderColor: isFiltered ? 'var(--pri)' : 'var(--line)', background: isFiltered ? 'var(--pri-t)' : '#fff' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: barColor, flex: 'none' }} />
+                            <strong style={{ fontSize: '16px' }}>{p.name}</strong>
+                          </div>
+                          {p.serverName && (
+                            <div style={{ marginTop: '4px' }}>
+                              <span className="bn ok sm" style={{ fontSize: '11px', padding: '1px 6px' }}>{p.serverName}</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`bn ${pct > 90 ? 'er' : pct > 75 ? 'wa' : 'ok'} sm`} style={{ fontSize: '12px', fontWeight: 600 }}>
+                          {pct}%
+                        </span>
+                      </div>
+
+                      <div className="mono small" dir="ltr" style={{ background: 'var(--fill)', padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--line)', color: 'var(--ink)' }}>
+                        {p.ranges}
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ width: '100%', height: '8px', background: 'var(--fill)', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--muted)' }}>
+                          <span><strong>{p.activeCount}</strong> / {p.totalIps} {t('network.poolActive', { n: '' }).trim()}</span>
+                          <span>{t('network.freeIps', { n: freeCount })}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line)', paddingTop: '10px', marginTop: '2px' }}>
+                        <div>
+                          {p.activeCount > 0 ? (
+                            <button
+                              type="button"
+                              className="lnk"
+                              style={{ fontSize: '12px' }}
+                              onClick={() => setSelectedPool(isFiltered ? null : p.name)}
+                            >
+                              {isFiltered ? t('network.filterPoolActive') : `${t('network.filterPool')} (${p.activeCount})`}
+                            </button>
+                          ) : (
+                            <span className="sub small" style={{ fontSize: '11px' }}>{isEn ? 'No users' : 'لا يوجد متصلين'}</span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            type="button"
+                            className="btn btn-g sm"
+                            style={{ fontSize: '12px', minHeight: '30px', padding: '0 8px', border: '1px solid var(--line)', background: '#fff' }}
+                            onClick={() => setPoolModal(p)}
+                          >
+                            {t('network.editPool')}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-d sm"
+                            style={{ fontSize: '12px', minHeight: '30px', padding: '0 8px' }}
+                            onClick={() => setDeletingPool(p)}
+                          >
+                            {t('common.delete')}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()
         ) : (
           <div className="empty-row bordered">{isEn ? 'No pools defined on the router.' : 'لا توجد Pools معرفة على الراوتر.'}</div>
         )}
@@ -277,7 +430,7 @@ export function Network() {
               >
                 {t('network.filterAll')} ({allSessions.length})
               </button>
-              {d.pools.map((p) => (
+              {[...d.pools].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })).map((p) => (
                 <button
                   key={p.name}
                   type="button"
@@ -339,10 +492,11 @@ export function Network() {
       {poolModal && (
         <PoolDialog
           pool={poolModal === 'new' ? null : poolModal}
+          isEn={isEn}
           onCancel={() => setPoolModal(null)}
           onDone={() => {
             setPoolModal(null)
-            say('تم حفظ الـ Pool بنجاح.')
+            say(isEn ? 'Pool saved successfully.' : 'تم حفظ الـ Pool بنجاح.')
             setN((x) => x + 1)
           }}
         />
@@ -350,9 +504,9 @@ export function Network() {
 
       {deletingPool && (
         <Dialog
-          title={`حذف Pool ${deletingPool.name}`}
-          body={`هل أنت متأكد من حذف الـ Pool (${deletingPool.name}) من الراوتر؟ تأكد من عدم اعتماده في سيرفرات الهوتسبوت أو الـ DHCP.`}
-          okLabel="نعم، احذف"
+          title={isEn ? `Delete Pool ${deletingPool.name}` : `حذف Pool ${deletingPool.name}`}
+          body={isEn ? `Are you sure you want to delete pool "${deletingPool.name}" from router? Ensure it is not in use by Hotspot or DHCP servers.` : `هل أنت متأكد من حذف الـ Pool (${deletingPool.name}) من الراوتر؟ تأكد من عدم اعتماده في سيرفرات الهوتسبوت أو الـ DHCP.`}
+          okLabel={isEn ? 'Yes, Delete' : 'نعم، احذف'}
           danger
           busy={delPoolBusy}
           onCancel={() => setDeletingPool(null)}
@@ -361,7 +515,7 @@ export function Network() {
             const r = await api.deletePool(deletingPool.name)
             setDelPoolBusy(false)
             if (!r.ok) return say(errorText(r.error))
-            say(`تم حذف ${deletingPool.name} من الراوتر.`)
+            say(isEn ? `Deleted pool ${deletingPool.name} from router.` : `تم حذف ${deletingPool.name} من الراوتر.`)
             setDeletingPool(null)
             setN((x) => x + 1)
           }}

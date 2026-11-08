@@ -151,6 +151,11 @@ html,body,#root{height:100%}
 .device-state{padding:8px 12px;font-size:14px;line-height:22px;font-weight:500}
 .ses.thead{background:var(--ground);font-size:14px;line-height:22px;font-weight:600;border-top:0}
 .kick-col{width:76px}
+.pool-row{display:grid;grid-template-columns:1.2fr 1fr 1.6fr 1.1fr 1.3fr auto;gap:12px;padding:10px 16px;align-items:center;border-top:1px solid var(--line)}
+.pool-row.thead{background:var(--ground);font-size:14px;line-height:22px;font-weight:600;border-top:0}
+.pool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;padding:16px;background:var(--ground)}
+.pool-card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:box-shadow .12s}
+.pool-card:hover{box-shadow:0 3px 8px rgba(0,0,0,.08)}
 .empty-row.bordered{border-top:1px solid var(--line);padding:40px 16px;display:flex;flex-direction:column;gap:2px;align-items:center}
 .empty-row.bordered strong{font-weight:600;color:var(--ink)}
 

@@ -26,7 +26,7 @@ Hotspot owners sell internet vouchers through shops and kiosks, then chase who h
 </p>
 
 <!-- 2. About -->
-## 👨‍💻 About
+## 💡 About
 
 ```yaml
 project:   Nuqta (نُقطة)

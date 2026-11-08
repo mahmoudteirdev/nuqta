@@ -98,7 +98,8 @@ export function App() {
     const sync = () => {
       // عنوان التحميل المخفي (.sr) ما بياخذ التركيز: بيختفي لما توصل البيانات.
       const h = document.querySelector('main h1:not(.sr)')
-      document.title = h ? 'نقطة: ' + h.textContent : 'نقطة'
+      const brand = state.lang === 'en' ? 'Nuqta' : 'نقطة'
+      document.title = h ? `${brand}: ` + h.textContent : brand
       if (h && !focused) {
         focused = true
         focusTitle()
@@ -149,7 +150,7 @@ export function App() {
     <div className="app">
       {state.status?.dev && <DevBar />}
       <div className="shell">
-        <button type="button" className="btn btn-p skip" onClick={focusTitle}>انتقل للمحتوى</button>
+        <button type="button" className="btn btn-p skip" onClick={focusTitle}>{state.lang === 'en' ? 'Skip to content' : 'انتقل للمحتوى'}</button>
         <Sidebar />
         <main className="main">
           <StatusBar />

@@ -4,7 +4,7 @@ import { api } from '@/lib/api'
 import { connectError, errorText } from '@/lib/actions'
 import { leftText } from '@/lib/format'
 import { t } from '@/lib/i18n'
-import { EMPTY } from '@/lib/screens'
+import { getEmpty } from '@/lib/screens'
 import { useStore } from '@/lib/store'
 import { useApi } from '@/lib/useApi'
 import { Dialog } from '@/shell/Dialog'
@@ -15,15 +15,16 @@ import { useToast } from '@/shell/Toast'
 /** المتصلين بيتغيروا كل دقيقة، فبنعيد القراءة طول ما الشاشة مفتوحة. */
 const REFRESH_MS = 10_000
 
-const clock = new Intl.DateTimeFormat('ar-u-nu-latn', { hour: 'numeric', minute: '2-digit' })
-const dayMonth = new Intl.DateTimeFormat('ar-u-nu-latn', { day: 'numeric', month: 'long' })
-function lastSeen(iso: string | null): string {
-  if (!iso) return 'ما ردّ لسا'
+function lastSeen(iso: string | null, isEn: boolean): string {
+  if (!iso) return isEn ? 'Unreachable' : 'ما ردّ لسا'
   const d = new Date(iso)
   const mins = Math.round((Date.now() - d.getTime()) / 60_000)
-  if (mins < 1) return 'آخر اتصال قبل لحظات'
-  if (mins < 60) return `آخر اتصال قبل ${mins} دقيقة`
-  return `آخر اتصال ${new Date().toDateString() === d.toDateString() ? clock.format(d) : dayMonth.format(d)}`
+  if (mins < 1) return t('network.lastSeenMoments')
+  if (mins < 60) return t('network.lastSeenMins', { m: mins })
+  const clock = new Intl.DateTimeFormat(isEn ? 'en-US' : 'ar-u-nu-latn', { hour: 'numeric', minute: '2-digit' })
+  const dayMonth = new Intl.DateTimeFormat(isEn ? 'en-US' : 'ar-u-nu-latn', { day: 'numeric', month: 'long' })
+  const at = new Date().toDateString() === d.toDateString() ? clock.format(d) : dayMonth.format(d)
+  return t('network.lastSeenAt', { at })
 }
 
 function ConnectDialog({ onDone, onCancel }: { onDone: (name: string) => void; onCancel: () => void }) {
@@ -33,8 +34,8 @@ function ConnectDialog({ onDone, onCancel }: { onDone: (name: string) => void; o
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   return (
-    <Dialog title="اربط راوتر" okLabel="اربط" busy={busy} busyLabel="جاري الاتصال" error={err} onCancel={onCancel}
-      body="لازم يكون جهازك على نفس شبكة الراوتر. فعّل خدمة api-ssl من IP > Services، واستخدم حساب بصلاحيات محدودة مش حساب المدير."
+    <Dialog title={t('network.connect.title')} okLabel={t('network.connect.ok')} busy={busy} busyLabel={t('network.connect.busy')} error={err} onCancel={onCancel}
+      body={t('network.connect.body')}
       onOk={async () => {
         if (!host.trim()) return setErr(t('err.routerIp'))
         if (!user.trim() || !pass) return setErr(t('err.routerCreds'))
@@ -45,9 +46,9 @@ function ConnectDialog({ onDone, onCancel }: { onDone: (name: string) => void; o
         setPass('')
         onDone(r.value.name)
       }}>
-      <div className="fld"><label className="lbl" htmlFor="rip">عنوان الراوتر</label><div className="box" dir="ltr"><input id="rip" value={host} placeholder="192.168.88.1" onChange={(e) => { setHost(e.target.value); setErr('') }} /></div></div>
-      <div className="fld"><label className="lbl" htmlFor="run">اسم المستخدم</label><div className="box" dir="ltr"><input id="run" value={user} autoComplete="off" onChange={(e) => { setUser(e.target.value); setErr('') }} /></div></div>
-      <div className="fld"><label className="lbl" htmlFor="rpw">كلمة المرور</label><div className="box" dir="ltr"><input id="rpw" type="password" value={pass} autoComplete="off" onChange={(e) => { setPass(e.target.value); setErr('') }} /></div></div>
+      <div className="fld"><label className="lbl" htmlFor="rip">{t('network.connect.ip')}</label><div className="box" dir="ltr"><input id="rip" value={host} placeholder="192.168.88.1" onChange={(e) => { setHost(e.target.value); setErr('') }} /></div></div>
+      <div className="fld"><label className="lbl" htmlFor="run">{t('network.connect.user')}</label><div className="box" dir="ltr"><input id="run" value={user} autoComplete="off" onChange={(e) => { setUser(e.target.value); setErr('') }} /></div></div>
+      <div className="fld"><label className="lbl" htmlFor="rpw">{t('network.connect.pass')}</label><div className="box" dir="ltr"><input id="rpw" type="password" value={pass} autoComplete="off" onChange={(e) => { setPass(e.target.value); setErr('') }} /></div></div>
     </Dialog>
   )
 }
@@ -55,7 +56,8 @@ function ConnectDialog({ onDone, onCancel }: { onDone: (name: string) => void; o
 type Session = NonNullable<NetworkData['sessions']>[number]
 
 export function Network() {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
+  const isEn = state.lang === 'en'
   const say = useToast()
   const [n, setN] = useState(0)
   const net = useApi(() => api.network(), [n])
@@ -77,18 +79,19 @@ export function Network() {
   const connectDlg = connect && (
     <ConnectDialog onCancel={() => setConnect(false)} onDone={async (name) => {
       setConnect(false)
-      say(`انربط الراوتر ${name}.`)
+      say(t('network.connect.connected', { name }))
       dispatch({ type: 'status', status: await api.status() })
       setN((x) => x + 1)
     }} />
   )
 
   if (!d.routers.length) {
+    const empty = getEmpty('network', state.lang)
     return (
       <div className="card scr state-empty">
-        <h1>{EMPTY.network.title}</h1>
-        <p>{EMPTY.network.body}</p>
-        <button type="button" className="btn btn-p" onClick={() => setConnect(true)}>{EMPTY.network.cta}</button>
+        <h1>{empty.title}</h1>
+        <p>{empty.body}</p>
+        <button type="button" className="btn btn-p" onClick={() => setConnect(true)}>{empty.cta}</button>
         {connectDlg}
       </div>
     )
@@ -97,8 +100,8 @@ export function Network() {
   return (
     <div className="scr stack" style={{ gap: 24 }}>
       <header className="head" style={{ alignItems: 'center', gap: 16 }}>
-        <h1 className="h1">الشبكة</h1>
-        <button type="button" className="btn btn-s" onClick={() => setConnect(true)}>{d.configured ? 'غيّر الراوتر' : 'اربط راوتر'}</button>
+        <h1 className="h1">{t('network.title')}</h1>
+        <button type="button" className="btn btn-s" onClick={() => setConnect(true)}>{d.configured ? t('network.changeRouter') : t('network.connectRouter')}</button>
       </header>
 
       <section aria-label="الأجهزة" className="devices">
@@ -106,35 +109,40 @@ export function Network() {
           <div key={r.id} className="card device">
             <div className="device-head"><strong>{r.name}</strong><span className="mono">{r.host}</span></div>
             <div className={r.up ? 'bn ok device-state' : 'bn er device-state'}>
-              {r.up ? `متصل، ${r.sessions ?? 0} جهاز` : `مش راد. ${lastSeen(r.lastSeenAt)}`}
+              {r.up ? t('network.connected', { n: r.sessions ?? 0 }) : `${t('network.down')} ${lastSeen(r.lastSeenAt, isEn)}`}
             </div>
-            {d.mock && <span className="sub small">راوتر وهمي للتجربة. اربط راوتر حقيقي لما يكون جاهز.</span>}
+            {d.mock && <span className="sub small">{t('network.mockSub')}</span>}
           </div>
         ))}
         <div className="card device">
-          <div className="device-head"><strong>طابور الراوتر</strong></div>
+          <div className="device-head"><strong>{t('network.queueTitle')}</strong></div>
           <div className={d.queued ? 'bn wa device-state' : 'bn ok device-state'}>
-            {d.queued ? `${d.queued} عملية بانتظار الراوتر، ومحفوظة على الجهاز` : 'ما في شي بالانتظار'}
+            {d.queued ? t('network.queueBusy', { n: d.queued }) : t('network.queueEmpty')}
           </div>
         </div>
       </section>
 
       <section aria-labelledby="on" className="panel">
-        <div className="panel-head"><h2 id="on" className="h2">{d.sessions ? `متصلين الآن: ${d.sessions.length}` : 'المتصلين الآن'}</h2></div>
+        <div className="panel-head">
+          <h2 id="on" className="h2">{d.sessions ? t('network.sessionsTitle', { n: d.sessions.length }) : t('network.sessionsTitleNone')}</h2>
+        </div>
         {!d.sessions ? (
           <div className="empty-row bordered">
-            <strong>ما قدرنا نجيب المتصلين</strong>
-            <span className="sub">الراوتر مش راد. بياناتك محفوظة، ورح تتحدث لما يرجع.</span>
+            <strong>{t('network.sessionsFail')}</strong>
+            <span className="sub">{t('network.sessionsFailSub')}</span>
           </div>
         ) : !d.sessions.length ? (
-          <div className="empty-row bordered">ما في حدا متصل هلأ.</div>
+          <div className="empty-row bordered">{t('network.sessionsEmpty')}</div>
         ) : (
-          <div style={{ overflowX: 'auto' }} tabIndex={0} role="group" aria-label="المتصلين الآن، قابل للتمرير">
-            <div role="table" aria-label="المتصلين الآن" style={{ minWidth: 760 }}>
+          <div style={{ overflowX: 'auto' }} tabIndex={0} role="group" aria-label={t('network.sessionsTitleNone')}>
+            <div role="table" aria-label={t('network.sessionsTitleNone')} style={{ minWidth: 760 }}>
               <div role="row" className="ses thead">
-                <span role="columnheader">الكرت</span><span role="columnheader">الفئة</span><span role="columnheader">الراوتر</span>
-                <span role="columnheader">IP</span><span role="columnheader">الوقت الباقي</span>
-                <span role="columnheader" className="kick-col"><span className="sr">إجراء</span></span>
+                <span role="columnheader">{t('network.colCard')}</span>
+                <span role="columnheader">{t('network.colCategory')}</span>
+                <span role="columnheader">{t('network.colRouter')}</span>
+                <span role="columnheader">{t('network.colIp')}</span>
+                <span role="columnheader">{t('network.colTimeLeft')}</span>
+                <span role="columnheader" className="kick-col"><span className="sr">{t('network.colActions')}</span></span>
               </div>
               {d.sessions.map((s) => (
                 <div key={s.id} role="row" className="ses">
@@ -142,10 +150,10 @@ export function Network() {
                   <span role="cell">{s.categoryName ?? '—'}</span>
                   <span role="cell">{s.routerName}</span>
                   <span role="cell" className="mono">{s.address}</span>
-                  <span role="cell">{s.isUnlimited ? 'مفتوح (اشتراك)' : leftText(s.secondsLeft, null)}</span>
+                  <span role="cell">{s.isUnlimited ? t('network.unlimited') : leftText(s.secondsLeft, null, state.lang)}</span>
                   <span role="cell" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <button type="button" className="btn btn-s sm" onClick={() => setExtending(s.code)}>+ وقت</button>
-                    <button type="button" className="btn btn-d sm kick-col" aria-label={`افصل الكرت ${s.code}`} onClick={() => { setKickErr(''); setKick(s) }}>افصل</button>
+                    <button type="button" className="btn btn-s sm" onClick={() => setExtending(s.code)}>{t('network.btnExtend')}</button>
+                    <button type="button" className="btn btn-d sm kick-col" aria-label={`${t('network.btnKick')} ${s.code}`} onClick={() => { setKickErr(''); setKick(s) }}>{t('network.btnKick')}</button>
                   </span>
                 </div>
               ))}

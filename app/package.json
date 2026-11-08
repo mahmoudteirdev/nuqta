@@ -72,10 +72,15 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "نقطة",
-      "uninstallDisplayName": "نقطة",
+      "shortcutName": "Nuqta",
+      "uninstallDisplayName": "Nuqta",
       "deleteAppDataOnUninstall": false,
       "displayLanguageSelector": true,
+      "installerLanguages": [
+        "ar_SA",
+        "en_US"
+      ],
+      "include": "build/installer.nsh",
       "runAfterFinish": true
     },
     "electronFuses": {

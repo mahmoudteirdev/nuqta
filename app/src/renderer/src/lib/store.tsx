@@ -1,8 +1,10 @@
 import { createContext, useContext, useReducer, type Dispatch, type ReactNode } from 'react'
 import type { AppStatus } from '@shared/api'
 import type { ScreenId, StateMode } from './screens'
+import { getLang, setLang, type Lang } from './i18n'
 
 export interface AppState {
+  lang: Lang
   screen: ScreenId
   stateMode: StateMode
   /** الكود اللي انفحص آخر مرة من البحث. */
@@ -24,6 +26,7 @@ export interface AppState {
 }
 
 export type Action =
+  | { type: 'setLang'; lang: Lang }
   | { type: 'go'; screen: ScreenId; distributorId?: string | null; batchId?: number | null; settingsTab?: string | null }
   | { type: 'checkCard'; code: string }
   | { type: 'setStateMode'; mode: StateMode }
@@ -32,7 +35,11 @@ export type Action =
   | { type: 'forceNetDown'; down: boolean }
   | { type: 'changed' }
 
+// تطبيق اتجاه ولغة الصفحة عند التشغيل الأولي
+setLang(getLang())
+
 export const initialState: AppState = {
+  lang: getLang(),
   screen: 'home',
   stateMode: 'normal',
   cardCode: '',
@@ -48,6 +55,10 @@ export const initialState: AppState = {
 
 function reducer(s: AppState, a: Action): AppState {
   switch (a.type) {
+    case 'setLang': {
+      setLang(a.lang)
+      return { ...s, lang: a.lang }
+    }
     case 'go':
       return {
         ...s, screen: a.screen, stateMode: 'normal',
@@ -61,7 +72,12 @@ function reducer(s: AppState, a: Action): AppState {
       return { ...s, stateMode: a.mode }
     case 'status': {
       const routerChanged = s.status?.router.up !== a.status.router.up
-      return { ...s, status: a.status, revision: routerChanged ? s.revision + 1 : s.revision }
+      let nextLang = s.lang
+      if (typeof localStorage !== 'undefined' && !localStorage.getItem('nuqta_lang') && a.status.installerLang) {
+        setLang(a.status.installerLang)
+        nextLang = a.status.installerLang
+      }
+      return { ...s, status: a.status, lang: nextLang, revision: routerChanged ? s.revision + 1 : s.revision }
     }
     case 'net':
       return { ...s, netUp: a.up, netDownSince: a.up ? null : (s.netDownSince ?? Date.now()) }
@@ -74,16 +90,16 @@ function reducer(s: AppState, a: Action): AppState {
 
 const Ctx = createContext<{ state: AppState; dispatch: Dispatch<Action> } | null>(null)
 
-export function StoreProvider({ children, init = initialState }: { children: ReactNode; init?: AppState }) {
-  const [state, dispatch] = useReducer(reducer, init)
-  return <Ctx.Provider value={{ state, dispatch }}>{children}</Ctx.Provider>
+export function StoreProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(reducer, initialState)
+  return <Ctx value={{ state, dispatch }}>{children}</Ctx>
 }
 
-export function useStore() {
-  const v = useContext(Ctx)
-  if (!v) throw new Error('useStore outside StoreProvider')
-  return v
+export function useStore(): { state: AppState; dispatch: Dispatch<Action> } {
+  const c = useContext(Ctx)
+  if (!c) throw new Error('useStore outside StoreProvider')
+  return c
 }
 
-export const routerUp = (s: AppState): boolean => s.status?.router.up ?? true
+export const routerUp = (s: AppState): boolean => !!s.status?.router.up
 export const netUp = (s: AppState): boolean => s.netUp && !s.netForcedDown

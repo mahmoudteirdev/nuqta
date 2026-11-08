@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { api } from '@/lib/api'
 import { errorText } from '@/lib/actions'
+import { t } from '@/lib/i18n'
 import { Dialog } from '@/shell/Dialog'
 import { useToast } from '@/shell/Toast'
 
@@ -19,34 +20,35 @@ export function ExtendDialog({
   const [err, setErr] = useState('')
 
   const PRESETS = [
-    { label: '30 دقيقة', mins: 30 },
-    { label: 'ساعة واحدة', mins: 60 },
-    { label: 'ساعتين', mins: 120 },
-    { label: '3 ساعات', mins: 180 },
-    { label: '24 ساعة (يوم)', mins: 1440 }
+    { label: t('extend.m30'), mins: 30 },
+    { label: t('extend.h1'), mins: 60 },
+    { label: t('extend.h2'), mins: 120 },
+    { label: t('extend.h3'), mins: 180 },
+    { label: t('extend.d1'), mins: 1440 }
   ]
 
   return (
     <Dialog
-      title={`زيادة وقت للكرت: ${code}`}
-      body="اختر المدة الإضافية التي تريد إضافتها لوقت الكرت على الراوتر. سيتم تمديد وقت الكرت فوراً وسيستمر الزبون بالاتصال."
-      okLabel="تأكيد زيادة الوقت"
+      title={t('extend.title', { code })}
+      body={t('extend.body')}
+      okLabel={t('extend.ok')}
+      cancelLabel={t('extend.cancel')}
       busy={busy}
-      busyLabel="جاري التحديث..."
+      busyLabel={t('extend.busy')}
       error={err}
       onCancel={onCancel}
       onOk={async () => {
-        if (minutes <= 0) return setErr('يرجى اختيار مدة صحيحة')
+        if (minutes <= 0) return setErr(t('extend.errValid'))
         setBusy(true)
         const r = await api.extendCard(code, minutes)
         setBusy(false)
         if (!r.ok) return setErr(errorText(r.error))
-        say(`تمت زيادة الوقت للكرت ${code} بنجاح.`)
+        say(t('extend.success', { code }))
         onDone(r.value.newLimit)
       }}
     >
       <div className="fld">
-        <label className="lbl">المدة الإضافية</label>
+        <label className="lbl">{t('extend.label')}</label>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
           {PRESETS.map((p) => (
             <button

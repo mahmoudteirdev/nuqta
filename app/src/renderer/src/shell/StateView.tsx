@@ -1,9 +1,10 @@
-import { EMPTY, ERROR_TITLES, type ScreenId, type StateMode } from '@/lib/screens'
+import { getEmpty, getErrorTitle, type ScreenId, type StateMode } from '@/lib/screens'
 import { useStore } from '@/lib/store'
 
-/** حالات التحميل والخطأ والفاضي، بنص خاص لكل قسم. */
+/** حالات التحميل والخطأ والفاضي، بنص خاص لكل قسم بحسب اللغة. */
 export function StateView({ screen, mode, onRetry }: { screen: ScreenId; mode: Exclude<StateMode, 'normal'>; onRetry?: () => void }) {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
+  const isEn = state.lang === 'en'
 
   if (mode === 'loading') {
     const block = (
@@ -11,8 +12,8 @@ export function StateView({ screen, mode, onRetry }: { screen: ScreenId; mode: E
     )
     return (
       <>
-        <h1 className="sr">جاري التحميل</h1>
-        <div className="scr stack" aria-busy="true" role="status" aria-label="جاري التحميل" style={{ gap: 24 }}>
+        <h1 className="sr">{isEn ? 'Loading' : 'جاري التحميل'}</h1>
+        <div className="scr stack" aria-busy="true" role="status" aria-label={isEn ? 'Loading' : 'جاري التحميل'} style={{ gap: 24 }}>
           <span className="sk" style={{ width: 220, height: 30 }} />
           <div className="sk-grid">{block}{block}{block}</div>
           <div className="card">
@@ -28,14 +29,16 @@ export function StateView({ screen, mode, onRetry }: { screen: ScreenId; mode: E
   if (mode === 'error') {
     return (
       <div className="card scr state-err" role="alert">
-        <h1>{ERROR_TITLES[screen]}</h1>
-        <p>بياناتك ما انمسحت. جرّب مرة ثانية، وإذا ضلت المشكلة استرجع آخر نسخة من الإعدادات.</p>
-        <button type="button" className="btn btn-s" onClick={onRetry ?? (() => dispatch({ type: 'setStateMode', mode: 'normal' }))}>أعد المحاولة</button>
+        <h1>{getErrorTitle(screen, state.lang)}</h1>
+        <p>{isEn ? 'Your data is safe. Please retry, or restore the last backup from settings if the issue persists.' : 'بياناتك ما انمسحت. جرّب مرة ثانية، وإذا ضلت المشكلة استرجع آخر نسخة من الإعدادات.'}</p>
+        <button type="button" className="btn btn-s" onClick={onRetry ?? (() => dispatch({ type: 'setStateMode', mode: 'normal' }))}>
+          {isEn ? 'Retry' : 'أعد المحاولة'}
+        </button>
       </div>
     )
   }
 
-  const e = EMPTY[screen]
+  const e = getEmpty(screen, state.lang)
   return (
     <div className="card scr state-empty">
       <h1>{e.title}</h1>

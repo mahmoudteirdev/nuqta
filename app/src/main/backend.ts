@@ -2,6 +2,7 @@
 
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, type IpcMainInvokeEvent } from 'electron'
 import { writeFile } from 'node:fs/promises'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { AppStatus, Backend, DbStatus, UpdateView } from '@shared/api'
 import { openDatabase, type Db } from './db/db'
@@ -186,6 +187,23 @@ export function startBackend(): AppStatus {
     }).catch((e) => console.error('[update] not available', e))
   }
 
+  function getInstallerLang(): 'ar' | 'en' | null {
+    try {
+      const candidates = [
+        join(process.resourcesPath, '..', 'installer-lang.json'),
+        join(app.getAppPath(), 'installer-lang.json'),
+        join(process.cwd(), 'installer-lang.json')
+      ]
+      for (const p of candidates) {
+        if (existsSync(p)) {
+          const json = JSON.parse(readFileSync(p, 'utf8'))
+          if (json.lang === 'ar' || json.lang === 'en') return json.lang
+        }
+      }
+    } catch {}
+    return null
+  }
+
   const status = (): AppStatus => ({
     db: dbStatus,
     router: { ...router, mock: !!live?.mock, configured: !!live?.configured },
@@ -195,7 +213,8 @@ export function startBackend(): AppStatus {
     lastBackupAt: listBackups(backupDir)[0]?.at ?? null,
     license: lic.info(),
     session: auth.info(lockAfter()),
-    update: updateView()
+    update: updateView(),
+    installerLang: getInstallerLang()
   })
 
   const backend: Backend = {

@@ -35,6 +35,7 @@ export interface AppStatus {
   license: LicenseInfo
   session: SessionInfo
   update: UpdateView
+  installerLang?: 'ar' | 'en' | null
 }
 
 /** مين فاتح البرنامج هلأ. */

@@ -34,7 +34,7 @@ const ROLE: Record<UserRole, { name: string; note: string }> = {
 }
 
 function NetTab() {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
   const say = useToast()
   const saved = useApi(() => api.networkSettings())
   const [s, setS] = useState<NetworkSettings | null>(null)
@@ -46,7 +46,16 @@ function NetTab() {
   return (
     <section className="card scr settings-form" aria-label="بيانات الشبكة">
       <div className="fld">
-        <label className="lbl" htmlFor="sn">اسم الشبكة على الكرت</label>
+        <label className="lbl" htmlFor="langSel">{t('settings.language')}</label>
+        <div className="box">
+          <select id="langSel" value={state.lang} onChange={(e) => dispatch({ type: 'setLang', lang: e.target.value as 'ar' | 'en' })}>
+            <option value="ar">{t('settings.langAr')}</option>
+            <option value="en">{t('settings.langEn')}</option>
+          </select>
+        </div>
+      </div>
+      <div className="fld">
+        <label className="lbl" htmlFor="sn">{t('settings.netName')}</label>
         <div className={err?.field === 'name' ? 'box err' : 'box'}>
           <input id="sn" value={s.networkName} aria-invalid={err?.field === 'name'} aria-describedby={err?.field === 'name' ? 'snE' : undefined}
             onChange={(e) => { const v = e.target.value; setS((p) => p && { ...p, networkName: v }); setErr(null) }} />
@@ -54,7 +63,7 @@ function NetTab() {
         {err?.field === 'name' && <span id="snE" className="emsg" role="alert">{err.msg}</span>}
       </div>
       <div className="fld">
-        <label className="lbl" htmlFor="sp">رقم الدعم على الكرت</label>
+        <label className="lbl" htmlFor="sp">{t('settings.supportPhone')}</label>
         <div className={err?.field === 'phone' ? 'box err' : 'box'} dir="ltr">
           <input id="sp" inputMode="tel" value={s.phone} placeholder="059" aria-invalid={err?.field === 'phone'} aria-describedby={err?.field === 'phone' ? 'spE' : 'spH'}
             onChange={(e) => { const v = e.target.value; setS((p) => p && { ...p, phone: v }); setErr(null) }} />
@@ -72,11 +81,11 @@ function NetTab() {
         const r = await api.saveNetworkSettings(s)
         setBusy(false)
         if (!r.ok) return setErr(r.error.code === 'phone_invalid' ? { field: 'phone', msg: 'الرقم فيه أحرف. اكتب أرقام بس.' } : { field: 'name', msg: errorText(r.error) })
-        say('انحفظت بيانات الشبكة.')
+        say(t('settings.saved'))
         dispatch({ type: 'status', status: await api.status() })
       }}>
         {busy && <span className="spin" aria-hidden="true" />}
-        {busy ? 'جاري الحفظ' : 'احفظ'}
+        {busy ? 'جاري الحفظ' : t('settings.save')}
       </button>
     </section>
   )

@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript strict" />
   <img src="https://img.shields.io/badge/SQLite-local-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite local" />
   <br />
-  <img src="https://img.shields.io/badge/tests-276%20passing-0A5C56?style=for-the-badge&logo=vitest&logoColor=white" alt="276 tests passing" />
+  <img src="https://img.shields.io/badge/tests-315%20passing-0A5C56?style=for-the-badge&logo=vitest&logoColor=white" alt="315 tests passing" />
   <img src="https://img.shields.io/badge/offline-first-13201D?style=for-the-badge" alt="Offline first" />
   <img src="https://img.shields.io/badge/RTL-%D8%B9%D8%B1%D8%A8%D9%8A-F26B21?style=for-the-badge" alt="RTL Arabic" />
   <img src="https://img.shields.io/badge/Windows-desktop-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Windows desktop" />
@@ -43,10 +43,11 @@ does:
   - read card usage from the router and turn it into debt, once per card
   - settle, return cards, open disputes, correct with linked reverse entries
   - reports: collected vs used, per-batch commission, stale cards
+  - sign in per user with a PIN; owner and technician roles; auto lock
 works:     fully offline; the router is on the local network
 language:  Arabic, right to left
 platform:  Windows desktop (Electron)
-status:    first version built, 7/10 acceptance items automated and passing
+status:    first version built, 7/10 acceptance items automated and passing; no installer yet
 ```
 
 <!-- 3. الأدوات والتقنيات -->
@@ -75,7 +76,8 @@ status:    first version built, 7/10 acceptance items automated and passing
 | الراوتر | RouterOS API عبر api-ssl | مكتوب من الصفر، مع تثبيت بصمة الشهادة، وراوتر وهمي للتطوير |
 | الطباعة | نافذة طباعة مخفية من نفس البناء | A4 بـ12 و24 كرت، وحرارية 80mm، وكشف الحساب، وتقارير PDF |
 | الترخيص | Ed25519 | كود جهاز ومفتاح موقّع بيشتغل بدون نت |
-| الاختبار | Vitest | 276 اختبار، منهم اختبارات القبول |
+| الدخول | scrypt لكل رمز | الصلاحيات بتنفحص بالعملية الرئيسية، مش بالواجهة |
+| الاختبار | Vitest | 315 اختبار، منهم اختبارات القبول |
 | الخطوط | IBM Plex Sans Arabic وIBM Plex Mono | محلية، عشان البرنامج يشتغل بدون نت |
 
 </div>
@@ -132,7 +134,8 @@ status:    first version built, 7/10 acceptance items automated and passing
 </div>
 
 ```bash
-cd app
+git clone https://github.com/mahmoudteirdev/nuqta.git
+cd nuqta/app
 npm install
 npm run dev        # البرنامج بوضع التطوير، مع بيانات تجربة وراوتر وهمي
 npm test           # كل الاختبارات
@@ -141,7 +144,9 @@ npm run build      # بناء البرنامج
 
 <div dir="rtl">
 
-متغيرات للتطوير والفحص بس:
+بيانات التجربة فيها مستخدمين: صاحب الشبكة برمز `1234`، والفني سامي برمز `5678`. هدول بوضع التطوير بس، والنسخة الحقيقية بتطلب رمز جديد لصاحب الشبكة بعد أول تشغيل.
+
+متغيرات للتطوير والفحص بس، والنسخة المبنية بتتجاهلها كلها:
 
 | المتغير | شو بيعمل |
 |---|---|
@@ -150,6 +155,9 @@ npm run build      # بناء البرنامج
 | `NUQTA_NO_SEED=1` | بدون بيانات تجربة، عشان تشوف أول تشغيل |
 | `NUQTA_PRINT_PDF_DIR` | كل الطباعة بتصير ملفات PDF بهالمجلد |
 | `NUQTA_BACKUP_DIR` | مجلد نسخ ثاني |
+| `NUQTA_IMPORT_FILE` | ملف استيراد بدون نافذة الاختيار |
+| `NUQTA_MACHINE_ID` | معرّف جهاز مصطنع |
+| `NUQTA_INSTALLED_AT` | تاريخ تثبيت مصطنع |
 
 ### هيكل المشروع
 
@@ -163,11 +171,34 @@ app/
   src/shared/         الحساب والدفتر والأكواد: كود صافي ومختبر
   src/main/           قاعدة البيانات، الراوتر، الطباعة، النسخ، الترخيص
   src/renderer/       الواجهة وصفحة الطباعة
-  scripts/license.mjs أداة إصدار مفاتيح الترخيص
+  scripts/            أداة إصدار السيريالات، بصفحة وبسطر أوامر
   ACCEPTANCE.md       نتيجة اختبارات القبول
 ```
 
 <div dir="rtl">
+
+### المستخدمون والصلاحيات
+
+كل مستخدم بيدخل برمزه، والدفتر بيسجل مين عمل كل حركة. البرنامج بيقفل لحاله بعد مدة بدون حركة، والمدة بتنضبط من الإعدادات.
+
+| | صاحب الشبكة | الفني |
+|---|---|---|
+| توليد الكروت وطباعتها وتسليمها | ✅ | ✅ |
+| الشبكة وفحص الكرت | ✅ | ✅ |
+| أرقام المال والحسابات والتسوية | ✅ | ❌ |
+| التقارير والإعدادات والنسخ والترخيص | ✅ | ❌ |
+| دفعة لموزع فوق سقف الدين | ✅ | ❌ لازم صاحب الشبكة يقرر |
+
+### الأمان
+
+- الواجهة معزولة عن النظام، وكل طلب منها بينفحص حسب دور المستخدم بالعملية الرئيسية.
+- الرموز مخزنة كـhash بـscrypt، وبعد 5 محاولات غلط المستخدم بيستنى، حتى لو البرنامج انسكر وانفتح.
+- كلمة مرور الراوتر مشفرة بتشفير Windows، والاتصال بالراوتر مشفر ومربوط ببصمة شهادته.
+- البرنامج بيعمل نسخة احتياطية قبل ما أي تحديث يعدّل قاعدة البيانات.
+- ما بتشتغل نسختين من البرنامج مع بعض.
+
+> [!WARNING]
+> قاعدة البيانات ونسخها مش مشفرة: الرمز بيحمي الشاشة، مش الملف. والنسخ التلقائية على نفس الجهاز، فلازم تنسخ وحدة لبرا الجهاز.
 
 ### الترخيص
 
@@ -206,10 +237,16 @@ node scripts/license.mjs issue --key <license-private.pem> --device NQ-XXXX-XXXX
 
 ### لسا قبل الإطلاق
 
+- ملف تثبيت ونظام تحديثات: لسا ما في طريقة يثبّت فيها الزبون البرنامج أو يستلم تحديث.
+- حماية النسخة المبنية: توقيع رقمي، وفحص إن ملفات البرنامج ما انعدلت، وإغلاق منفذ التشخيص.
 - تجربة على راوتر MikroTik حقيقي: الاتصال، وتحديد أول استخدام من `uptime`، وإضافة ألف كرت دفعة وحدة.
 - تجربة على طابعة A4 وطابعة حرارية 80mm.
 - فحص بإنسان: NVDA بصوت عربي، وشاشة لمس.
-- قرارات مفتوحة: طريقة الدفع، والنسخ السحابي، والعملة. القائمة كاملة بآخر [ACCEPTANCE.md](app/ACCEPTANCE.md).
+- قرارات مفتوحة: طريقة الدفع، والنسخ السحابي، والعملة، وتشفير قاعدة البيانات. القائمة كاملة بآخر [ACCEPTANCE.md](app/ACCEPTANCE.md).
+
+## 👤 المطوّر
+
+[mahmoudteirdev](https://github.com/mahmoudteirdev)
 
 </div>
 
